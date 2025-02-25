@@ -1,3 +1,11 @@
-# pn-template-ms-be
+# pn-portfat
 
-A template project for a new PN backend microservice 
+To start application run
+
+```bash
+    ./mvnw clean install
+```
+
+```bash
+    ./mvnw spring-boot:run
+```
