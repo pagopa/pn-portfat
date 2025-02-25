@@ -1,0 +1,61 @@
+openapi: 3.0.1
+info:
+  title: PN Portale Fatturazione BE
+  description: Documentation APIs v1.0
+  termsOfService: https://termofservice.it
+  x-api-id: api-internal-portale-fatturazione
+  x-summary: 'Ricezione dati dal Portale Fatturazione'
+  version: '1.0.0'
+  contact:
+    email: pn@pagopa.it
+  license:
+    name: Licenza di PN
+    url: 'https://da-definire/'
+servers:
+  - url: https://api.pn.pagopa.it
+    description: Generated server url
+paths:
+  /status:
+    get:
+      summary: healthCheck path
+      description: health check path per verificare lo stato del micro servizio
+      tags:
+        - HealthCheck
+      operationId: status
+      responses:
+        '200':
+          description: Ok
+        '500':
+          description: Internal Server Error
+
+  /pn-portfat-in/file-ready-event:
+    put:
+      summary: FileReadyEvent
+      operationId: fileReadyEvent
+      tags:
+        - Portale Fatturazione
+      parameters:
+        - in: header
+          name: api-key
+          required: true
+          schema:
+            $ref: 'schemas-params.yaml#/components/schemas/ApiKey'
+
+      requestBody:
+        description: Parametri necessari per processare i file
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'schemas-params.yaml#/components/schemas/FileReadyEvent'
+
+      responses:
+        '400':
+          $ref: 'schemas-responses.yaml#/components/responses/FileReadyEventBadRequest'
+        '429':
+          $ref: 'schemas-responses.yaml#/components/responses/FileReadyEventToManyRequest'
+        '500':
+          $ref: 'schemas-responses.yaml#/components/responses/FailResponseInternalServerError'
+        '202':
+          description: "Richiesta accettata."
+
