@@ -1,4 +1,4 @@
-package it.pagopa.pn.template.rest;
+package it.pagopa.pn.portfat.rest;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.server.ServerWebExchange;
