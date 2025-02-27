@@ -1,0 +1,23 @@
+info:
+  version: v1.0
+components:
+  schemas:
+    FileReadyEvent:
+      type: object
+      required:
+        - downloadUrl
+        - fileVersionString
+
+    ApiKey:
+      type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          example: 400
+        message:
+          type: string
+          example: "Richiesta non valida, i parametri sono obbligatori"
+
