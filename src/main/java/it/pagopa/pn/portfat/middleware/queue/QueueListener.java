@@ -25,6 +25,7 @@ public class QueueListener {
 
     @SqsListener(value = "${pn.pn-portfat.queue}", deletionPolicy = SqsMessageDeletionPolicy.ALWAYS)
     public void pullPortFat(@Payload String node, @Headers Map<String, Object> headers) {
+        log.info("pullPortFat {}", node);
         FileReadyEvent fileReadyEvent = convertToObject(node, FileReadyEvent.class);
     }
 

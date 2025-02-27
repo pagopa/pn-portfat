@@ -6,7 +6,7 @@ server:
 pn:
   env:
     runtime: DEVELOPMENT
-  pn-portfat-queue:
+  pn-portfat.queue:
 #pn.env.runtime=PROD
 
 # AWS specific configurations
@@ -14,3 +14,8 @@ aws:
   region-code: us-east-1
   profile-name: ${PN_AWS_PROFILE_NAME:default}
   endpoint-url: http://localhost:4566
+
+cloud.aws.credentials.profile-name: ${PN_AWS_PROFILE_NAME:default}
+cloud.aws.region.static: us-east-1
+cloud.aws.sqs.endpoint: http://localhost:4566
+
