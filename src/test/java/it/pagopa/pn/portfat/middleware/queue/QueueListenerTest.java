@@ -52,8 +52,7 @@ class QueueListenerTest {
     @BeforeEach
     void setup() throws JsonProcessingException {
         amazonSQS.createQueue(new CreateQueueRequest()
-                .withQueueName(queueUrl)
-                .withAttributes(Map.of("ContentBasedDeduplication", "true")));
+                .withQueueName(queueUrl));
         queueUrl = amazonSQS.getQueueUrl(queueUrl).getQueueUrl();
         // Crea il messaggio
         FileReadyEvent event = new FileReadyEvent();
