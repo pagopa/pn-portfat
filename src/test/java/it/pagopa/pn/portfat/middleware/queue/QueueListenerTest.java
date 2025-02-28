@@ -18,7 +18,6 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.times;
@@ -69,8 +68,8 @@ class QueueListenerTest {
 
     @Test
     void testMessageReception() {
-        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
-            verify(queueListener, times(1)).pullPortFat(messageBody);
-        });
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
+            verify(queueListener, times(1)).pullPortFat(messageBody)
+        );
     }
 }
