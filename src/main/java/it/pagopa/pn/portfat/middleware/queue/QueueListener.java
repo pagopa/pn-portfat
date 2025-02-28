@@ -25,14 +25,6 @@ public class QueueListener {
 
     private final ObjectMapper objectMapper;
 
-    @Value("${pn.pn-portfat.queue}")
-    private String queue;
-
-    @PostConstruct
-    public void init() {
-        log.info("coda in ascolto {}", queue);
-    }
-
     @SqsListener(value = "${pn.pn-portfat.queue}", deletionPolicy = SqsMessageDeletionPolicy.ALWAYS)
     public void pullPortFat(@Payload String node) {
         log.info("pullPortFat {}", node);
