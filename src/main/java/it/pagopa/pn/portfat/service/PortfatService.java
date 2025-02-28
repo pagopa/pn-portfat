@@ -1,4 +1,4 @@
 package it.pagopa.pn.portfat.service;
 
-public interface QueueListenerService {
+public interface PortfatService {
 }

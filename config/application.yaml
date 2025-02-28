@@ -8,8 +8,9 @@ pn:
     runtime: DEVELOPMENT
   pn-portfat:
     queue: local-pn-portfat-inputs
-    blobStorageBaseUrl: https://portale-fatturazione-storage.blob.core.windows.net
+    blobStorageBaseUrl: https://portale-fatturazione-storage.blob.core.windows.net/portfatt/
     filePathWhiteList: portfatt, port-fatt
+    basePathZipFiele:
 
 # AWS specific configurations
 aws:

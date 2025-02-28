@@ -5,7 +5,9 @@ import lombok.Getter;
 @Getter
 public enum ExceptionTypeEnum {
 
-    MAPPER_ERROR("MAPPER_ERROR", "Non è stato possibile mappare l'oggetto richiesto");
+    MAPPER_ERROR("MAPPER_ERROR", "Non è stato possibile mappare l'oggetto richiesto"),
+    DOWNLOAD_ZIP_ERROR("DOWNLOAD_ZIP_ERROR", "Non è stato possibile scaricare il file: "),
+    ZIP_ERROR("ZIP_ERROR", "Non è stato possibile decomprimere il file: ");
 
     private final String title;
     private final String message;
