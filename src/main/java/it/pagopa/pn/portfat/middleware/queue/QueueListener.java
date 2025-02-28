@@ -8,13 +8,8 @@ import it.pagopa.pn.portfat.generated.openapi.server.v1.dto.FileReadyEvent;
 import it.pagopa.pn.portfat.utils.Utility;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.messaging.handler.annotation.Headers;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
-import java.util.Map;
 
 import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.MAPPER_ERROR;
 
