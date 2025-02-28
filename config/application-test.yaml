@@ -1,6 +1,6 @@
 pn:
   pn-portfat:
-    queue: http://localhost:4566/000000000000/local-pn-portfat-inputs.fifo
+    queue: local-pn-portfat-inputs
 
 aws:
   region-code: us-east-1

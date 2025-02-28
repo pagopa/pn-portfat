@@ -8,10 +8,12 @@ import it.pagopa.pn.portfat.generated.openapi.server.v1.dto.FileReadyEvent;
 import it.pagopa.pn.portfat.utils.Utility;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.handler.annotation.Headers;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.Map;
 
 import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.MAPPER_ERROR;
@@ -23,8 +25,16 @@ public class QueueListener {
 
     private final ObjectMapper objectMapper;
 
+    @Value("${pn.pn-portfat.queue}")
+    private String queue;
+
+    @PostConstruct
+    public void init() {
+        log.info("coda in ascolto {}", queue);
+    }
+
     @SqsListener(value = "${pn.pn-portfat.queue}", deletionPolicy = SqsMessageDeletionPolicy.ALWAYS)
-    public void pullPortFat(@Payload String node, @Headers Map<String, Object> headers) {
+    public void pullPortFat(@Payload String node) {
         log.info("pullPortFat {}", node);
         FileReadyEvent fileReadyEvent = convertToObject(node, FileReadyEvent.class);
     }

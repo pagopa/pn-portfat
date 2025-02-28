@@ -1,8 +1,9 @@
 package it.pagopa.pn.portfat.middleware.queue;
 
-import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.AmazonSQSAsync;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pn.portfat.generated.openapi.server.v1.dto.FileReadyEvent;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.containers.localstack.LocalStackContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -19,11 +21,12 @@ import org.testcontainers.utility.DockerImageName;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 @SpringBootTest
-@ActiveProfiles("test") // Usa un profilo dedicato per il test
+@ActiveProfiles("test")
 @Testcontainers
 class QueueListenerTest {
 
@@ -36,37 +39,39 @@ class QueueListenerTest {
                     .withServices(LocalStackContainer.Service.SQS);
 
     @Autowired
-    private AmazonSQS amazonSQS;
+    private AmazonSQSAsync amazonSQS;
 
     @Autowired
     private ObjectMapper objectMapper;
 
+    @SpyBean
+    private QueueListener queueListener;
+
+    private String messageBody;
+
     @BeforeEach
-    void setup() {
+    void setup() throws JsonProcessingException {
         amazonSQS.createQueue(new CreateQueueRequest()
                 .withQueueName(queueUrl)
-                .withAttributes(Map.of("FifoQueue", "true", "ContentBasedDeduplication", "true")));
+                .withAttributes(Map.of("ContentBasedDeduplication", "true")));
         queueUrl = amazonSQS.getQueueUrl(queueUrl).getQueueUrl();
-    }
-    @Test
-    void testMessageReception() throws Exception {
         // Crea il messaggio
         FileReadyEvent event = new FileReadyEvent();
         event.setDownloadUrl("https://example.com/file.pdf");
         event.setFileVersionString("v1.0");
-        String messageBody = objectMapper.writeValueAsString(event);
+        messageBody = objectMapper.writeValueAsString(event);
 
         // Invia il messaggio alla coda
         SendMessageRequest sendMessageRequest = new SendMessageRequest()
                 .withQueueUrl(queueUrl)
-                .withMessageBody(messageBody)
-                .withMessageGroupId("group1");
+                .withMessageBody(messageBody);
         amazonSQS.sendMessage(sendMessageRequest);
+    }
 
-
+    @Test
+    void testMessageReception() {
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
-
-            assertTrue(true);
+            verify(queueListener, times(1)).pullPortFat(messageBody);
         });
     }
 }
