@@ -16,5 +16,6 @@ public class PortfatPropertiesConfig {
     private List<String> filePathWhiteList;
     private String blobStorageBaseUrl;
     private String basePathZipFiele;
+    private String zipExtension;
 
 }

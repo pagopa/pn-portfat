@@ -10,7 +10,8 @@ pn:
     queue: local-pn-portfat-inputs
     blobStorageBaseUrl: https://portale-fatturazione-storage.blob.core.windows.net/portfatt/
     filePathWhiteList: portfatt, port-fatt
-    basePathZipFiele:
+    basePathZipFiele: port-fat-zips
+    zipExtension: .zip
 
 # AWS specific configurations
 aws:

@@ -11,9 +11,9 @@ import java.util.zip.ZipInputStream;
 
 import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.ZIP_ERROR;
 
-public class UnzipUtility {
+public class ZipUtility {
 
-    private UnzipUtility() {
+    private ZipUtility() {
         throw new IllegalCallerException();
     }
 
