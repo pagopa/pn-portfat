@@ -24,8 +24,8 @@ public class ZipUtility {
     public static Mono<Void> unzip(String zipFilePath, String destDirectory) {
         return Mono.fromCallable(() -> {
                     File destDir = new File(destDirectory);
-                    if (!destDir.exists()) {
-                        destDir.mkdirs();
+                    if (!destDir.exists() && !destDir.mkdirs()) {
+                        throw new IOException("Failed to create directory: " + destDirectory);
                     }
                     return new FileInputStream(zipFilePath);
                 })
@@ -41,14 +41,15 @@ public class ZipUtility {
 
                                 File newFile = new File(destDirectory, entry.getName());
                                 if (entry.isDirectory()) {
-                                    newFile.mkdirs();
+                                    if (!newFile.mkdirs() && !newFile.exists()) {
+                                        throw new IOException("Failed to create directory: " + newFile);
+                                    }
                                 } else {
                                     File parent = newFile.getParentFile();
-                                    if (!parent.exists()) {
-                                        parent.mkdirs();
+                                    if (!parent.exists() && !parent.mkdirs()) {
+                                        throw new IOException("Failed to create parent directory: " + parent);
                                     }
 
-                                    // Scrive i dati del file
                                     try (FileOutputStream fos = new FileOutputStream(newFile)) {
                                         byte[] buffer = new byte[4096];
                                         int len;
@@ -56,7 +57,6 @@ public class ZipUtility {
                                             fos.write(buffer, 0, len);
                                         }
                                     }
-
                                 }
                                 sink.next(newFile);
                             } catch (IOException e) {
@@ -71,10 +71,6 @@ public class ZipUtility {
                             }
                         }
                 ))
-                .onErrorResume(e -> {
-                    log.error("Error during unzip operation: {}", e.getMessage());
-                    return Mono.empty();
-                })
                 .doOnComplete(() -> log.info("Unzip operation completed"))
                 .then();
     }

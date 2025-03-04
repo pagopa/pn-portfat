@@ -5,11 +5,11 @@ import lombok.Getter;
 @Getter
 public enum ExceptionTypeEnum {
 
-    MAPPER_ERROR("MAPPER_ERROR", "Non è stato possibile mappare l'oggetto richiesto"),
-    DOWNLOAD_ZIP_ERROR("DOWNLOAD_ZIP_ERROR", "Non è stato possibile scaricare il file: "),
-    PROCESS_ERROR("PROCESS_ERROR", "Non è stato possibile processare i file: "),
-    CREATE_PATH_ERROR("CREATE_PATH_ERROR", "Non è stato possibile creare il percorso: "),
-    ZIP_ERROR("ZIP_ERROR", "Non è stato possibile decomprimere il file: ");
+    MAPPER_ERROR("MAPPER_ERROR", "Failed to map the requested object"),
+    DOWNLOAD_ZIP_ERROR("DOWNLOAD_ZIP_ERROR", "Failed to download file: "),
+    PROCESS_ERROR("PROCESS_ERROR", "Failed to process the files: "),
+    CREATE_PATH_ERROR("CREATE_PATH_ERROR", "Failed to create directory: "),
+    ZIP_ERROR("ZIP_ERROR", "Failed to unzip the file: ");
 
     private final String title;
     private final String message;

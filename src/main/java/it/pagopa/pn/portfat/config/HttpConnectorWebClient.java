@@ -1,5 +1,6 @@
 package it.pagopa.pn.portfat.config;
 
+import it.pagopa.pn.portfat.exception.PnGenericException;
 import lombok.CustomLog;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
@@ -11,6 +12,8 @@ import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.nio.file.Path;
+
+import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.DOWNLOAD_ZIP_ERROR;
 
 @Component
 @CustomLog
@@ -34,7 +37,10 @@ public class HttpConnectorWebClient implements HttpConnector {
 
         return DataBufferUtils.write(dataBufferFlux, fileOutput)
                 .doOnTerminate(() -> log.info("Download completed and saved to: {}", fileOutput))
-                .doOnError(ex -> log.error("Error writing to file: {}", ex.getMessage()))
+                .onErrorMap(ex -> {
+                    log.error("Error writing to file: {}", ex.getMessage());
+                    return new PnGenericException(DOWNLOAD_ZIP_ERROR, DOWNLOAD_ZIP_ERROR.getMessage() + ex.getMessage());
+                })
                 .then();
     }
 
