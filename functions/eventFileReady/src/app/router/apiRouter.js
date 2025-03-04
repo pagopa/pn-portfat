@@ -8,11 +8,12 @@ exports.route = async (event) => {
     if (httpMethod === 'POST' && resource === '/pn-portfat-in/file-ready-event') {
         let parsedBody;
         try {
-            parsedBody = JSON.parse(body || '{}');
+            parsedBody = JSON.parse(body ?? '{}');
         } catch (err) {
+            console.log('Invalid JSON received:', body, err.message);
             return {
                 statusCode: 400,
-                body: JSON.stringify({ message: 'Invalid JSON' })
+                body: JSON.stringify({ message: `Invalid JSON: ${err.message}` })
             };
         }
         validateBody(parsedBody);
