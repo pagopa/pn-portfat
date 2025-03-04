@@ -4,6 +4,7 @@ import it.pagopa.pn.portfat.exception.PnGenericException;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.SynchronousSink;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -22,55 +23,88 @@ public class ZipUtility {
     }
 
     public static Mono<Void> unzip(String zipFilePath, String destDirectory) {
-        return Mono.fromCallable(() -> {
-                    File destDir = new File(destDirectory);
-                    if (!destDir.exists()) {
-                        destDir.mkdirs();
-                    }
-                    return new FileInputStream(zipFilePath);
-                })
+        return Mono.fromCallable(() -> createDestinationDirectory(destDirectory, zipFilePath))
                 .flatMapMany(fis -> Flux.using(
                         () -> new ZipInputStream(fis),
-                        zis -> Flux.generate(sink -> {
-                            try {
-                                ZipEntry entry = zis.getNextEntry();
-                                if (entry == null) {
-                                    sink.complete();
-                                    return;
-                                }
-
-                                File newFile = new File(destDirectory, entry.getName());
-                                if (entry.isDirectory()) {
-                                    newFile.mkdirs();
-                                } else {
-                                    File parent = newFile.getParentFile();
-                                    if (!parent.exists()) {
-                                        parent.mkdirs();
-                                    }
-
-                                    try (FileOutputStream fos = new FileOutputStream(newFile)) {
-                                        byte[] buffer = new byte[4096];
-                                        int len;
-                                        while ((len = zis.read(buffer)) > 0) {
-                                            fos.write(buffer, 0, len);
-                                        }
-                                    }
-                                }
-                                sink.next(newFile);
-                            } catch (IOException e) {
-                                sink.error(new PnGenericException(ZIP_ERROR, ZIP_ERROR.getMessage() + e.getMessage()));
-                            }
-                        }),
-                        zis -> {
-                            try {
-                                zis.close();
-                            } catch (IOException e) {
-                                log.error("Error closing ZipInputStream", e);
-                            }
-                        }
+                        zis -> Flux.generate(sink -> processZipEntry(zis, destDirectory, sink)),
+                        ZipUtility::closeZipStream
                 ))
                 .doOnComplete(() -> log.info("Unzip operation completed"))
                 .then();
+    }
+
+    private static FileInputStream createDestinationDirectory(String destDirectory, String zipFilePath) throws IOException {
+        File destDir = new File(destDirectory);
+        if (!destDir.exists()) {
+            destDir.mkdirs();
+        }
+        return new FileInputStream(zipFilePath);
+    }
+
+    private static void processZipEntry(ZipInputStream zis, String destDirectory, SynchronousSink<Object> sink) {
+        try {
+            ZipEntry entry = zis.getNextEntry();
+            if (entry == null) {
+                sink.complete();
+                return;
+            }
+
+            String sanitizedEntryName = sanitizeEntryName(entry.getName());
+            File newFile = new File(destDirectory, sanitizedEntryName);
+
+            if (isValidPath(newFile, destDirectory)) {
+                processFileEntry(entry, zis, newFile);
+                sink.next(newFile);
+            } else {
+                sink.error(new PnGenericException(ZIP_ERROR, "Potential Zip Slip detected: " + entry.getName()));
+            }
+        } catch (IOException e) {
+            sink.error(new PnGenericException(ZIP_ERROR, ZIP_ERROR.getMessage() + e.getMessage()));
+        }
+    }
+
+    private static String sanitizeEntryName(String entryName) {
+        return entryName.replace("..", "")
+                .replace("/", File.separator)
+                .replace("\\", File.separator);
+    }
+
+    private static boolean isValidPath(File newFile, String destDirectory) throws IOException {
+        return newFile.getCanonicalPath().startsWith(new File(destDirectory).getCanonicalPath());
+    }
+
+    private static void processFileEntry(ZipEntry entry, ZipInputStream zis, File newFile) throws IOException {
+        if (entry.isDirectory()) {
+            newFile.mkdirs();
+        } else {
+            createParentDirectoriesIfNeeded(newFile);
+            writeFileContent(zis, newFile);
+        }
+    }
+
+    private static void createParentDirectoriesIfNeeded(File newFile) {
+        File parent = newFile.getParentFile();
+        if (!parent.exists()) {
+            parent.mkdirs();
+        }
+    }
+
+    private static void writeFileContent(ZipInputStream zis, File newFile) throws IOException {
+        try (FileOutputStream fos = new FileOutputStream(newFile)) {
+            byte[] buffer = new byte[4096];
+            int len;
+            while ((len = zis.read(buffer)) > 0) {
+                fos.write(buffer, 0, len);
+            }
+        }
+    }
+
+    private static void closeZipStream(ZipInputStream zis) {
+        try {
+            zis.close();
+        } catch (IOException e) {
+            log.error("Error closing ZipInputStream", e);
+        }
     }
 
 }
