@@ -7,7 +7,7 @@ describe('schemaValidator - validateBody', () => {
     it('Should pass for valid body', () => {
         const validBody = {
             downloadUrl: 'https://pagopa.blob.core.windows.net/invoices/file.zip?sv=2012-02-12&st=2009-02-09&se=2009-02-10&sr=c&sp=r&si=YWJjZGVmZw%3d%3d&sig=dD80ihBh5jfNpymO5Hg1IdiJIEvHcJpCMiCMnN%2fRnbI%3d',
-            fileVersionString: '1.0.0'
+            fileVersion: '1.0.0'
         };
 
         expect(() => validateBody(validBody)).to.not.throw();
@@ -15,7 +15,7 @@ describe('schemaValidator - validateBody', () => {
 
     it('Should throw error for missing downloadUrl', () => {
         const invalidBody = {
-            fileVersionString: '1.0.0'
+            fileVersion: '1.0.0'
         };
 
         try {
@@ -38,7 +38,7 @@ describe('schemaValidator - validateBody', () => {
     it('Should throw error for invalid downloadUrl', () => {
         const invalidBody = {
             downloadUrl: 'invalid-url',
-            fileVersionString: '1.0.0'
+            fileVersion: '1.0.0'
         };
 
         try {
@@ -57,7 +57,7 @@ describe('schemaValidator - validateBody', () => {
         }
     });
 
-    it('Should throw error for missing fileVersionString', () => {
+    it('Should throw error for missing fileVersion', () => {
         const invalidBody = {
             downloadUrl: 'https://pagopa.blob.core.windows.net/invoices/file.zip?sv=2012-02-12&st=2009-02-09&se=2009-02-10&sr=c&sp=r&si=YWJjZGVmZw%3d%3d&sig=dD80ihBh5jfNpymO5Hg1IdiJIEvHcJpCMiCMnN%2fRnbI%3d'
         };
@@ -73,16 +73,16 @@ describe('schemaValidator - validateBody', () => {
                 code: 'invalid_type',
                 expected: 'string',
                 received: 'undefined',
-                path: ['fileVersionString'],
+                path: ['fileVersion'],
                 message: 'Required'
             });
         }
     });
 
-    it('Should throw error for empty fileVersionString', () => {
+    it('Should throw error for empty fileVersion', () => {
         const invalidBody = {
             downloadUrl: 'https://pagopa.blob.core.windows.net/invoices/file.zip?sv=2012-02-12&st=2009-02-09&se=2009-02-10&sr=c&sp=r&si=YWJjZGVmZw%3d%3d&sig=dD80ihBh5jfNpymO5Hg1IdiJIEvHcJpCMiCMnN%2fRnbI%3d',
-            fileVersionString: ''
+            fileVersion: ''
         };
 
         try {
@@ -98,7 +98,7 @@ describe('schemaValidator - validateBody', () => {
                 type: 'string',
                 inclusive: true,
                 exact: false,
-                path: ['fileVersionString'],
+                path: ['fileVersion'],
                 message: 'String must contain at least 1 character(s)'
             });
         }

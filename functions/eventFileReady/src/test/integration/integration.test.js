@@ -66,7 +66,7 @@ describe('SQS Integration Test', () => {
 
         const messageBody = {
             downloadUrl: "https://pagopa.blob.core.windows.net/invoices/file.zip?sv=2021-02-12",
-            fileVersionString: "1.0.0",
+            fileVersion: "1.0.0",
             filePath: filePath
         };
 
@@ -92,7 +92,7 @@ describe('SQS Integration Test', () => {
             console.log("Received Message Body:", receivedMessage);
 
             expect(receivedMessage).to.have.property("downloadUrl", messageBody.downloadUrl);
-            expect(receivedMessage).to.have.property("fileVersionString", messageBody.fileVersionString);
+            expect(receivedMessage).to.have.property("fileVersion", messageBody.fileVersion);
             expect(receivedMessage).to.have.property("filePath", messageBody.filePath);
 
             await sqsClient.send(new DeleteMessageCommand({
@@ -138,7 +138,7 @@ describe('SQS Integration Test', () => {
         const filePath = "/invoices/error-file.zip";
         const messageBody = {
             downloadUrl: "https://pagopa.blob.core.windows.net/invoices/error-file.zip?sv=2021-02-12",
-            fileVersionString: "1.0.0",
+            fileVersion: "1.0.0",
             filePath: filePath
         };
 

@@ -22,13 +22,13 @@ describe('messageService - processFileReadyEvent', () => {
     it('Should extract filePath, build message and send it to SQS', async () => {
         const inputBody = {
             downloadUrl: 'https://pagopa.blob.core.windows.net/invoices/file.zip?sv=2012-02-12&st=2009-02-09&se=2009-02-10&sr=c&sp=r&si=YWJjZGVmZw%3d%3d&sig=dD80ihBh5jfNpymO5Hg1IdiJIEvHcJpCMiCMnN%2fRnbI%3d',
-            fileVersionString: '1.0.0'
+            fileVersion: '1.0.0'
         };
 
         const expectedFilePath = '/invoices/file.zip';
         const expectedMessagePayload = {
             downloadUrl: inputBody.downloadUrl,
-            fileVersionString: inputBody.fileVersionString,
+            fileVersion: inputBody.fileVersion,
             filePath: expectedFilePath
         };
 
@@ -42,7 +42,7 @@ describe('messageService - processFileReadyEvent', () => {
     it('Should throw an error if sendMessageToQueue fails', async () => {
         const inputBody = {
             downloadUrl: 'https://pagopa.blob.core.windows.net/invoices/file.zip?sv=2012-02-12&st=2009-02-09&se=2009-02-10&sr=c&sp=r&si=YWJjZGVmZw%3d%3d&sig=dD80ihBh5jfNpymO5Hg1IdiJIEvHcJpCMiCMnN%2fRnbI%3d',
-            fileVersionString: '1.0.0'
+            fileVersion: '1.0.0'
         };
 
         sendMessageToQueueStub.rejects(new Error('SQS Error'));
