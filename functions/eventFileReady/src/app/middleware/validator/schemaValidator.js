@@ -3,7 +3,7 @@ const { z } = require('zod');
 
 const schema = z.object({
     downloadUrl: z.string().url(),
-    fileVersionString: z.string().nonempty()
+    fileVersion: z.string().nonempty()
 });
 
 exports.validateBody = (body) => {
