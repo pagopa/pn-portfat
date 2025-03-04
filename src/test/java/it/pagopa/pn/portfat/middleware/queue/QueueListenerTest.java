@@ -48,7 +48,7 @@ class QueueListenerTest {
 
     private String messageBody;
 
-    @BeforeEach
+    //@BeforeEach
     void setup() throws JsonProcessingException {
         amazonSQS.createQueue(new CreateQueueRequest()
                 .withQueueName(queueUrl));
