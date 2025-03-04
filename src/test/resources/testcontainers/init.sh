@@ -19,12 +19,6 @@ aws --profile default --region us-east-1 --endpoint-url=http://localstack:4566 \
     --table-name PortFatDownload \
     --attribute-definitions \
         AttributeName=downloadId,AttributeType=S \
-        AttributeName=downloadUrl,AttributeType=S \
-        AttributeName=fileVersion,AttributeType=S \
-        AttributeName=sha256,AttributeType=S \
-        AttributeName=status,AttributeType=S \
-        AttributeName=createdAt,AttributeType=S \
-       AttributeName=updatedAt,AttributeType=S \
     --key-schema \
         AttributeName=downloadId,KeyType=HASH \
     --provisioned-throughput \
