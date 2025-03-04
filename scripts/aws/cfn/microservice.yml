@@ -67,8 +67,15 @@ Parameters:
     Type: String
     Description: 'keep track of used projects commitIds'
 
-Resources:
+  PortFatDownloadTableName:
+    Type: String
+    Description: 'Name of dynamodb table containing Downloads files'
 
+  PortFatSqsInputRequests:
+    Type: String
+    Description: 'Name of SQS that contain file input request'
+
+Resources:
   # PN-TemplateBeMs microservice
   TemplateBeMsMicroservice:
     Type: AWS::CloudFormation::Stack
@@ -87,5 +94,7 @@ Resources:
         VpcId: !Ref VpcId
         EcsDefaultSecurityGroup: !Ref EcsDefaultSecurityGroup
         LoadBalancerListenerArn: !Ref ApplicationLoadBalancerListenerArn
-        LoadbalancerRulePriority: !Ref MicroserviceNumber
+        LoadBalancerRulePriority: !Ref MicroserviceNumber
         CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
+        DynamoDBTableNames:
+          - !Ref PortFatDownloadTableName
