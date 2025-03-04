@@ -1,0 +1,16 @@
+pn:
+  pn-portfat:
+    queue: local-pn-portfat-inputs
+
+aws:
+  region-code: us-east-1
+  profile-name: ${PN_AWS_PROFILE_NAME:default}
+  endpoint-url: http://localhost:4566
+
+cloud:
+  aws:
+    region:
+      static: us-east-1
+    credentials:
+      access-key: test
+      secret-key: test

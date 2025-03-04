@@ -7,6 +7,13 @@ components:
       required:
         - downloadUrl
         - fileVersionString
+      properties:
+        downloadUrl:
+          type: string
+          description: "URL per il download del file"
+        fileVersionString:
+          type: string
+          description: "Versione del file"
 
     ApiKey:
       type: string

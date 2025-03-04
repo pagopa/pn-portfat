@@ -1,0 +1,28 @@
+logging:
+  config: config/logback-local.xml
+server:
+  port: 8099
+
+pn:
+  env:
+    runtime: DEVELOPMENT
+  pn-portfat:
+    queue: local-pn-portfat-inputs
+    blobStorageBaseUrl: https://portale-fatturazione-storage.blob.core.windows.net/portfatt/
+    filePathWhiteList: portfatt, port-fatt
+    basePathZipFiele: port-fat-zips
+    zipExtension: .zip
+
+# AWS specific configurations
+aws:
+  region-code: us-east-1
+  profile-name: ${PN_AWS_PROFILE_NAME:default}
+  endpoint-url: http://localhost:4566
+
+cloud:
+  aws:
+    credentials.profile-name: ${PN_AWS_PROFILE_NAME:default}
+    region.static: us-east-1
+    sqs.endpoint: http://localhost:4566
+
+

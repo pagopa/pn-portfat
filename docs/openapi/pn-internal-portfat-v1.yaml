@@ -50,7 +50,6 @@ paths:
           required: true
           schema:
             $ref: 'schemas-params.yaml#/components/schemas/ApiKey'
-
       requestBody:
         description: Parametri necessari per processare i file
         required: true
