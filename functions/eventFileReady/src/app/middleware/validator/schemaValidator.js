@@ -9,7 +9,7 @@ const schema = z.object({
 exports.validateBody = (body) => {
     const result = schema.safeParse(body);
     if (!result.success) {
-        console.error('Invalid request body:', result.error);
+        console.log('Invalid request body:', result.error);
         throw {
             statusCode: 400,
             message: 'Invalid request body',
