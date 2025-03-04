@@ -30,7 +30,7 @@ L'API viene invocata dal portale di fatturazione quando un file è pronto per es
 aws lambda invoke \
     --profile sso_pn-core-X \
     --function-name pn-portfat-eventFilReadyLambda \
-    --payload '{ "downloadUrl": "https://pagopa.blob.core.windows.net", "fileVersionString": "1.0.0" }' \
+    --payload '{ "downloadUrl": "https://pagopa.blob.core.windows.net", "fileVersion": "1.0.0" }' \
     response.json
 ```
 
@@ -39,7 +39,7 @@ aws lambda invoke \
 ```Javascript
 {
     downloadUrl: "https://pagopa.blob.core.windows.net"    // Url della risorsa 
-    fileVersionString: "1.0.0"                             // Versione del file zip
+    fileVersion: "1.0.0"                             // Versione del file zip
 }
 ```
 
