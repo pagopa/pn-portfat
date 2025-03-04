@@ -7,7 +7,7 @@ exports.processFileReadyEvent = async (body) => {
 
     const messagePayload = {
         downloadUrl: body.downloadUrl,
-        fileVersionString: body.fileVersionString,
+        fileVersion: body.fileVersion,
         filePath: filePath
     };
 
