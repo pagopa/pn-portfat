@@ -8,6 +8,7 @@ public enum ExceptionTypeEnum {
     MAPPER_ERROR("MAPPER_ERROR", "Non è stato possibile mappare l'oggetto richiesto"),
     DOWNLOAD_ZIP_ERROR("DOWNLOAD_ZIP_ERROR", "Non è stato possibile scaricare il file: "),
     PROCESS_ERROR("PROCESS_ERROR", "Non è stato possibile processare i file: "),
+    CREATE_PATH_ERROR("CREATE_PATH_ERROR", "Non è stato possibile creare il percorso: "),
     ZIP_ERROR("ZIP_ERROR", "Non è stato possibile decomprimere il file: ");
 
     private final String title;

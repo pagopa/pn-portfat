@@ -1,6 +1,8 @@
 package it.pagopa.pn.portfat.service;
 
+import reactor.core.publisher.Mono;
+
 public interface PortFatService {
 
-    void processZipFile(String url);
+    Mono<Void> processZipFile(String url);
 }

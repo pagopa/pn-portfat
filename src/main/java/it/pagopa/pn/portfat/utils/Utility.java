@@ -4,8 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import reactor.core.publisher.Mono;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @Slf4j
 public class Utility {
@@ -28,11 +31,24 @@ public class Utility {
      *
      * @param workPath path or file to delete
      */
-    public static void deleteFileOrDirectory(File workPath) {
-        try {
+    public static Mono<Void> deleteFileOrDirectory(File workPath) {
+        return Mono.fromCallable(() -> {
+            log.info("Directory deleted: {}", workPath);
             FileUtils.forceDelete(workPath);
-        } catch (Exception e) {
-            log.info("The following path could not be deleted {} , ERROR: {}", workPath.getPath(), e.getMessage());
-        }
+            return workPath;
+        }).then();
+    }
+
+    /**
+     * Create Directory.
+     *
+     * @param path path or file to delete
+     */
+    public static Mono<Void> createDirectories(Path path) {
+        return Mono.fromCallable(() -> {
+            log.info("Directory created: {}", path);
+            Files.createDirectories(path);
+            return path;
+        }).then();
     }
 }
