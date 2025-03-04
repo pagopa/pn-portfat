@@ -35,7 +35,7 @@ public class QueueListener {
         MDC.put(MDCUtils.MDC_PN_CTX_REQUEST_ID, fileReady.getDownloadUrl());
 
         MDCUtils.addMDCToContextAndExecute(Mono.just(fileReady))
-                .filter(this::isFileReadyEvent)
+                //.filter(this::isFileReadyEvent)
                 .flatMap(fileReadyEvent -> portfatService.processZipFile(fileReadyEvent.getDownloadUrl()))
                 .block();
     }

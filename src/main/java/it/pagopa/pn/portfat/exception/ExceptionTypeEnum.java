@@ -9,6 +9,8 @@ public enum ExceptionTypeEnum {
     DOWNLOAD_ZIP_ERROR("DOWNLOAD_ZIP_ERROR", "Failed to download file: "),
     PROCESS_ERROR("PROCESS_ERROR", "Failed to process the files: "),
     CREATE_PATH_ERROR("CREATE_PATH_ERROR", "Failed to create directory: "),
+    LIST_FILES_ERROR("FAILED_LIST_ERROR", "Failed to list files in directory: "),
+    FAILED_DELETE_FILE("FAILED_DELETE_FILE", "Failed to delete file: "),
     ZIP_ERROR("ZIP_ERROR", "Failed to unzip the file: ");
 
     private final String title;
