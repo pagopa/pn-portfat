@@ -1,6 +1,6 @@
 echo "### CREATE QUEUES ###"
 
-queues_fifo="local-pn-portfact-inputs-requests.fifo"
+queues_fifo="local-pn-portfat-inputs-requests.fifo"
 
 for qn in  $( echo $queues_fifo | tr " " "\n" ) ; do
 
