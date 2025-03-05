@@ -7,7 +7,7 @@ pn:
   env:
     runtime: DEVELOPMENT
   pn-portfat:
-    queue: local-pn-portfat-inputs-requests
+    queue: local-pn-portfat-inputs-requests.fifo
     blobStorageBaseUrl: https://portale-fatturazione-storage.blob.core.windows.net/portfatt/
     filePathWhiteList: portfatt, port-fatt
     basePathZipFiele: port-fat-zips
