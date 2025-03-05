@@ -19,6 +19,7 @@ public class PortFatDownload {
     public static final String STATUS = "status";
     public static final String CREATED_AT = "createdAt";
     public static final String UPDATED_AT = "updatedAt";
+    public static final String ERROR_MESSAGE = "errorMessage";
 
     @Getter(onMethod=@__({@DynamoDbPartitionKey, @DynamoDbAttribute(DOWNLOAD_ID)}))
     private String downloadId;
@@ -40,5 +41,8 @@ public class PortFatDownload {
 
     @Getter(onMethod=@__({@DynamoDbAttribute(UPDATED_AT)}))
     private String updatedAt;
+
+    @Getter(onMethod=@__({@DynamoDbAttribute(ERROR_MESSAGE)}))
+    private String errorMessage;
 
 }

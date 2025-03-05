@@ -6,12 +6,12 @@ components:
       type: object
       required:
         - downloadUrl
-        - fileVersionString
+        - fileVersion
       properties:
         downloadUrl:
           type: string
           description: "URL per il download del file"
-        fileVersionString:
+        fileVersion:
           type: string
           description: "Versione del file"
 

@@ -2,6 +2,7 @@ package it.pagopa.pn.portfat.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import it.pagopa.pn.portfat.generated.openapi.server.v1.dto.FileReadyEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import reactor.core.publisher.Mono;
@@ -15,6 +16,10 @@ public class Utility {
 
     private Utility() {
         throw new IllegalCallerException();
+    }
+
+    public static String downloadId(FileReadyEvent fileReady) {
+        return fileReady.getDownloadUrl() + fileReady.getFileVersion();
     }
 
     public static <T> T jsonToObject(ObjectMapper objectMapper, String json, Class<T> tClass) {

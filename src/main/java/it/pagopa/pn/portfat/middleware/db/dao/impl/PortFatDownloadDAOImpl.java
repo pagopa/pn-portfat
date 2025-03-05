@@ -6,6 +6,7 @@ import it.pagopa.pn.portfat.middleware.db.dao.PortFatDownloadDAO;
 import it.pagopa.pn.portfat.middleware.db.entities.PortFatDownload;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient;
 
@@ -19,5 +20,9 @@ public class PortFatDownloadDAOImpl extends BaseDAO<PortFatDownload> implements 
         super(dynamoDbEnhancedAsyncClient, dynamoDbAsyncClient, awsPropertiesConfig.getDynamodbPrtFatTable(), PortFatDownload.class);
     }
 
+    @Override
+    public Mono<PortFatDownload> findByDownloadId(String downloadId) {
+        return Mono.fromFuture(this.dynamoTable.getItem(keyBuild(downloadId, null)).thenApply(item -> item));
+    }
 
 }
