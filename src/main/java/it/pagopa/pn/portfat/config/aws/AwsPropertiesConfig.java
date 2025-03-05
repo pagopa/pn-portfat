@@ -1,4 +1,4 @@
-package it.pagopa.pn.portfat.config;
+package it.pagopa.pn.portfat.config.aws;
 
 import it.pagopa.pn.commons.configs.aws.AwsConfigs;
 import lombok.Getter;
@@ -11,4 +11,7 @@ import org.springframework.context.annotation.Configuration;
 @Getter
 @Setter
 public class AwsPropertiesConfig extends AwsConfigs {
+
+    private String dynamodbPrtFatTable;
+
 }

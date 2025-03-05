@@ -12,12 +12,18 @@ pn:
     filePathWhiteList: portfatt, port-fatt
     basePathZipFiele: port-fat-zips
     zipExtension: .zip
+  # Technology activation
+  middleware:
+    init:
+      kafka: false
+      aws: true
 
 # AWS specific configurations
 aws:
   region-code: us-east-1
   profile-name: ${PN_AWS_PROFILE_NAME:default}
   endpoint-url: http://localhost:4566
+  dynamodbPrtFatTable: PortFatDownload
 
 cloud:
   aws:
