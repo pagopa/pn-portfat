@@ -1,6 +1,11 @@
-require('dotenv').config();
-const isLocal = process.env.LOCALSTACK === 'true';
+if (!process.env.AWS_LAMBDA_FUNCTION_NAME && !process.env.LOCALSTACK) {
+    require('dotenv').config();
+    console.log('Dotenv loaded (local execution)');
+} else {
+    console.log('Dotenv NOT loaded (LocalStack or AWS Lambda execution)');
+}
 
+const isLocal = process.env.LOCALSTACK === 'true';
 
 module.exports = {
     region: process.env.AWS_REGION,
