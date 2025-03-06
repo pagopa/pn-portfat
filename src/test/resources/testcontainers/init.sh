@@ -1,4 +1,4 @@
-echo "### CREATE QUEUES ###"
+echo "### CREATE QUEUES FIFO ###"
 
 queues_fifo="local-pn-portfat-inputs-requests.fifo"
 
@@ -11,8 +11,6 @@ for qn in  $( echo $queues_fifo | tr " " "\n" ) ; do
         --attributes '{"DelaySeconds":"2","FifoQueue": "true","ContentBasedDeduplication": "true"}' \
         --queue-name $qn
 done
-
-echo " - Create pn-delivery-push TABLES"
 
 aws --profile default --region us-east-1 --endpoint-url=http://localstack:4566 \
     dynamodb create-table \

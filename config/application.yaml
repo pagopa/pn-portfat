@@ -7,17 +7,23 @@ pn:
   env:
     runtime: DEVELOPMENT
   pn-portfat:
-    queue: local-pn-portfat-inputs-requests
+    queue: local-pn-portfat-inputs-requests.fifo
     blobStorageBaseUrl: https://portale-fatturazione-storage.blob.core.windows.net/portfatt/
     filePathWhiteList: portfatt, port-fatt
     basePathZipFiele: port-fat-zips
     zipExtension: .zip
+  # Technology activation
+  middleware:
+    init:
+      kafka: false
+      aws: true
 
 # AWS specific configurations
 aws:
   region-code: us-east-1
   profile-name: ${PN_AWS_PROFILE_NAME:default}
   endpoint-url: http://localhost:4566
+  dynamodbPrtFatTable: PortFatDownload
 
 cloud:
   aws:

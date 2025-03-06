@@ -1,4 +1,4 @@
-package it.pagopa.pn.portfat.config;
+package it.pagopa.pn.portfat.config.aws;
 
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.sqs.AmazonSQSAsync;

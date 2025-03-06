@@ -3,6 +3,7 @@ package it.pagopa.pn.portfat.service.impl;
 import it.pagopa.pn.portfat.config.HttpConnectorWebClient;
 import it.pagopa.pn.portfat.config.PortfatPropertiesConfig;
 import it.pagopa.pn.portfat.exception.PnGenericException;
+import it.pagopa.pn.portfat.middleware.db.entities.PortFatDownload;
 import it.pagopa.pn.portfat.service.PortFatService;
 import lombok.AllArgsConstructor;
 import lombok.CustomLog;
@@ -35,8 +36,8 @@ public class PortFatServiceImpl implements PortFatService {
     private final HttpConnectorWebClient webClient;
 
     @Override
-    public Mono<Void> processZipFile(String downloadUrl) {
-        log.info("processZipFile,  downloadUrl {}", downloadUrl);
+    public Mono<Void> processZipFile(PortFatDownload portFatDownload) {
+        log.info("processZipFile,  downloadUrl {}", portFatDownload.getDownloadUrl());
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern(TIME_FORMAT));
         Path outputPath = Path.of(portFatConfig.getBasePathZipFiele(), timestamp);
         Path outputFilesPath = Path.of(outputPath.toString(), PATH_FIELS);
@@ -45,7 +46,7 @@ public class PortFatServiceImpl implements PortFatService {
 
         return createDirectories(outputPath)
                 .then(createDirectories(outputFilesPath))
-                .then(webClient.downloadFileAsByteArray(downloadUrl, zipFilePath))
+                .then(webClient.downloadFileAsByteArray(portFatDownload.getDownloadUrl(), zipFilePath))
                 .then(unzip(zipFilePath.toString(), outputFilesPath.toString()))
                 .thenMany(processDirectory(outputFilesPath))
                 .then()
