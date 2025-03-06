@@ -3,6 +3,8 @@ const { validateBody } = require('../middleware/validator/schemaValidator');
 
 
 exports.route = async (event) => {
+    console.log('ROUTER EVENT:', JSON.stringify(event));
+
     const { httpMethod, resource, body } = event;
 
     if (httpMethod === 'POST' && resource === '/pn-portfat-in/file-ready-event') {
@@ -16,19 +18,27 @@ exports.route = async (event) => {
                 body: JSON.stringify({ message: `Invalid JSON: ${err.message}` })
             };
         }
-        validateBody(parsedBody);
+        try {
+            validateBody(parsedBody);
 
-        const result = await processFileReadyEvent(parsedBody);
+            const result = await processFileReadyEvent(parsedBody);
 
-        if (result.success) {
-            return {
-                statusCode: 202,
-                body: JSON.stringify({ message: 'Request accepted' })
-            };
-        } else {
+            if (result.success) {
+                return {
+                    statusCode: 202,
+                    body: JSON.stringify({ message: 'Request accepted' })
+                };
+            } else {
+                return {
+                    statusCode: 500,
+                    body: JSON.stringify({ message: 'Internal error' })
+                };
+            }
+        } catch (err) {
+            console.log('Error processing request:', err);
             return {
                 statusCode: 500,
-                body: JSON.stringify({ message: 'Internal error' })
+                body: JSON.stringify({ message: 'Internal server error', error: err.message })
             };
         }
     }

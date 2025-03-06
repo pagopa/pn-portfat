@@ -2,17 +2,16 @@ const apiRouter = require('./app/router/apiRouter');
 
 
 exports.handler = async (event) => {
-    console.log('Event received:', JSON.stringify(event));
+    console.log('EVENT RECEIVED:', JSON.stringify(event));
+    console.log('ENV VARIABLES:', JSON.stringify(process.env, null, 2));
 
     try {
       return await apiRouter.route(event);
     } catch (error) {
-        console.log('Unhandled error:', error);
-        const statusCode = error.statusCode || 500;
-        const message = error.message || 'Internal Server Error';
+        console.log('UNHANDLED ERROR');
         return {
-            statusCode,
-            body: JSON.stringify({ message })
+            statusCode: 500,
+            body: JSON.stringify({ message: 'Internal Server Error', error: error.message })
         };
     }
 };
