@@ -13,7 +13,17 @@ public class PortFatConverter {
         throw new IllegalCallerException();
     }
 
-    public static PortFatDownload portFatDownloadToEntity(FileReadyEvent fileReadyEvent) {
+    public static void completed(PortFatDownload portFatDownload) {
+        portFatDownload.setStatus(DownloadStatus.COMPLETED);
+        portFatDownload.setUpdatedAt(Instant.now().toString());
+    }
+
+    public static void portFatDownload(PortFatDownload portFatDownload, DownloadStatus status) {
+        portFatDownload.setUpdatedAt(Instant.now().toString());
+        portFatDownload.setStatus(status);
+    }
+
+    public static PortFatDownload portFatDownload(FileReadyEvent fileReadyEvent) {
         return PortFatDownload.builder()
                 .downloadId(downloadId(fileReadyEvent))
                 .downloadUrl(fileReadyEvent.getDownloadUrl())

@@ -7,5 +7,8 @@ public interface PortFatDownloadDAO {
 
     Mono<PortFatDownload> findByDownloadId(String downloadId);
 
+    Mono<PortFatDownload> createPortFatDownload(PortFatDownload pnAddress);
+
+    Mono<PortFatDownload> updatePortFatDownload(PortFatDownload pnAddress);
 
 }
