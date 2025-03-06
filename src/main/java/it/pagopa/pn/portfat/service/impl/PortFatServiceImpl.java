@@ -5,6 +5,7 @@ import it.pagopa.pn.portfat.config.PortFatPropertiesConfig;
 import it.pagopa.pn.portfat.exception.PnGenericException;
 import it.pagopa.pn.portfat.middleware.db.dao.PortFatDownloadDAO;
 import it.pagopa.pn.portfat.middleware.db.entities.PortFatDownload;
+import it.pagopa.pn.portfat.middleware.msclient.SafeStorageClient;
 import it.pagopa.pn.portfat.service.PortFatService;
 import lombok.AllArgsConstructor;
 import lombok.CustomLog;
@@ -40,6 +41,7 @@ public class PortFatServiceImpl implements PortFatService {
     private final PortFatPropertiesConfig portFatConfig;
     private final HttpConnectorWebClient webClient;
     private final PortFatDownloadDAO portFatDownloadDAO;
+    private final SafeStorageClient safeStorageClient;
 
     @Override
     public Mono<Void> processZipFile(PortFatDownload portFatDownload) {
@@ -85,6 +87,7 @@ public class PortFatServiceImpl implements PortFatService {
         return Mono.fromRunnable(() -> {
             try {
                 log.info("Processing file: {} in folder: {}", file, parentDirectoryName);
+
 
                 //TODO safe storage
                 Files.delete(file);

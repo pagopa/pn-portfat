@@ -11,7 +11,8 @@ public enum ExceptionTypeEnum {
     CREATE_PATH_ERROR("CREATE_PATH_ERROR", "Failed to create directory: "),
     LIST_FILES_ERROR("FAILED_LIST_ERROR", "Failed to list files in directory: "),
     FAILED_DELETE_FILE("FAILED_DELETE_FILE", "Failed to delete file: "),
-    ZIP_ERROR("ZIP_ERROR", "Failed to unzip the file: ");
+    ZIP_ERROR("ZIP_ERROR", "Failed to unzip the file: "),
+    ZIP_NOT_FOND("ZIP_NOT_FOND", "JSONS not found in the ZIP file");
 
     private final String title;
     private final String message;

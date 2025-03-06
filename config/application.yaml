@@ -13,7 +13,7 @@ pn:
     basePathZipFiele: port-fat-zips
     zipExtension: .zip
     clientSafeStorageBasePath: http://localhost:8120
-    safeStorageCxId: pn-cons-000
+    safeStorageCxId: pn-portfat-in
 
   # Technology activation
   middleware:
