@@ -1,7 +1,7 @@
 package it.pagopa.pn.portfat.service.impl;
 
 import it.pagopa.pn.portfat.config.HttpConnectorWebClient;
-import it.pagopa.pn.portfat.config.PortfatPropertiesConfig;
+import it.pagopa.pn.portfat.config.PortFatPropertiesConfig;
 import it.pagopa.pn.portfat.exception.PnGenericException;
 import it.pagopa.pn.portfat.middleware.db.dao.PortFatDownloadDAO;
 import it.pagopa.pn.portfat.middleware.db.entities.PortFatDownload;
@@ -37,7 +37,7 @@ public class PortFatServiceImpl implements PortFatService {
     private static final String TIME_FORMAT = "yyyy-MM-dd_HH-mm-ss-SSS";
     private static final String PATH_FIELS = "port-fat-files";
 
-    private final PortfatPropertiesConfig portFatConfig;
+    private final PortFatPropertiesConfig portFatConfig;
     private final HttpConnectorWebClient webClient;
     private final PortFatDownloadDAO portFatDownloadDAO;
 

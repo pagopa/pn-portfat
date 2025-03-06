@@ -6,12 +6,15 @@ server:
 pn:
   env:
     runtime: DEVELOPMENT
-  pn-portfat:
+  portfat:
     queue: local-pn-portfat-inputs-requests.fifo
     blobStorageBaseUrl: https://portale-fatturazione-storage.blob.core.windows.net/portfatt/
     filePathWhiteList: portfatt, port-fatt
     basePathZipFiele: port-fat-zips
     zipExtension: .zip
+    clientSafeStorageBasePath: http://localhost:8120
+    safeStorageCxId: pn-cons-000
+
   # Technology activation
   middleware:
     init:

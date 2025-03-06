@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.awspring.cloud.messaging.listener.SqsMessageDeletionPolicy;
 import io.awspring.cloud.messaging.listener.annotation.SqsListener;
 import it.pagopa.pn.commons.utils.MDCUtils;
-import it.pagopa.pn.portfat.config.PortfatPropertiesConfig;
+import it.pagopa.pn.portfat.config.PortFatPropertiesConfig;
 import it.pagopa.pn.portfat.exception.PnGenericException;
 import it.pagopa.pn.portfat.generated.openapi.server.v1.dto.FileReadyEvent;
 import it.pagopa.pn.portfat.middleware.db.dao.PortFatDownloadDAO;
@@ -32,11 +32,11 @@ import static it.pagopa.pn.portfat.middleware.db.converter.PortFatConverter.port
 public class QueueListener {
 
     private final ObjectMapper objectMapper;
-    private final PortfatPropertiesConfig portFatConfig;
+    private final PortFatPropertiesConfig portFatConfig;
     private final PortFatService portfatService;
     private final PortFatDownloadDAO portFatDownloadDAO;
 
-    @SqsListener(value = "${pn.pn-portfat.queue}", deletionPolicy = SqsMessageDeletionPolicy.ALWAYS)
+    @SqsListener(value = "${pn.portfat.queue}", deletionPolicy = SqsMessageDeletionPolicy.ALWAYS)
     public void pullPortFat(@Payload String payload, @Header("MessageGroupId") String messageGroupId) {
         log.info("messageGroupId: {}", messageGroupId);
         FileReadyEvent fileReady = convertToObject(payload, FileReadyEvent.class);
