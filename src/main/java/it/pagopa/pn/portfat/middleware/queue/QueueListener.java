@@ -64,15 +64,9 @@ public class QueueListener {
                                             .flatMap(portFatDownloadInProgress -> portfatService.processZipFile(portFatDownloadInProgress)
                                                     .then(updateStatusToCompleted(portFatDownloadInProgress))
                                             );
-                                } else if (portFatDownload.getStatus() == DownloadStatus.IN_PROGRESS ||
-                                        portFatDownload.getStatus() == DownloadStatus.COMPLETED) {
-                                    log.info("PortFatDownload is in IN_PROGRESS or COMPLETED state, doing nothing");
-                                    return Mono.empty();
-                                } else {
-                                    log.info("PortFatDownload is in a different state, continuing processing");
-                                    return Mono.fromCallable(() -> portfatService.processZipFile(portFatDownload))
-                                            .then(updateStatusToCompleted(portFatDownload));
                                 }
+                                log.info("PortFatDownload is in {} state, doing nothing", portFatDownload.getStatus());
+                                return Mono.empty();
                             });
                 })
                 .onErrorResume(e -> {
@@ -82,6 +76,7 @@ public class QueueListener {
                                 if (portFatDownload != null) {
                                     portFatDownload.setStatus(DownloadStatus.ERROR);
                                     portFatDownload.setUpdatedAt(Instant.now().toString());
+                                    portFatDownload.setErrorMessage(e.getMessage());
                                     return portFatDownloadDAO.updatePortFatDownload(portFatDownload)
                                             .then(Mono.error(e));
                                 }

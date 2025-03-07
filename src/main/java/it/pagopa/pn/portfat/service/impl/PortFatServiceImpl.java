@@ -22,7 +22,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
-import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.FAILED_DELETE_FILE;
 import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.LIST_FILES_ERROR;
 import static it.pagopa.pn.portfat.mapper.FileCreationWithContentRequestMapper.mapper;
 import static it.pagopa.pn.portfat.utils.Utility.*;
@@ -94,15 +93,7 @@ public class PortFatServiceImpl implements PortFatService {
                                     String sha256 = tuple.getT1();
                                     byte[] jsonToByteArray = tuple.getT2();
                                     FileCreationWithContentRequest fileCreationRequest = mapper(jsonToByteArray, portaleFatturazioneModel);
-                                    return safeStorageService.createAndUploadContent(fileCreationRequest, sha256)
-                                            .then(Mono.fromRunnable(() -> {
-                                                try {
-                                                    Files.delete(file);
-                                                    log.info("File deleted: {}", file);
-                                                } catch (IOException e) {
-                                                    throw new PnGenericException(FAILED_DELETE_FILE, FAILED_DELETE_FILE.getMessage() + e.getMessage());
-                                                }
-                                            }));
+                                    return safeStorageService.createAndUploadContent(fileCreationRequest, sha256);
                                 })
                 )
                 .onErrorResume(e -> {
