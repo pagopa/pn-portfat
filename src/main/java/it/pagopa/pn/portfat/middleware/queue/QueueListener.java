@@ -9,7 +9,6 @@ import it.pagopa.pn.portfat.middleware.db.dao.PortFatDownloadDAO;
 import it.pagopa.pn.portfat.middleware.db.entities.DownloadStatus;
 import it.pagopa.pn.portfat.middleware.db.entities.PortFatDownload;
 import it.pagopa.pn.portfat.service.PortFatService;
-import it.pagopa.pn.portfat.utils.Utility;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -22,6 +21,8 @@ import java.time.Instant;
 
 import static it.pagopa.pn.portfat.middleware.db.converter.PortFatConverter.completed;
 import static it.pagopa.pn.portfat.middleware.db.converter.PortFatConverter.portFatDownload;
+import static it.pagopa.pn.portfat.utils.Utility.convertToObject;
+import static it.pagopa.pn.portfat.utils.Utility.downloadId;
 
 @Component
 @Slf4j
@@ -35,13 +36,13 @@ public class QueueListener {
     @SqsListener(value = "${pn.portfat.queue}", deletionPolicy = SqsMessageDeletionPolicy.ALWAYS)
     public void pullPortFat(@Payload String payload, @Header("MessageGroupId") String messageGroupId) {
         log.info("messageGroupId: {}", messageGroupId);
-        FileReadyEvent fileReady = Utility.convertToObject(payload, FileReadyEvent.class);
+        FileReadyEvent fileReady = convertToObject(payload, FileReadyEvent.class);
         MDC.put(MDCUtils.MDC_PN_CTX_REQUEST_ID, fileReady.getDownloadUrl());
 
         MDCUtils.addMDCToContextAndExecute(Mono.just(fileReady))
                 .filter(this::isFileReadyEvent)
                 .flatMap(fileReadyEvent -> {
-                    String downloadId = Utility.downloadId(fileReadyEvent);
+                    String downloadId = downloadId(fileReadyEvent);
                     log.info("Searching for downloadId: {}", downloadId);
                     return portFatDownloadDAO.findByDownloadId(downloadId)
                             .doOnNext(portFatDownload -> log.info("Found in DB: {}", portFatDownload))
@@ -76,7 +77,7 @@ public class QueueListener {
                 })
                 .onErrorResume(e -> {
                     log.error("Error occurred during processing, updating status to ERROR", e);
-                    return portFatDownloadDAO.findByDownloadId(Utility.downloadId(fileReady))
+                    return portFatDownloadDAO.findByDownloadId(downloadId(fileReady))
                             .flatMap(portFatDownload -> {
                                 if (portFatDownload != null) {
                                     portFatDownload.setStatus(DownloadStatus.ERROR);
