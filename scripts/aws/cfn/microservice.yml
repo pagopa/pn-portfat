@@ -9,7 +9,7 @@ Parameters:
 
   AlarmSNSTopicArn:
     Type: String
-    Description: ARN of alarm topic
+    Description: 'ARN of alarm topic'
 
   WebApiDnsName:
     Type: String
@@ -67,34 +67,415 @@ Parameters:
     Type: String
     Description: 'keep track of used projects commitIds'
 
+  # Autoscaling parameters
+  AutoscalingCheckPeriod:
+    Default: 60
+    Type: Number
+    Description: 'minimum autoscaling number of tasks'
+
+  AutoscalingDataPointN:
+    Default: 1
+    Type: Number
+    Description: 'activate when N datapoint on M'
+
+  AutoscalingDataPointM:
+    Default: 1
+    Type: Number
+    Description: 'activate when N datapoint on M'
+
+  AutoscalingThreshold:
+    Default: 70
+    Type: String
+    Description: 'activate when default is reached'
+
+  MinTasksNumber:
+    Default: 1
+    Type: Number
+    Description: 'minimum autoscaling number of tasks'
+
+  MaxTasksNumber:
+    Default: 6
+    Type: Number
+    Description: 'maximum autoscaling number of tasks'
+
+  # OpenApi Bucket params
+  MicroserviceBucketName:
+    Type: String
+    Default: ''
+    Description: 'Name of the bucket where the microservice files are copied during deploy'
+
+  MicroserviceBucketBaseKey:
+    Type: String
+    Default: ''
+    Description: 'Base key of the microservice in the s3 bucket'
+
+  # Logging parameters
+  WireTapLogActivation:
+    Type: String
+    Default: false
+    Description: 'Activation of wire logs'
+    AllowedValues:
+      - true
+      - false
+
+  PnCronAnalyzer:
+    Type: String
+    Default: '-'
+    Description: 'Cron for which you send the metric to CloudWatch'
+
+  # Log group parameters
+  EcsLogGroup:
+    Type: String
+    Description: 'Ecs log group name'
+
+  LogAlarmStrategy:
+    Type: String
+    Default: 'FATAL'
+
+  # Heath Check parameters
+  HealthCheckInterval:
+    Description: 'Seconds between two health check'
+    Type: Number
+    Default: 60
+
+  HealthCheckTimeout:
+    Description: 'health check timeout seconds'
+    Type: Number
+    Default: 5
+
+  HealthyThresholdCount:
+    Description: 'The number of consecutive health checks successes required before considering 
+      an unhealthy target healthy.'
+    Type: Number
+    Default: 5
+
+  UnhealthyThresholdCount:
+    Description: 'The number of consecutive health check failures required before considering a target unhealthy.'
+    Type: Number
+    Default: 2
+
+  # Instance parameters
+  # 256 (.25 vCPU) - Available memory values: 0.5GB, 1GB, 2GB
+  # 512 (.5 vCPU) - Available memory values: 1GB, 2GB, 3GB, 4GB
+  # 1024 (1 vCPU) - Available memory values: 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB
+  # 2048 (2 vCPU) - Available memory values: Between 4GB and 16GB in 1GB increments
+  # 4096 (4 vCPU) - Available memory values: Between 8GB and 30GB in 1GB increments
+  CpuValue:
+    Type: Number
+    Default: 1024
+    Description: 'Fargate virtual CPU quantity 1024 equals one vCPU'
+
+  # 0.5GB, 1GB, 2GB - Available cpu values: 256 (.25 vCPU)
+  # 1GB, 2GB, 3GB, 4GB - Available cpu values: 512 (.5 vCPU)
+  # 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB - Available cpu values: 1024 (1 vCPU)
+  # Between 4GB and 16GB in 1GB increments - Available cpu values: 2048 (2 vCPU)
+  # Between 8GB and 30GB in 1GB increments - Available cpu values: 4096 (4 vCPU)
+  MemoryAmount:
+    Type: String
+    Default: 2GB
+    Description: 'memory amount reserved to the task pod.'
+    AllowedValues: [ 2GB, 4GB, 6GB, 8GB ]
+
+  AlbSecurityGroup:
+    Type: String
+    Description: 'Application load balancer security group'
+
+  JavaToolOptions:
+    Type: String
+    Default: ''
+    Description: JavaToolOptions
+
+  # Storage parameters
   PortFatDownloadTableName:
     Type: String
-    Description: 'Name of dynamodb table containing Downloads files'
+    Description: Name of dynamodb table containing Downloads files
 
-  PortFatSqsInputRequests:
+  PortFatDownloadTableArn:
     Type: String
-    Description: 'Name of SQS that contain file input request'
+    Description: ARN of dynamodb table containing Downloads files
+
+  PortFatRequestActionsQueueName:
+    Type: String
+    Description: Name of SQS request actions queue
+
+  PortFatRequestActionsQueueARN:
+    Type: String
+    Description: ARN of SQS request actions queue
+
+  PortFatRequestActionsQueueDLQName:
+    Type: String
+    Description: Name of DLQ for request actions queue
+
+  PortFatRequestActionsQueueAlarmARN:
+    Type: String
+    Description: ARN of SQS alarm for request actions queue
+
+  PortFatRequestActionsQueueAgeAlarmARN:
+    Type: String
+    Description: ARN of SQS age alarm for request actions queue
+
+  PortFatRequestActionsQueueDLQARN:
+    Type: String
+    Description: ARN of DLQ for request actions queue
+
+  LambdaLogGroup:
+    Type: String
+    Description: Name of Lambda Log Group
+
+  EventFileReadyLambdaName:
+    Type: String
+    Description: Name of the EventFileReady lambda function
 
 Resources:
-  # PN-TemplateBeMs microservice
-  TemplateBeMsMicroservice:
+  PortFatMicroservice:
     Type: AWS::CloudFormation::Stack
     Properties:
+      StackName: pn-portfat-microservice-stack
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/ecs-service.yaml"
       Parameters:
-        MicroServiceUniqueName: !Sub '${ProjectName}-template-ms-be'
-        CpuValue: 512
-        MemoryAmount: 2GB
+        MicroServiceUniqueName: !Sub '${ProjectName}-portfat'
+        CpuValue: !Ref CpuValue
+        MemoryAmount: !Ref MemoryAmount
+
+        HealthCheckTimeout: !Ref HealthCheckTimeout
+        HealthCheckInterval: !Ref HealthCheckInterval
+        HealthyThresholdCount: !Ref HealthyThresholdCount
+        UnhealthyThresholdCount: !Ref UnhealthyThresholdCount
+
+        AutoscalingStrategy: CUSTOM
+        MinTasksNumber: !Ref MinTasksNumber
+        MaxTasksNumber: !Ref MaxTasksNumber
+        AutoscalingThreshold: !Ref AutoscalingThreshold
+        AutoscalingCheckPeriod: !Ref AutoscalingCheckPeriod
+        AutoscalingDataPointN: !Ref AutoscalingDataPointN
+        AutoscalingDataPointM: !Ref AutoscalingDataPointM
+
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
-        ContainerImageURI: !Sub '${ContainerImageUri}'
-        ContainerEnvEntry1: !Sub 'AWS_REGIONCODE=${AWS::Region}'
-        MappedPaths: '/template-ms-be/*'
+        ContainerImageURI: !Ref ContainerImageUri
+
+        MappedPaths: '/portfat/*,/portfat-private/*'
+        MicroServiceSecretPrefix: pn-PortFat-Secrets
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds
         VpcId: !Ref VpcId
+        AlbSecurityGroup: !Ref AlbSecurityGroup
         EcsDefaultSecurityGroup: !Ref EcsDefaultSecurityGroup
         LoadBalancerListenerArn: !Ref ApplicationLoadBalancerListenerArn
         LoadBalancerRulePriority: !Ref MicroserviceNumber
         CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
-        DynamoDBTableNames:
+        EcsLogGroup: !Ref EcsLogGroup
+        LogAlarmStrategyV1: !Ref LogAlarmStrategy
+        WireTapLogActivation: !Ref WireTapLogActivation
+        JavaToolOptions: !Ref JavaToolOptions
+        TaskRoleManagedPolicyArn: !Ref PortFatMicroserviceTaskManagedPolicy
+
+        ContainerEnvEntry1: !Sub 'AWS_REGIONCODE=${AWS::Region}'
+        ContainerEnvEntry2: !Sub 'PN_PORTFAT_SAFESTORAGEBASEURL=${SandboxSafeStorageBaseUrl}'
+        ContainerEnvEntry3: !Sub 'PN_PORTFAT_SAFESTORAGEFILENOTFOUNDRETRY=${SafeStorageFileNotFoundRetry}'
+
+  PortFatMicroserviceTaskManagedPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sqs:SendMessage
+              - sqs:SendMessageBatch
+              - sqs:ReceiveMessage
+              - sqs:DeleteMessage
+              - sqs:DeleteMessageBatch
+              - sqs:GetQueueUrl
+              - sqs:GetQueueAttributes
+              - sqs:ChangeMessageVisibility
+              - sqs:ChangeMessageVisibilityBatch
+            Resource:
+              - !Ref PortFatRequestActionsQueueARN
+              - !Ref PortFatRequestActionsQueueDLQARN
+          - Effect: Allow
+            Action:
+              - dynamodb:GetItem
+              - dynamodb:PutItem
+              - dynamodb:UpdateItem
+              - dynamodb:DeleteItem
+              - dynamodb:Query
+            Resource:
+              - !Ref PortFatDownloadTableArn
+
+  PortFatCloudWatchDashboard:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      StackName: pn-portfat-cloudwatch-dashboard-stack
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/microservice-cloudwatch-dashboard.yaml"
+      Parameters:
+        DashboardName: !Sub "${ProjectName}-portfat"
+        DynamoDBTableNames: !Join
+          - ','
           - !Ref PortFatDownloadTableName
+        RestApiStageArns: ''
+        RestApiNames: ''
+        AlarmArns: !Join
+          - ','
+          - - !Ref PortFatRequestActionsQueueAlarmARN
+            - !Ref PortFatRequestActionsQueueAgeAlarmARN
+            - !Ref PortFatRequestActionsQueueDLQARN
+            - !GetAtt PortFatLambdaAlarms.Outputs.LambdaInvocationErrorLogsMetricAlarm
+        LambdaArns: !Join
+          - ','
+          - - !GetAtt PortFatLambdaFunction.Arn
+        QueueArns: !Join
+          - ','
+          - - !Ref PortFatRequestActionsQueueARN
+            - !Ref PortFatRequestActionsQueueDLQARN
+        LogGroupsNames: !Join
+          - ','
+          - - !Ref EcsLogGroup
+            - !Ref LambdaLogGroup
+
+  PortFatAutoScalingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: pn-portfat-ecs-autoscaling-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: application-autoscaling.amazonaws.com
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: ECSAutoScalingPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecs:UpdateService
+                  - ecs:DescribeServices
+                Resource: !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:service/${ECSClusterName}/${MicroServiceUniqueName}"
+              - Effect: Allow
+                Action:
+                  - cloudwatch:PutMetricAlarm
+                  - cloudwatch:DescribeAlarms
+                  - cloudwatch:DeleteAlarms
+                Resource: "*"
+
+  PortFatScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: 10
+      MinCapacity: 0
+      ResourceId: !Sub "service/${ECSClusterName}/${MicroServiceUniqueName}"
+      RoleARN: !GetAtt PortFatAutoScalingRole.Arn
+      ScalableDimension: "ecs:service:DesiredCount"
+      ServiceNamespace: "ecs"
+
+  PortFatScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: pn-portfat-SQSScalingPolicy
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref PortFatScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: SQSMessageVisible
+          ResourceLabel: !Sub "${AWS::AccountId}:${PortFatRequestActionsQueueName}.fifo"
+        TargetValue: 100
+        ScaleInCooldown: 300
+        ScaleOutCooldown: 300
+
+  PortFatLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref EventFileReadyLambdaName
+      Runtime: nodejs18.x
+      Handler: "index.handler"
+      Code:
+        S3Bucket: !Ref MicroserviceBucketName
+        S3Key: !Sub "${MicroserviceBucketBaseKey}/functions/pn-portfat_eventFilReadyLambda.zip"
+      Role: !GetAtt PortFatLambdaRole.Arn
+      VpcConfig:
+        SecurityGroupIds:
+          - !GetAtt PortFatLambdaSecGroup.GroupId
+        SubnetIds: !Ref SubnetsIds
+      Timeout: 30
+      MemorySize: 512
+      TracingConfig:
+        Mode: Activer
+      Environment:
+        Variables:
+          AWS_REGION: !Sub ${AWS::Region}
+          SQS_QUEUE_URL: !Ref PortFatRequestActionsQueueName
+
+  PortFatLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-portfat-lambda-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+        - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
+
+  PortFatLambdaPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub "${ProjectName}-portfat-lambda-policy"
+      Roles:
+        - !Ref PortFatLambdaRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - sqs:SendMessage
+              - sqs:ReceiveMessage
+              - sqs:DeleteMessage
+              - sqs:GetQueueAttributes
+            Resource:
+              - !Ref PortFatRequestActionsQueueARN
+              - !Ref PortFatRequestActionsQueueDLQARN
+          - Effect: Allow
+            Action:
+              - dynamodb:GetItem
+              - dynamodb:PutItem
+              - dynamodb:UpdateItem
+              - dynamodb:Query
+            Resource:
+              - !Ref PortFatDownloadTableArn
+
+  PortFatLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref PortFatLambdaFunction
+      Action: "lambda:InvokeFunction"
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MyApiGateway}/*/POST/pn-portfat-in/file-ready-event"
+
+  PortFatLambdaAlarms:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      StackName: pn-portfat-lambda-alarms
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/lambda-alarms.yaml"
+      Parameters:
+        FunctionName: !Ref PortFatLambdaFunction
+        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
+
+  PortFatLambdaSecGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub '${EventFileReadyLambdaName}-sec-group'
+      VpcId: !Ref VpcId
+
+Outputs:
+  Version:
+    Value: !Ref Version
