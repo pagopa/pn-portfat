@@ -25,8 +25,6 @@ public class SafeStorageServiceImpl implements SafeStorageService {
     public Mono<String> createAndUploadContent(FileCreationWithContentRequest fileCreationRequest, String sha256) {
         log.info("Start createAndUploadFile - documentType={} fileSize={}", fileCreationRequest.getDocumentType(), fileCreationRequest.getContent().length);
 
-        return Mono.just("tutto ok");
-        /*
         return safeStorageClient.createFile(fileCreationRequest, sha256)
                 .onErrorResume(exception -> {
                     log.error("Cannot create file ", exception);
@@ -35,6 +33,5 @@ public class SafeStorageServiceImpl implements SafeStorageService {
                 .flatMap(fileCreationResponse -> httpConnector.uploadContent(fileCreationRequest, fileCreationResponse, sha256)
                         .thenReturn(fileCreationResponse))
                 .map(FileCreationResponseDto::getKey);
-         */
     }
 }

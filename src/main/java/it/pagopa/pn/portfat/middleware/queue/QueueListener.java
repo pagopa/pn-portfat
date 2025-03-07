@@ -40,7 +40,7 @@ public class QueueListener {
         MDC.put(MDCUtils.MDC_PN_CTX_REQUEST_ID, fileReady.getDownloadUrl());
 
         MDCUtils.addMDCToContextAndExecute(Mono.just(fileReady))
-                .filter(this::isFileReadyEvent)
+                //.filter(this::isFileReadyEvent)
                 .flatMap(fileReadyEvent -> {
                     String downloadId = downloadId(fileReadyEvent);
                     log.info("Searching for downloadId: {}", downloadId);
@@ -53,6 +53,7 @@ public class QueueListener {
                                         .flatMap(newPortFatDownload ->
                                                 portfatService.processZipFile(newPortFatDownload)
                                                         .then(updateStatusToCompleted(newPortFatDownload))
+                                                        .ignoreElement()
                                         );
                             }))
                             .flatMap(portFatDownload -> {
@@ -82,13 +83,13 @@ public class QueueListener {
                                 }
                                 return Mono.error(e);
                             });
-                }).subscribe();
+                }).block();
     }
 
     private Mono<PortFatDownload> updateStatusToCompleted(PortFatDownload portFatDownload) {
         completed(portFatDownload);
         return portFatDownloadDAO.updatePortFatDownload(portFatDownload)
-                .doOnNext(portFatDownloaded -> log.info("PortFat: update status to Completed"));
+                .doOnNext(portFatDownloadUpdated -> log.info("updated To Completed {}", portFatDownloadUpdated.getStatus()));
     }
 
     private Mono<PortFatDownload> createAndSaveNewDownload(FileReadyEvent fileReadyEvent) {
