@@ -5,29 +5,27 @@ import it.pagopa.pn.portfat.config.PortFatPropertiesConfig;
 import it.pagopa.pn.portfat.exception.PnGenericException;
 import it.pagopa.pn.portfat.middleware.db.dao.PortFatDownloadDAO;
 import it.pagopa.pn.portfat.middleware.db.entities.PortFatDownload;
-import it.pagopa.pn.portfat.middleware.msclient.SafeStorageClient;
+import it.pagopa.pn.portfat.model.FileCreationWithContentRequest;
+import it.pagopa.pn.portfat.model.PortaleFatturazioneModel;
 import it.pagopa.pn.portfat.service.PortFatService;
+import it.pagopa.pn.portfat.service.SafeStorageService;
 import lombok.AllArgsConstructor;
 import lombok.CustomLog;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HexFormat;
 import java.util.UUID;
 
-import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.*;
-import static it.pagopa.pn.portfat.utils.Utility.createDirectories;
-import static it.pagopa.pn.portfat.utils.Utility.deleteFileOrDirectory;
+import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.FAILED_DELETE_FILE;
+import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.LIST_FILES_ERROR;
+import static it.pagopa.pn.portfat.mapper.FileCreationWithContentRequestMapper.mapper;
+import static it.pagopa.pn.portfat.utils.Utility.*;
 import static it.pagopa.pn.portfat.utils.ZipUtility.unzip;
 
 @Service
@@ -41,7 +39,9 @@ public class PortFatServiceImpl implements PortFatService {
     private final PortFatPropertiesConfig portFatConfig;
     private final HttpConnectorWebClient webClient;
     private final PortFatDownloadDAO portFatDownloadDAO;
-    private final SafeStorageClient safeStorageClient;
+    private final SafeStorageService safeStorageService;
+
+    // TODO ORIGINAL_DATA_UPDATE in FileCreationWithContentRequestMapper
 
     @Override
     public Mono<Void> processZipFile(PortFatDownload portFatDownload) {
@@ -51,20 +51,19 @@ public class PortFatServiceImpl implements PortFatService {
         Path outputFilesPath = Path.of(outputPath.toString(), PATH_FIELS);
         String fileName = UUID.randomUUID().toString();
         Path zipFilePath = outputPath.resolve(fileName + portFatConfig.getZipExtension());
-
         return createDirectories(outputPath)
                 .then(createDirectories(outputFilesPath))
                 .then(webClient.downloadFileAsByteArray(portFatDownload.getDownloadUrl(), zipFilePath))
-                .then(computeSHA256(zipFilePath)
-                        .doOnSuccess(hash -> log.info("SHA-256 Hash: {}", hash))
-                        .flatMap(hash -> {
-                            portFatDownload.setSha256(hash);
-                            return portFatDownloadDAO.updatePortFatDownload(portFatDownload);
-                        }))
+                .then(Mono.fromCallable(() -> computeSHA256(zipFilePath)))
+                .doOnNext(hash -> log.info("SHA-256 Hash: {}", hash))
+                .flatMap(hash -> {
+                    portFatDownload.setSha256(hash);
+                    return portFatDownloadDAO.updatePortFatDownload(portFatDownload);
+                })
                 .then(unzip(zipFilePath.toString(), outputFilesPath.toString()))
                 .thenMany(processDirectory(outputFilesPath))
                 .then()
-                .doFinally(signalType -> deleteFileOrDirectory(outputPath.toFile()).subscribe());
+                .doOnTerminate(() -> deleteFileOrDirectory(outputPath.toFile()).subscribe());
     }
 
     public Mono<Void> processDirectory(Path directoryPath) {
@@ -79,38 +78,37 @@ public class PortFatServiceImpl implements PortFatService {
                 .flatMap(file -> {
                     Path parentDirectory = file.getParent();
                     return processFile(file, parentDirectory.getFileName().toString());
-                })
+                }, 10)
                 .then();
     }
 
     private Mono<Void> processFile(Path file, String parentDirectoryName) {
-        return Mono.fromRunnable(() -> {
-            try {
-                log.info("Processing file: {} in folder: {}", file, parentDirectoryName);
-
-
-                //TODO safe storage
-                Files.delete(file);
-                log.info("File deleted: {}", file);
-            } catch (IOException e) {
-                throw new PnGenericException(FAILED_DELETE_FILE, FAILED_DELETE_FILE.getMessage() + e.getMessage());
-            }
-        });
-    }
-
-    private Mono<String> computeSHA256(Path filePath) {
-        return Mono.fromCallable(() -> {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            try (InputStream fis = Files.newInputStream(filePath);
-                 DigestInputStream dis = new DigestInputStream(fis, digest)) {
-                byte[] buffer = new byte[8192];
-                while (dis.read(buffer) != -1) {
-                    // Il digest viene aggiornato automaticamente dal DigestInputStream
-                }
-            }
-            byte[] hash = digest.digest();
-            return HexFormat.of().formatHex(hash);
-        }).subscribeOn(Schedulers.boundedElastic());
+        log.info("Processing file: {} in folder: {}", file, parentDirectoryName);
+        return Mono.fromCallable(() -> convertToObject(file.toFile(), PortaleFatturazioneModel.class))
+                .flatMap(portaleFatturazioneModel ->
+                        Mono.zip(
+                                        Mono.fromCallable(() -> computeSHA256(file)),
+                                        Mono.fromCallable(() -> jsonToByteArray(portaleFatturazioneModel))
+                                )
+                                .flatMap(tuple -> {
+                                    String sha256 = tuple.getT1();
+                                    byte[] jsonToByteArray = tuple.getT2();
+                                    FileCreationWithContentRequest fileCreationRequest = mapper(jsonToByteArray, portaleFatturazioneModel);
+                                    return safeStorageService.createAndUploadContent(fileCreationRequest, sha256)
+                                            .then(Mono.fromRunnable(() -> {
+                                                try {
+                                                    Files.delete(file);
+                                                    log.info("File deleted: {}", file);
+                                                } catch (IOException e) {
+                                                    throw new PnGenericException(FAILED_DELETE_FILE, FAILED_DELETE_FILE.getMessage() + e.getMessage());
+                                                }
+                                            }));
+                                })
+                )
+                .onErrorResume(e -> {
+                    log.error("Error processing file: {}", file, e);
+                    return Mono.error(e);
+                }).then();
     }
 
 }

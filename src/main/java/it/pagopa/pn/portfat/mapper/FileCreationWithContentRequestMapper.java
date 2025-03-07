@@ -1,0 +1,49 @@
+package it.pagopa.pn.portfat.mapper;
+
+import it.pagopa.pn.portfat.model.FileCreationWithContentRequest;
+import it.pagopa.pn.portfat.model.PortaleFatturazioneModel;
+import org.springframework.http.MediaType;
+
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class FileCreationWithContentRequestMapper {
+
+    private FileCreationWithContentRequestMapper() {
+        throw new IllegalCallerException();
+    }
+
+    static final String SEND_SERVICE_ORDER = "SEND_SERVICE_ORDER";
+    static final String SAVED_STATUS = "SAVED";
+    static final String SENDER_PA_ID = "senderPaId";
+    static final String REFERENCE_PERIOD = "referencePeriod";
+    static final String ORIGINAL_DATA_UPDATE = "originalDataUpdateTimestamp";
+    static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm.ssX");
+
+    public static FileCreationWithContentRequest mapper(byte[] bytesPdf, PortaleFatturazioneModel model) {
+        FileCreationWithContentRequest request = new FileCreationWithContentRequest();
+        request.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        request.setDocumentType(SEND_SERVICE_ORDER);
+        request.setStatus(SAVED_STATUS);
+        request.setContent(bytesPdf);
+        Map<String, List<String>> tags = new HashMap<>();
+        tags.put(SENDER_PA_ID, List.of(model.getFkIdEnte()));
+        tags.put(REFERENCE_PERIOD, List.of(model.getAnnoValidita() + monthFormatter(model.getMeseValidita())));
+
+        // TODO ORIGINAL_DATA_UPDATE
+        tags.put(ORIGINAL_DATA_UPDATE, List.of(ZonedDateTime.now().format(formatter)));
+        request.setTags(tags);
+        return request;
+    }
+
+    private static String monthFormatter(Integer monthNumber) {
+        if (monthNumber < 1 || monthNumber > 12) {
+            throw new IllegalArgumentException("Mese non valido: " + monthNumber);
+        }
+        return String.format("%02d", monthNumber);
+    }
+
+}
