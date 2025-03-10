@@ -15,6 +15,7 @@ public class PortFatConverter {
 
     public static void completed(PortFatDownload portFatDownload) {
         portFatDownload.setStatus(DownloadStatus.COMPLETED);
+        portFatDownload.setErrorMessage(null);
         portFatDownload.setUpdatedAt(Instant.now().toString());
     }
 

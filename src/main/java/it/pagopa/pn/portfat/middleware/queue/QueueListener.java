@@ -40,7 +40,7 @@ public class QueueListener {
         MDC.put(MDCUtils.MDC_PN_CTX_REQUEST_ID, fileReady.getDownloadUrl());
 
         MDCUtils.addMDCToContextAndExecute(Mono.just(fileReady))
-                //.filter(this::isFileReadyEvent)
+                .filter(this::isFileReadyEvent)
                 .flatMap(fileReadyEvent -> {
                     String downloadId = downloadId(fileReadyEvent);
                     log.info("Searching for downloadId: {}", downloadId);
