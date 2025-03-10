@@ -1,6 +1,6 @@
 package it.pagopa.pn.template.rest;
 
-import it.pagopa.pn.template.rest.v1.api.HealthCheckApi;
+import it.pagopa.pn.portfat.generated.openapi.server.v1.api.HealthCheckApi;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
