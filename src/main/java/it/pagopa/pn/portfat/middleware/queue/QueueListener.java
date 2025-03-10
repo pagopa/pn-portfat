@@ -33,7 +33,7 @@ public class QueueListener {
     private final PortFatService portfatService;
     private final PortFatDownloadDAO portFatDownloadDAO;
 
-    @SqsListener(value = "${pn.portfat.queue}", deletionPolicy = SqsMessageDeletionPolicy.ALWAYS)
+    @SqsListener(value = "${pn.portfat.queue}", deletionPolicy = SqsMessageDeletionPolicy.DEFAULT)
     public void pullPortFat(@Payload String payload, @Header("MessageGroupId") String messageGroupId) {
         log.info("messageGroupId: {}", messageGroupId);
         FileReadyEvent fileReady = convertToObject(payload, FileReadyEvent.class);
@@ -74,14 +74,11 @@ public class QueueListener {
                     log.error("Error occurred during processing, updating status to ERROR", e);
                     return portFatDownloadDAO.findByDownloadId(downloadId(fileReady))
                             .flatMap(portFatDownload -> {
-                                if (portFatDownload != null) {
                                     portFatDownload.setStatus(DownloadStatus.ERROR);
                                     portFatDownload.setUpdatedAt(Instant.now().toString());
                                     portFatDownload.setErrorMessage(e.getMessage());
                                     return portFatDownloadDAO.updatePortFatDownload(portFatDownload)
                                             .then(Mono.error(e));
-                                }
-                                return Mono.error(e);
                             });
                 }).block();
     }
