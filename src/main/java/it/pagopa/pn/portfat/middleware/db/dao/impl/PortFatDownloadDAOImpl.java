@@ -22,17 +22,17 @@ public class PortFatDownloadDAOImpl extends BaseDAO<PortFatDownload> implements 
 
     @Override
     public Mono<PortFatDownload> findByDownloadId(String downloadId) {
-        return this.get(downloadId, null);
+        return Mono.fromFuture(this.get(downloadId, null).toFuture());
     }
 
     @Override
     public Mono<PortFatDownload> createPortFatDownload(PortFatDownload portFatDownload) {
-        return this.put(portFatDownload);
+        return Mono.fromFuture(this.put(portFatDownload).toFuture());
     }
 
     @Override
     public Mono<PortFatDownload> updatePortFatDownload(PortFatDownload portFatDownload) {
-        return this.update(portFatDownload);
+        return Mono.fromFuture(this.update(portFatDownload).toFuture());
     }
 
 }
