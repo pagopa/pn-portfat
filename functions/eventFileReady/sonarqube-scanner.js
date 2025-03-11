@@ -1,4 +1,4 @@
-const { scanner } = require("sonarqube-scanner");
+const scanner = require("sonarqube-scanner");
 
 const options = {
     "sonar.organization": "pagopa",
