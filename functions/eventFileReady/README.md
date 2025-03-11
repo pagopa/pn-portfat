@@ -10,15 +10,43 @@ Questa repository contiene la Lambda `event-file-ready` che riceve eventi di fil
 - Docker (per i test di integrazione)
 - LocalStack (gestito da testcontainers nei test)
 
-### Installazione
+## Installazione
 ```bash
 npm install
 ```
 
-### Verifica test e codice
+## Esecuzione build
+
+Il comando di seguito genera uno zip nella directory build contenente tutte e sole le dipendenze necessarie all'ambiente di produzione
+
 ```bash
-npm predeploy
+    npm run-script build
 ```
+
+## Esecuzione test
+
+Il comando di seguito permette di eseguire tutti i test previsti
+
+```
+    npm test
+```
+
+## Esecuzione codecoverage
+
+Il comando di seguito permette di eseguire la code coverga dopo l'esecuizione dei test
+
+```bash
+    npm run-script coverage
+```
+
+## Esecuzione test, coverage, sonar e build
+
+Il comando di seguito permette di eseguire la routine dei test per poi generare lo zip di build
+
+```bash
+    npm run-script test-build
+```
+
 
 ## API
 ### API per la gestione dell'evento file pronto
@@ -48,11 +76,10 @@ aws lambda invoke \
 ```Javascript
 {
   statusCode: 200 | 202 | 400 | 404 | 500
-  message: "descrizione"
+  message: "message response"
 }
 ```
 **Status codes:**
--   **200** - OK: il messaggio è stato ricevuto e processato correttamente.
 -   **202** - Request accepted: il messaggio è stato accodato per una successiva elaborazione.
 -   **400** - Invalid JSON: payload malformato o con dati mancanti.
 -   **404** - Route not found: endpoint non esistente.

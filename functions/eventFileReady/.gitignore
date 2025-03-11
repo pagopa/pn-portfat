@@ -1,3 +1,6 @@
+/node_modules/*
+function.zip
+
 # Logs
 logs
 *.log
