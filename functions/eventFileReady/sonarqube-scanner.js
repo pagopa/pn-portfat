@@ -1,20 +1,20 @@
-// const options = {
-//   'sonar.organization': 'pagopa',
-//   'sonar.projectKey': 'pagopa_pn-bff-paperchanneltenderslambda',
-// };
+const options = {
+    "sonar.organization": "pagopa",
+    "sonar.projectKey": "pagopa_pn-portfat-EventFileReady",
+};
 
-// if (process.env.PR_NUM) {
-//   options['sonar.pullrequest.base'] = process.env.BRANCH_TARGET;
-//   options['sonar.pullrequest.branch'] = process.env.BRANCH_NAME;
-//   options['sonar.pullrequest.key'] = process.env.PR_NUM;
-// }
+if (process.env.PR_NUM) {
+    options["sonar.pullrequest.base"] = process.env.BRANCH_TARGET;
+    options["sonar.pullrequest.branch"] = process.env.BRANCH_NAME;
+    options["sonar.pullrequest.key"] = process.env.PR_NUM;
+}
 
-// const scanner = require('sonarqube-scanner');
+const scanner = require("sonarqube-scanner");
 
-// scanner(
-//   {
-//     serverUrl: 'https://sonarcloud.io',
-//     options: options,
-//   },
-//   () => process.exit()
-// );
+scanner(
+    {
+        serverUrl: "https://sonarcloud.io",
+        options: options,
+    },
+    () => process.exit()
+);
