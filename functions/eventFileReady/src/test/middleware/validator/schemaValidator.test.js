@@ -23,7 +23,7 @@ describe('schemaValidator - validateBody', () => {
             throw new Error('Test should have thrown');
         } catch (err) {
             expect(err.statusCode).to.equal(400);
-            expect(err.message).to.equal('Invalid request body');
+            expect(err.message).to.equal('Bad Request: missing data or not valid');
             expect(err.details).to.be.an('array');
             expect(err.details).to.deep.include({
                 code: 'invalid_type',
@@ -46,7 +46,7 @@ describe('schemaValidator - validateBody', () => {
             throw new Error('Test should have thrown');
         } catch (err) {
             expect(err.statusCode).to.equal(400);
-            expect(err.message).to.equal('Invalid request body');
+            expect(err.message).to.equal('Bad Request: missing data or not valid');
             expect(err.details).to.be.an('array');
             expect(err.details).to.deep.include({
                 code: 'invalid_string',
@@ -67,7 +67,7 @@ describe('schemaValidator - validateBody', () => {
             throw new Error('Test should have thrown');
         } catch (err) {
             expect(err.statusCode).to.equal(400);
-            expect(err.message).to.equal('Invalid request body');
+            expect(err.message).to.equal('Bad Request: missing data or not valid');
             expect(err.details).to.be.an('array');
             expect(err.details).to.deep.include({
                 code: 'invalid_type',
@@ -90,7 +90,7 @@ describe('schemaValidator - validateBody', () => {
             throw new Error('Test should have thrown');
         } catch (err) {
             expect(err.statusCode).to.equal(400);
-            expect(err.message).to.equal('Invalid request body');
+            expect(err.message).to.equal('Bad Request: missing data or not valid');
             expect(err.details).to.be.an('array');
             expect(err.details).to.deep.include({
                 code: 'too_small',
