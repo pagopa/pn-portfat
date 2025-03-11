@@ -1,6 +1,7 @@
 const { SQSClient, SendMessageCommand } = require('@aws-sdk/client-sqs');
 const { fromEnv } = require('@aws-sdk/credential-providers');
 const config = require('../../config/config');
+const AppError = require('../../utils/appError');
 
 const isLocalStack = process.env.LOCALSTACK === 'true';
 
@@ -24,5 +25,11 @@ exports.sendMessageToQueue = async (message, filePath) => {
     };
 
     console.log('Sending message to queue:', params);
-    await sqsClient.send(new SendMessageCommand(params));
+
+    try {
+        return await sqsClient.send(new SendMessageCommand(params));
+    } catch (error) {
+        console.error('Error sending message to queue:', error);
+        throw new AppError(500, 'Error sending message to queue', error.message);
+    }
 };

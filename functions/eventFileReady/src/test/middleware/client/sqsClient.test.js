@@ -14,6 +14,7 @@ const sqsClientModule = proxyquire('../../../app/middleware/client/sqsClient', {
 
 
 describe('sqsClient - sendMessageToQueue', () => {
+
     afterEach(() => {
         sinon.restore();
         mockSend.reset();
