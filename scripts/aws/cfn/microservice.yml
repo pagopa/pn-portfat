@@ -381,7 +381,7 @@ Resources:
         PredefinedMetricSpecification:
           PredefinedMetricType: SQSMessageVisible
           ResourceLabel: !Sub "${AWS::AccountId}:${PortFatRequestActionsQueueName}.fifo"
-        TargetValue: 100
+        TargetValue: 1
         ScaleInCooldown: 300
         ScaleOutCooldown: 300
 
