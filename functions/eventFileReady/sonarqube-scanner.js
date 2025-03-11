@@ -11,10 +11,20 @@ if (process.env.PR_NUM) {
 
 const scanner = require("sonarqube-scanner");
 
-scanner(
-    {
-        serverUrl: "https://sonarcloud.io",
-        options: options,
-    },
-    () => process.exit()
-);
+(async () => {
+    try {
+        await scanner({
+                serverUrl: "https://sonarcloud.io",
+                options: options,
+            },
+            () => {
+                console.log("SonarQube Scanner execution completed.");
+                process.exit(0);
+            });
+
+        process.exit(0);
+    } catch (error) {
+        console.error("Error during SonarQube Scanner execution:", error);
+        process.exit(1);
+    }
+})();
