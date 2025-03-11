@@ -86,7 +86,7 @@ public class QueueListener {
     private Mono<PortFatDownload> updateStatusToCompleted(PortFatDownload portFatDownload) {
         completed(portFatDownload);
         return portFatDownloadDAO.updatePortFatDownload(portFatDownload)
-                .doOnNext(portFatDownloadUpdated -> log.info("updated To Completed {}", portFatDownloadUpdated.getStatus()));
+                .doOnNext(portFatDownloadUpdated -> log.info("updated To {}", portFatDownloadUpdated.getStatus()));
     }
 
     private Mono<PortFatDownload> createAndSaveNewDownload(FileReadyEvent fileReadyEvent) {
@@ -95,7 +95,9 @@ public class QueueListener {
 
     private boolean isFileReadyEvent(FileReadyEvent fileReadyEvent) {
         String downloadUrl = fileReadyEvent.getDownloadUrl();
-        boolean isFileReadyEvent = downloadUrl.startsWith(portFatConfig.getBlobStorageBaseUrl())
+        boolean isFileReadyEvent = downloadUrl != null
+                && !downloadUrl.isBlank()
+                && downloadUrl.startsWith(portFatConfig.getBlobStorageBaseUrl())
                 && portFatConfig.getFilePathWhiteList().stream().anyMatch(downloadUrl::contains)
                 && fileReadyEvent.getFileVersion() != null
                 && !fileReadyEvent.getFileVersion().trim().isBlank();

@@ -1,77 +1,152 @@
 package it.pagopa.pn.portfat.middleware.queue;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
-import com.amazonaws.services.sqs.model.CreateQueueRequest;
-import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import it.pagopa.pn.portfat.config.BaseTest;
+import it.pagopa.pn.portfat.config.PortFatPropertiesConfig;
 import it.pagopa.pn.portfat.generated.openapi.server.v1.dto.FileReadyEvent;
+import it.pagopa.pn.portfat.middleware.db.dao.PortFatDownloadDAO;
+import it.pagopa.pn.portfat.middleware.db.entities.DownloadStatus;
+import it.pagopa.pn.portfat.middleware.db.entities.PortFatDownload;
+import it.pagopa.pn.portfat.service.PortFatService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
-import org.testcontainers.containers.localstack.LocalStackContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
-import java.util.concurrent.TimeUnit;
+import java.util.List;
 
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
-//@SpringBootTest
-//@ActiveProfiles("test")
-//@Testcontainers
-class QueueListenerTest {
-
-    @Value("${pn.pn-portfat.queue}")
-    private String queueUrl;
-
-    @Container
-    public static LocalStackContainer localstack =
-            new LocalStackContainer(DockerImageName.parse("localstack/localstack:latest"))
-                    .withServices(LocalStackContainer.Service.SQS);
+@SpringBootTest
+@ActiveProfiles("test")
+class QueueListenerTest extends BaseTest {
 
     @Autowired
-    private AmazonSQSAsync amazonSQS;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @SpyBean
     private QueueListener queueListener;
 
-    private String messageBody;
+    @MockBean
+    private PortFatPropertiesConfig portFatConfig;
 
-    //@BeforeEach
-    void setup() throws JsonProcessingException {
-        amazonSQS.createQueue(new CreateQueueRequest()
-                .withQueueName(queueUrl));
-        queueUrl = amazonSQS.getQueueUrl(queueUrl).getQueueUrl();
-        // Crea il messaggio
+    @MockBean
+    private PortFatService portFatService;
+
+    @MockBean
+    private PortFatDownloadDAO portFatDownloadDAO;
+
+    @MockBean
+    private PortFatDownload portFatDownload;
+
+    private String payload;
+
+    private static final String MESSAGE_GROUP_ID = "port-fat_1";
+    private static final String DOWNLOAD_URL = "https://portale-fatturazione-storage.blob.core.windows.net/portfatt/pn-example_it";
+    private static final String FILE_VERSION = "v1.0";
+
+    @BeforeEach
+    void setup() {
+        // Mock della configurazione
+        when(portFatConfig.getBlobStorageBaseUrl())
+                .thenReturn("https://portale-fatturazione-storage.blob.core.windows.net/portfatt/");
+        when(portFatConfig.getFilePathWhiteList())
+                .thenReturn(List.of("pn-example_it"));
+    }
+
+    @Test
+    void testPullPortFatNewDownload() throws JsonProcessingException {
         FileReadyEvent event = new FileReadyEvent();
-        event.setDownloadUrl("https://example.com/file.pdf");
-        event.setFileVersion("v1.0");
-        messageBody = objectMapper.writeValueAsString(event);
+        event.setFileVersion(FILE_VERSION);
+        event.setDownloadUrl(DOWNLOAD_URL);
+        payload = new ObjectMapper().writeValueAsString(event);
 
-        // Invia il messaggio alla coda
-        SendMessageRequest sendMessageRequest = new SendMessageRequest()
-                .withQueueUrl(queueUrl)
-                .withMessageBody(messageBody);
-        amazonSQS.sendMessage(sendMessageRequest);
+        // Mock di portFatDownloadDAO.findByDownloadId() per restituire un Mono.empty()
+        when(portFatDownloadDAO.findByDownloadId(anyString())).thenReturn(Mono.empty());
+        // Mock di createAndSaveNewDownload() per creare un nuovo PortFatDownload
+        when(portFatDownloadDAO.createPortFatDownload(any())).thenReturn(Mono.just(portFatDownload));
+        when(portFatDownload.getStatus()).thenReturn(DownloadStatus.COMPLETED);
+        when(portFatDownloadDAO.updatePortFatDownload(any())).thenReturn(Mono.just(portFatDownload));
+        // Mock di portFatService.processZipFile() per simulare il processo del file
+        when(portFatService.processZipFile(any())).thenReturn(Mono.empty());
+
+        // Invoca il metodo pullPortFat
+        queueListener.pullPortFat(payload, MESSAGE_GROUP_ID);
+        // Verifica che il metodo processZipFile sia stato chiamato
+        verify(portFatService, times(1)).processZipFile(any());
+        // Verifica che lo stato sia stato aggiornato a COMPLETED
+        verify(portFatDownloadDAO, times(1)).updatePortFatDownload(portFatDownload);
     }
 
-    //@Test
-    void testMessageReception() {
-        /*
-        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
-            verify(queueListener, times(1)).pullPortFat(messageBody)
-        );
-         */
+    @Test
+    void testPullPortFatExistingDownloadInErrorState() throws JsonProcessingException {
+        // Mock di FileReadyEvent
+        FileReadyEvent event = new FileReadyEvent();
+        event.setFileVersion(FILE_VERSION);
+        event.setDownloadUrl(DOWNLOAD_URL);
+        payload = new ObjectMapper().writeValueAsString(event);
+
+        // Mock di portFatDownloadDAO.findByDownloadId() per restituire un PortFatDownload in stato ERROR
+        when(portFatDownload.getStatus()).thenReturn(DownloadStatus.ERROR);
+        when(portFatDownloadDAO.findByDownloadId(anyString())).thenReturn(Mono.just(portFatDownload));
+        PortFatDownload updated = mock(PortFatDownload.class);
+        when(updated.getStatus()).thenReturn(DownloadStatus.COMPLETED);
+        when(portFatDownloadDAO.updatePortFatDownload(any())).thenReturn(Mono.just(updated));
+
+        // Mock di portFatService.processZipFile() per simulare il processo del file
+        when(portFatService.processZipFile(any())).thenReturn(Mono.empty());
+
+        // Invoca il metodo pullPortFat
+        queueListener.pullPortFat(payload, MESSAGE_GROUP_ID);
+
+        // Verifica che il metodo processZipFile sia stato chiamato
+        verify(portFatService, times(1)).processZipFile(any());
+
+        // Verifica che lo stato del PortFatDownload sia stato aggiornato a IN_PROGRESS
+        verify(portFatDownloadDAO, times(1)).updatePortFatDownload(portFatDownload);
     }
+
+    @Test
+    void testPullPortFatFileReadyEventIsNotValid() throws JsonProcessingException {
+        FileReadyEvent event = new FileReadyEvent();
+        event.setFileVersion(FILE_VERSION);
+        event.setDownloadUrl(null);
+        payload = new ObjectMapper().writeValueAsString(event);
+        // Invoca il metodo pullPortFat
+        queueListener.pullPortFat(payload, MESSAGE_GROUP_ID);
+
+        // Verifica che processZipFile non sia stato chiamato
+        verify(portFatService, times(0)).processZipFile(any());
+    }
+
+    @Test
+    void testPullPortFatErrorHandling() throws JsonProcessingException {
+        // Mock di FileReadyEvent
+        FileReadyEvent event = new FileReadyEvent();
+        event.setFileVersion(FILE_VERSION);
+        event.setDownloadUrl(DOWNLOAD_URL);
+        payload = new ObjectMapper().writeValueAsString(event);
+
+        // Mock PortFatDownload con stato ERROR
+        when(portFatDownloadDAO.findByDownloadId(anyString())).thenReturn(Mono.just(portFatDownload));
+        when(portFatDownload.getStatus()).thenReturn(DownloadStatus.ERROR);
+
+        // Mock dell'errore durante il processo
+        when(portFatService.processZipFile(any())).thenReturn(Mono.error(new RuntimeException("Processing failed")));
+        when(portFatDownloadDAO.updatePortFatDownload(any())).thenReturn(Mono.just(mock(PortFatDownload.class)));
+
+        StepVerifier.create(
+                        Mono.fromRunnable(() -> queueListener.pullPortFat(payload, MESSAGE_GROUP_ID))
+                )
+                .expectError(RuntimeException.class)
+                .verify();
+
+        // Verifica che lo stato sia stato aggiornato a ERROR
+        verify(portFatDownloadDAO, times(3)).updatePortFatDownload(any(PortFatDownload.class));
+    }
+
 }
