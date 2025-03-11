@@ -60,6 +60,7 @@ class QueueListenerTest extends BaseTest {
 
     @Test
     void testPullPortFatNewDownload() throws JsonProcessingException {
+        //ARRANGE
         FileReadyEvent event = new FileReadyEvent();
         event.setFileVersion(FILE_VERSION);
         event.setDownloadUrl(DOWNLOAD_URL);
@@ -76,6 +77,8 @@ class QueueListenerTest extends BaseTest {
 
         // Invoca il metodo pullPortFat
         queueListener.pullPortFat(payload, MESSAGE_GROUP_ID);
+
+        //ASSERT
         // Verifica che il metodo processZipFile sia stato chiamato
         verify(portFatService, times(1)).processZipFile(any());
         // Verifica che lo stato sia stato aggiornato a COMPLETED
@@ -84,7 +87,7 @@ class QueueListenerTest extends BaseTest {
 
     @Test
     void testPullPortFatExistingDownloadInErrorState() throws JsonProcessingException {
-        // Mock di FileReadyEvent
+        //ARRANGE
         FileReadyEvent event = new FileReadyEvent();
         event.setFileVersion(FILE_VERSION);
         event.setDownloadUrl(DOWNLOAD_URL);
@@ -103,6 +106,8 @@ class QueueListenerTest extends BaseTest {
         // Invoca il metodo pullPortFat
         queueListener.pullPortFat(payload, MESSAGE_GROUP_ID);
 
+        //ASSERT
+
         // Verifica che il metodo processZipFile sia stato chiamato
         verify(portFatService, times(1)).processZipFile(any());
 
@@ -112,6 +117,7 @@ class QueueListenerTest extends BaseTest {
 
     @Test
     void testPullPortFatFileReadyEventIsNotValid() throws JsonProcessingException {
+        //ARRANGE
         FileReadyEvent event = new FileReadyEvent();
         event.setFileVersion(FILE_VERSION);
         event.setDownloadUrl(null);
@@ -119,13 +125,14 @@ class QueueListenerTest extends BaseTest {
         // Invoca il metodo pullPortFat
         queueListener.pullPortFat(payload, MESSAGE_GROUP_ID);
 
+        //ASSERT
         // Verifica che processZipFile non sia stato chiamato
         verify(portFatService, times(0)).processZipFile(any());
     }
 
     @Test
     void testPullPortFatErrorHandling() throws JsonProcessingException {
-        // Mock di FileReadyEvent
+        //ARRANGE
         FileReadyEvent event = new FileReadyEvent();
         event.setFileVersion(FILE_VERSION);
         event.setDownloadUrl(DOWNLOAD_URL);
@@ -145,6 +152,7 @@ class QueueListenerTest extends BaseTest {
                 .expectError(RuntimeException.class)
                 .verify();
 
+        //ASSERT
         // Verifica che lo stato sia stato aggiornato a ERROR
         verify(portFatDownloadDAO, times(3)).updatePortFatDownload(any(PortFatDownload.class));
     }
