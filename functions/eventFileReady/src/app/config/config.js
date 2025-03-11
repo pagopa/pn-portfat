@@ -1,4 +1,4 @@
-if (!process.env.AWS_LAMBDA_FUNCTION_NAME && !process.env.LOCALSTACK) {
+if (!process.env.LOCALSTACK) {
     require('dotenv').config();
     console.log('Dotenv loaded (local execution)');
 } else {
