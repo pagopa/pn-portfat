@@ -194,9 +194,17 @@ Parameters:
     Type: String
     Description: ARN of dynamodb table containing Downloads files
 
+  EventFileReadyLambdaSqsService:
+    Type: String
+    Description: Identifier of sqs service
+
   PortFatRequestActionsQueueName:
     Type: String
     Description: Name of SQS request actions queue
+
+  PortFatRequestActionsQueueURL:
+    Type: String
+    Description: URL of SQS request actions queue
 
   PortFatRequestActionsQueueARN:
     Type: String
@@ -225,6 +233,24 @@ Parameters:
   EventFileReadyLambdaName:
     Type: String
     Description: Name of the EventFileReady lambda function
+
+  SandboxSafeStorageBaseUrl:
+    Type: String
+    Default: ""
+    Description: 'Safe storage base url'
+
+  SafeStorageCxId:
+    Type: String
+    Default: "pn-portfat-in"
+    Description: "Identificativo della connessione di archiviazione sicura"
+
+  SafeStorageFileNotFoundRetry:
+    Default: false
+    Type: String
+    AllowedValues:
+      - true
+      - false
+    Description: 'Enables retry of the notification validation in case of SafeStorage 404 error'
 
 Resources:
   PortFatMicroservice:
@@ -271,7 +297,8 @@ Resources:
 
         ContainerEnvEntry1: !Sub 'AWS_REGIONCODE=${AWS::Region}'
         ContainerEnvEntry2: !Sub 'PN_PORTFAT_SAFESTORAGEBASEURL=${SandboxSafeStorageBaseUrl}'
-        ContainerEnvEntry3: !Sub 'PN_PORTFAT_SAFESTORAGEFILENOTFOUNDRETRY=${SafeStorageFileNotFoundRetry}'
+        ContainerEnvEntry3: !Sub 'PN_PORTFAT_SAFESTORAGECXID=${SafeStorageCxId}'
+        ContainerEnvEntry4: !Sub 'PN_PORTFAT_SAFESTORAGEFILENOTFOUNDRETRY=${SafeStorageFileNotFoundRetry}'
 
   PortFatMicroserviceTaskManagedPolicy:
     Type: AWS::IAM::ManagedPolicy
@@ -406,7 +433,9 @@ Resources:
       Environment:
         Variables:
           AWS_REGION: !Sub ${AWS::Region}
-          SQS_QUEUE_URL: !Ref PortFatRequestActionsQueueName
+          AWS_SERVICE: !Ref EventFileReadyLambdaSqsService
+          SQS_QUEUE_NAME: !Ref PortFatRequestActionsQueueName
+          SQS_QUEUE_URL: !Ref PortFatRequestActionsQueueURL
 
   PortFatLambdaRole:
     Type: AWS::IAM::Role

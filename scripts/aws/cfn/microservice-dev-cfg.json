@@ -2,8 +2,9 @@
   "Parameters": {
     "PnCronAnalyzer": "* */1 * * * *",
     "WireTapLogActivation": "false",
-    "SafeStorageFileNotFoundRetry": "false",
+    "SandboxSafeStorageBaseUrl": "",
     "SafeStorageCxId": "pn-portfat-in",
+    "SafeStorageFileNotFoundRetry": "false",
     "MinTasksNumber": "0",
     "MaxTasksNumber": "10"
   }
