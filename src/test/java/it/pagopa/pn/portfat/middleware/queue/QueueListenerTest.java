@@ -18,7 +18,10 @@ import org.springframework.test.context.ActiveProfiles;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -44,8 +47,7 @@ class QueueListenerTest extends BaseTest {
     private PortFatDownload portFatDownload;
 
     private String payload;
-
-    private static final String MESSAGE_GROUP_ID = "port-fat_1";
+    Map<String, Object> headers;
     private static final String DOWNLOAD_URL = "https://portale-fatturazione-storage.blob.core.windows.net/portfatt/pn-example_it";
     private static final String FILE_VERSION = "v1.0";
 
@@ -61,6 +63,8 @@ class QueueListenerTest extends BaseTest {
     @Test
     void testPullPortFatNewDownload() throws JsonProcessingException {
         //ARRANGE
+        headers = new HashMap<>();
+        headers.put("id", UUID.randomUUID());
         FileReadyEvent event = new FileReadyEvent();
         event.setFileVersion(FILE_VERSION);
         event.setDownloadUrl(DOWNLOAD_URL);
@@ -76,7 +80,7 @@ class QueueListenerTest extends BaseTest {
         when(portFatService.processZipFile(any())).thenReturn(Mono.empty());
 
         // Invoca il metodo pullPortFat
-        queueListener.pullPortFat(payload, MESSAGE_GROUP_ID);
+        queueListener.pullPortFat(payload, headers);
 
         //ASSERT
         // Verifica che il metodo processZipFile sia stato chiamato
@@ -88,6 +92,8 @@ class QueueListenerTest extends BaseTest {
     @Test
     void testPullPortFatExistingDownloadInErrorState() throws JsonProcessingException {
         //ARRANGE
+        headers = new HashMap<>();
+        headers.put("AWSTraceHeader", UUID.randomUUID());
         FileReadyEvent event = new FileReadyEvent();
         event.setFileVersion(FILE_VERSION);
         event.setDownloadUrl(DOWNLOAD_URL);
@@ -104,7 +110,7 @@ class QueueListenerTest extends BaseTest {
         when(portFatService.processZipFile(any())).thenReturn(Mono.empty());
 
         // Invoca il metodo pullPortFat
-        queueListener.pullPortFat(payload, MESSAGE_GROUP_ID);
+        queueListener.pullPortFat(payload, headers);
 
         //ASSERT
 
@@ -118,12 +124,13 @@ class QueueListenerTest extends BaseTest {
     @Test
     void testPullPortFatFileReadyEventIsNotValid() throws JsonProcessingException {
         //ARRANGE
+        headers = new HashMap<>();
         FileReadyEvent event = new FileReadyEvent();
         event.setFileVersion(FILE_VERSION);
         event.setDownloadUrl(null);
         payload = new ObjectMapper().writeValueAsString(event);
         // Invoca il metodo pullPortFat
-        queueListener.pullPortFat(payload, MESSAGE_GROUP_ID);
+        queueListener.pullPortFat(payload, headers);
 
         //ASSERT
         // Verifica che processZipFile non sia stato chiamato
@@ -133,6 +140,7 @@ class QueueListenerTest extends BaseTest {
     @Test
     void testPullPortFatErrorHandling() throws JsonProcessingException {
         //ARRANGE
+        headers = new HashMap<>();
         FileReadyEvent event = new FileReadyEvent();
         event.setFileVersion(FILE_VERSION);
         event.setDownloadUrl(DOWNLOAD_URL);
@@ -147,7 +155,7 @@ class QueueListenerTest extends BaseTest {
         when(portFatDownloadDAO.updatePortFatDownload(any())).thenReturn(Mono.just(mock(PortFatDownload.class)));
 
         StepVerifier.create(
-                        Mono.fromRunnable(() -> queueListener.pullPortFat(payload, MESSAGE_GROUP_ID))
+                        Mono.fromRunnable(() -> queueListener.pullPortFat(payload, headers))
                 )
                 .expectError(RuntimeException.class)
                 .verify();

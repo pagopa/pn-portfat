@@ -9,15 +9,17 @@ import it.pagopa.pn.portfat.middleware.db.dao.PortFatDownloadDAO;
 import it.pagopa.pn.portfat.middleware.db.entities.DownloadStatus;
 import it.pagopa.pn.portfat.middleware.db.entities.PortFatDownload;
 import it.pagopa.pn.portfat.service.PortFatService;
+import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
-import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.handler.annotation.Headers;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
+import java.util.Map;
+import java.util.UUID;
 
 import static it.pagopa.pn.portfat.middleware.db.converter.PortFatConverter.completed;
 import static it.pagopa.pn.portfat.middleware.db.converter.PortFatConverter.portFatDownload;
@@ -25,7 +27,7 @@ import static it.pagopa.pn.portfat.utils.Utility.convertToObject;
 import static it.pagopa.pn.portfat.utils.Utility.downloadId;
 
 @Component
-@Slf4j
+@CustomLog
 @RequiredArgsConstructor
 public class QueueListener {
 
@@ -34,11 +36,10 @@ public class QueueListener {
     private final PortFatDownloadDAO portFatDownloadDAO;
 
     @SqsListener(value = "${pn.portfat.queue}", deletionPolicy = SqsMessageDeletionPolicy.DEFAULT)
-    public void pullPortFat(@Payload String payload, @Header("MessageGroupId") String messageGroupId) {
-        log.info("messageGroupId: {}", messageGroupId);
+    public void pullPortFat(@Payload String payload, @Headers Map<String, Object> headers) {
         FileReadyEvent fileReady = convertToObject(payload, FileReadyEvent.class);
-        MDC.put(MDCUtils.MDC_PN_CTX_REQUEST_ID, fileReady.getDownloadUrl());
-
+        setMDCContext(headers);
+        log.logStartingProcess("portFat");
         MDCUtils.addMDCToContextAndExecute(Mono.just(fileReady))
                 .filter(this::isFileReadyEvent)
                 .flatMap(fileReadyEvent -> {
@@ -74,11 +75,11 @@ public class QueueListener {
                     log.error("Error occurred during processing, updating status to ERROR", e);
                     return portFatDownloadDAO.findByDownloadId(downloadId(fileReady))
                             .flatMap(portFatDownload -> {
-                                    portFatDownload.setStatus(DownloadStatus.ERROR);
-                                    portFatDownload.setUpdatedAt(Instant.now().toString());
-                                    portFatDownload.setErrorMessage(e.getMessage());
-                                    return portFatDownloadDAO.updatePortFatDownload(portFatDownload)
-                                            .then(Mono.error(e));
+                                portFatDownload.setStatus(DownloadStatus.ERROR);
+                                portFatDownload.setUpdatedAt(Instant.now().toString());
+                                portFatDownload.setErrorMessage(e.getMessage());
+                                return portFatDownloadDAO.updatePortFatDownload(portFatDownload)
+                                        .then(Mono.error(e));
                             });
                 }).block();
     }
@@ -110,4 +111,19 @@ public class QueueListener {
         return isFileReadyEvent;
     }
 
+    private void setMDCContext(Map<String, Object> headers) {
+        MDCUtils.clearMDCKeys();
+
+        if (headers.containsKey("id")) {
+            String awsMessageId = headers.get("id").toString();
+            MDC.put(MDCUtils.MDC_PN_CTX_MESSAGE_ID, awsMessageId);
+        }
+
+        if (headers.containsKey("AWSTraceHeader")) {
+            String traceId = headers.get("AWSTraceHeader").toString();
+            MDC.put(MDCUtils.MDC_TRACE_ID_KEY, traceId);
+        } else {
+            MDC.put(MDCUtils.MDC_TRACE_ID_KEY, String.valueOf(UUID.randomUUID()));
+        }
+    }
 }

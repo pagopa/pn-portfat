@@ -85,8 +85,8 @@ public class Utility {
      */
     public static Mono<Void> deleteFileOrDirectory(File workPath) {
         return Mono.fromCallable(() -> {
-            log.info("Directory deleted: {}", workPath);
             FileUtils.forceDelete(workPath);
+            log.info("Directory deleted: {}", workPath);
             return workPath;
         }).then();
     }
@@ -98,8 +98,8 @@ public class Utility {
      */
     public static Mono<Void> createDirectories(Path path) {
         return Mono.fromCallable(() -> {
-            log.info("Directory created: {}", path);
             Files.createDirectories(path);
+            log.info("Directory created: {}", path);
             return path;
         }).then();
     }
