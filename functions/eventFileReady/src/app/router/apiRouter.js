@@ -1,10 +1,10 @@
 const { processFileReadyEvent } = require('../service/messageService');
 const { validateBody } = require('../middleware/validator/schemaValidator');
+const AppError = require('../utils/appError');
 
 
 exports.route = async (event) => {
-    console.log('ROUTER EVENT:', JSON.stringify(event));
-
+    console.log('ROUTING EVENT:', JSON.stringify(event));
     const { httpMethod, resource, body } = event;
 
     if (httpMethod === 'POST' && resource === '/pn-portfat-in/file-ready-event') {
@@ -13,33 +13,19 @@ exports.route = async (event) => {
             parsedBody = JSON.parse(body ?? '{}');
         } catch (err) {
             console.log('Invalid JSON received:', body, err.message);
-            return {
-                statusCode: 400,
-                body: JSON.stringify({ message: `Invalid JSON: ${err.message}` })
-            };
+            throw new AppError(400, `Invalid JSON: ${err.message}`);
         }
-        try {
-            validateBody(parsedBody);
 
-            const result = await processFileReadyEvent(parsedBody);
+        validateBody(parsedBody);
 
-            if (result.success) {
-                return {
-                    statusCode: 202,
-                    body: JSON.stringify({ message: 'Request accepted' })
-                };
-            } else {
-                return {
-                    statusCode: 500,
-                    body: JSON.stringify({ message: 'Internal error' })
-                };
-            }
-        } catch (err) {
-            console.log('Error processing request:', err);
+        const result = await processFileReadyEvent(parsedBody);
+        if (result.success) {
             return {
-                statusCode: 500,
-                body: JSON.stringify({ message: 'Internal server error', error: err.message })
+                statusCode: 202,
+                body: JSON.stringify({ message: 'Request accepted' })
             };
+        } else {
+            throw new AppError(500, 'Internal error while processing request');
         }
     }
 
@@ -50,8 +36,5 @@ exports.route = async (event) => {
         };
     }
 
-    return {
-        statusCode: 404,
-        body: JSON.stringify({ message: 'Route not found' })
-    };
+    throw new AppError(404, 'Route not found');
 };

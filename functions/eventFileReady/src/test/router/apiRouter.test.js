@@ -1,6 +1,7 @@
 const { expect } = require('chai');
 const sinon = require('sinon');
 const proxyquire = require('proxyquire');
+const AppError = require('../../app/utils/appError');
 
 const processFileReadyEventStub = sinon.stub().resolves({ success: true });
 const validateBodyStub = sinon.stub().returns(true);
@@ -14,23 +15,27 @@ const routerModule = proxyquire('../../app/router/apiRouter', {
 
 const { route } = routerModule;
 
-
 describe('apiRouter route handler', () => {
 
     afterEach(() => {
         sinon.restore();
     });
 
-    it('Should return 400 for invalid JSON', async () => {
+    it('Should throw 400 for invalid JSON', async () => {
         const event = {
             httpMethod: 'POST',
             resource: '/pn-portfat-in/file-ready-event',
             body: '{invalid-json}'
         };
 
-        const response = await route(event);
-        expect(response.statusCode).to.equal(400);
-        expect(JSON.parse(response.body)).to.deep.equal({ message: 'Invalid JSON: Expected property name or \'}\' in JSON at position 1' });
+        try {
+            await route(event);
+            throw new Error('Expected route() to throw an error');
+        } catch (error) {
+            expect(error).to.be.instanceOf(AppError);
+            expect(error.statusCode).to.equal(400);
+            expect(error.message).to.contain('Invalid JSON:');
+        }
     });
 
     it('Should call validateBody and processFileReadyEvent for valid event', async () => {
@@ -64,15 +69,19 @@ describe('apiRouter route handler', () => {
         expect(JSON.parse(response.body)).to.deep.equal({ status: 'Ok' });
     });
 
-    it('Should return 404 for unknown routes', async () => {
+    it('Should throw 404 for unknown routes', async () => {
         const event = {
             httpMethod: 'GET',
             resource: '/wrong-route'
         };
 
-        const response = await route(event);
-
-        expect(response.statusCode).to.equal(404);
-        expect(JSON.parse(response.body)).to.deep.equal({ message: 'Route not found' });
+        try {
+            await route(event);
+            throw new Error('Expected route() to throw an error');
+        } catch (error) {
+            expect(error).to.be.instanceOf(AppError);
+            expect(error.statusCode).to.equal(404);
+            expect(error.message).to.equal('Route not found');
+        }
     });
 });
