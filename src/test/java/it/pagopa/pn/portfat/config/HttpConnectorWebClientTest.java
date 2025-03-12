@@ -35,7 +35,7 @@ class HttpConnectorWebClientTest {
         mockServer = ClientAndServer.startClientAndServer(1585);
         // Mock di WebClient.Builder
         WebClient.Builder webClientBuilder = mock(WebClient.Builder.class);
-        WebClient webClient = WebClient.builder().baseUrl("http://localhost:1080").build();
+        WebClient webClient = WebClient.builder().baseUrl("http://localhost:1585").build();
         // Configura il mock per restituire il WebClient
         when(webClientBuilder.build()).thenReturn(webClient);
         // Inizializza HttpConnectorWebClient con il builder mockato
@@ -58,7 +58,7 @@ class HttpConnectorWebClientTest {
 
         Path tempFile = Files.createTempFile("test", ".zip");
 
-        Mono<Void> result = httpConnectorWebClient.downloadFileAsByteArray("http://localhost:1080/test.zip", tempFile);
+        Mono<Void> result = httpConnectorWebClient.downloadFileAsByteArray("http://localhost:1585/test.zip", tempFile);
         result.block(); // Esegui e attendi il completamento
 
         // Verifica che il file sia stato scritto
