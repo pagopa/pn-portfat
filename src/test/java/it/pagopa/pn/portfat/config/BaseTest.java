@@ -14,6 +14,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.cloud.function.context.config.ContextFunctionCatalogAutoConfiguration;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 
 @Slf4j
@@ -21,11 +22,11 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 @Import(LocalStackTestConfig.class)
+@Testcontainers
 public abstract class BaseTest {
 
     @MockBean
     private SpringAnalyzer springAnalyzer;
-
 
     /**
      * Subclasses need to be annotated with:

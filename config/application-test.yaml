@@ -6,6 +6,7 @@ aws:
   region-code: us-east-1
   profile-name: ${PN_AWS_PROFILE_NAME:default}
   endpoint-url: http://localhost:4566
+  dynamodbPrtFatTable: PortFatDownload
 
 cloud:
   aws:
