@@ -29,7 +29,7 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
-class QueueListenerTest extends BaseTest {
+class QueueListenerTest extends BaseTest.WithLocalStack {
 
     @Autowired
     private QueueListener queueListener;
