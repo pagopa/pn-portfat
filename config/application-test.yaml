@@ -1,3 +1,7 @@
+mockserver:
+  bean:
+    port: 1050
+
 pn:
   portfat:
     queue: local-pn-portfat-inputs-requests.fifo

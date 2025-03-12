@@ -1,13 +1,5 @@
 package it.pagopa.pn.portfat;
 
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.client.builder.AwsClientBuilder;
-import com.amazonaws.services.kms.AWSKMS;
-import com.amazonaws.services.kms.AWSKMSClientBuilder;
-import com.amazonaws.services.kms.model.CreateKeyRequest;
-import com.amazonaws.services.kms.model.CreateKeyResult;
-import com.amazonaws.services.kms.model.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.core.io.ClassPathResource;
@@ -26,6 +18,7 @@ import static org.testcontainers.containers.localstack.LocalStackContainer.Servi
  * Classe che permette di creare un container Docker di LocalStack.
  * Il container (e quindi la classe) può essere condivisa tra più classi di test.
  * Per utilizzare questa classe, le classi di test dovranno essere annotate con
+ *
  * @Import(LocalStackTestConfig.class)
  */
 @TestConfiguration
@@ -46,7 +39,6 @@ public class LocalStackTestConfig {
 
     static {
         localStack.start();
-        System.setProperty("aws.kms.keyId", kmsKeyCreation(localStack));
         System.setProperty("aws.endpoint-url", localStack.getEndpointOverride(DYNAMODB).toString());
 
         try {
@@ -55,32 +47,6 @@ public class LocalStackTestConfig {
             throw new RuntimeException(e);
         }
 
-    }
-    public static String kmsKeyCreation(LocalStackContainer localstack) {
-        AWSKMS awskms = AWSKMSClientBuilder
-                .standard()
-                .withEndpointConfiguration(
-                        new AwsClientBuilder.EndpointConfiguration(
-                                localstack.getEndpointOverride(LocalStackContainer.Service.KMS).toString(),
-                                localstack.getRegion()
-                        )
-                )
-                .withCredentials(
-                        new AWSStaticCredentialsProvider(
-                                new BasicAWSCredentials(localstack.getAccessKey(), localstack.getSecretKey())
-                        )
-                )
-                .build();
-
-        Tag createdByTag = new Tag()
-                .withTagKey("CreatedBy")
-                .withTagValue("StorageService");
-        CreateKeyRequest req = new CreateKeyRequest()
-                .withDescription("AWS CMK Description")
-                .withTags(createdByTag);
-        CreateKeyResult key = awskms.createKey(req);
-        log.info("Arn : {}", key.getKeyMetadata().getArn());
-        return key.getKeyMetadata().getArn();
     }
 
 }

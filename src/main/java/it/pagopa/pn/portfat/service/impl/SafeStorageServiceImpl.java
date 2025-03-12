@@ -9,9 +9,13 @@ import it.pagopa.pn.portfat.service.SafeStorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Base64Utils;
 import reactor.core.publisher.Mono;
 
+import java.security.MessageDigest;
+
 import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.CREATION_FILE_SS_ERROR;
+import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.SHA256_ERROR;
 
 @Component
 @Slf4j
@@ -24,14 +28,29 @@ public class SafeStorageServiceImpl implements SafeStorageService {
     @Override
     public Mono<String> createAndUploadContent(FileCreationWithContentRequest fileCreationRequest, String sha256) {
         log.info("Start createAndUploadFile - documentType={} fileSize={}", fileCreationRequest.getDocumentType(), fileCreationRequest.getContent().length);
-
-        return safeStorageClient.createFile(fileCreationRequest, sha256)
+        var computeSha256 = computeSha256(fileCreationRequest.getContent());
+        return safeStorageClient.createFile(fileCreationRequest, computeSha256)
                 .onErrorResume(exception -> {
                     log.error("Cannot create file ", exception);
                     return Mono.error(new PnGenericException(CREATION_FILE_SS_ERROR, CREATION_FILE_SS_ERROR.getMessage() + exception.getMessage()));
                 })
-                .flatMap(fileCreationResponse -> httpConnector.uploadContent(fileCreationRequest, fileCreationResponse, sha256)
+                .flatMap(fileCreationResponse -> httpConnector.uploadContent(fileCreationRequest, fileCreationResponse, computeSha256)
                         .thenReturn(fileCreationResponse))
-                .map(FileCreationResponseDto::getKey);
+                .map(FileCreationResponseDto::getKey)
+                .doOnNext(s -> log.info("End createAndUploadFile - {}", s));
+    }
+
+    private static String computeSha256(byte[] content) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] encodedHash = digest.digest(content);
+            return bytesToBase64(encodedHash);
+        } catch (Exception exc) {
+            throw new PnGenericException(SHA256_ERROR, exc.getMessage());
+        }
+    }
+
+    private static String bytesToBase64(byte[] hash) {
+        return Base64Utils.encodeToString(hash);
     }
 }

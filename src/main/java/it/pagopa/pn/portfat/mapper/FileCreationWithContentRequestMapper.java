@@ -18,9 +18,9 @@ public class FileCreationWithContentRequestMapper {
 
     static final String SEND_SERVICE_ORDER = "SEND_SERVICE_ORDER";
     static final String SAVED_STATUS = "SAVED";
-    static final String SENDER_PA_ID = "senderPaId";
-    static final String REFERENCE_PERIOD = "referencePeriod";
-    static final String ORIGINAL_DATA_UPDATE = "originalDataUpdateTimestamp";
+    static final String SENDER_PA_ID = "sender_pa_id";
+    static final String REFERENCE_PERIOD = "reference_period_year_month";
+    static final String ORIGINAL_DATA_UPDATE = "original_data_update_timestamp";
     static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm.ssX");
 
     public static FileCreationWithContentRequest mapper(byte[] bytesPdf, PortaleFatturazioneModel model) {
