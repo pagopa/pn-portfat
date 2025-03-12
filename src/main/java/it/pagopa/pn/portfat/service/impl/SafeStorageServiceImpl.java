@@ -26,7 +26,7 @@ public class SafeStorageServiceImpl implements SafeStorageService {
     private final HttpConnector httpConnector;
 
     @Override
-    public Mono<String> createAndUploadContent(FileCreationWithContentRequest fileCreationRequest, String sha256) {
+    public Mono<String> createAndUploadContent(FileCreationWithContentRequest fileCreationRequest) {
         log.info("Start createAndUploadFile - documentType={} fileSize={}", fileCreationRequest.getDocumentType(), fileCreationRequest.getContent().length);
         var computeSha256 = computeSha256(fileCreationRequest.getContent());
         return safeStorageClient.createFile(fileCreationRequest, computeSha256)

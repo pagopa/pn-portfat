@@ -101,7 +101,7 @@ class PortFatServiceImplTest {
 
         when(portFatDownloadDAO.updatePortFatDownload(any()))
                 .thenReturn(Mono.just(portFatDownload));
-        when(safeStorageService.createAndUploadContent(any(), any()))
+        when(safeStorageService.createAndUploadContent(any()))
                 .thenReturn(Mono.just("TRDTYO"));
 
         StepVerifier.create(portFatService.processZipFile(portFatDownload))
@@ -111,7 +111,7 @@ class PortFatServiceImplTest {
         // Act - Assert
         verify(webClient, times(1)).downloadFileAsByteArray(anyString(), any());
         verify(portFatDownloadDAO, times(1)).updatePortFatDownload(any());
-        verify(safeStorageService, times(1)).createAndUploadContent(any(), anyString());
+        verify(safeStorageService, times(1)).createAndUploadContent(any());
     }
 
     @Test

@@ -85,15 +85,10 @@ public class PortFatServiceImpl implements PortFatService {
         log.info("Processing file: {} in folder: {}", file, parentDirectoryName);
         return Mono.fromCallable(() -> convertToObject(file.toFile(), PortaleFatturazioneModel.class))
                 .flatMap(portaleFatturazioneModel ->
-                        Mono.zip(
-                                        Mono.fromCallable(() -> computeSHA256(file)),
-                                        Mono.fromCallable(() -> jsonToByteArray(portaleFatturazioneModel))
-                                )
-                                .flatMap(tuple -> {
-                                    String sha256 = tuple.getT1();
-                                    byte[] jsonToByteArray = tuple.getT2();
+                        Mono.just(jsonToByteArray(portaleFatturazioneModel))
+                                .flatMap(jsonToByteArray -> {
                                     FileCreationWithContentRequest fileCreationRequest = mapper(jsonToByteArray, portaleFatturazioneModel);
-                                    return safeStorageService.createAndUploadContent(fileCreationRequest, sha256);
+                                    return safeStorageService.createAndUploadContent(fileCreationRequest);
                                 })
                 )
                 .onErrorResume(e -> {
