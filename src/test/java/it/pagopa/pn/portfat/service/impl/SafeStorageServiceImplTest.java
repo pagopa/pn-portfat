@@ -63,14 +63,13 @@ class SafeStorageServiceImplTest {
                 .uploadContent(eq(fileCreationRequest), eq(fileCreationResponseDto), eq(sha256));
     }
 
-    //@Test
+    @Test
     void testCreateAndUploadContentThrowsPnGenericException() {
         // Prepara i dati per il test
         FileCreationWithContentRequest fileCreationRequest = new FileCreationWithContentRequest();
         fileCreationRequest.setDocumentType("pdf");
         fileCreationRequest.setContent("fake content".getBytes());
-
-        String sha256 = "fake-sha256-hash";
+        String sha256 = "mLGuRQWbAEF4qO7gwfYXnc6hOcD9imnuR6bwLZevHxc=";
 
         // Crea una risposta errore per safeStorageClient
         when(safeStorageClient.createFile(eq(fileCreationRequest), eq(sha256)))
@@ -81,7 +80,7 @@ class SafeStorageServiceImplTest {
 
         // Verifica che l'eccezione venga sollevata
         PnGenericException exception = assertThrows(PnGenericException.class, result::block);
-        assertEquals("CREATION_FILE_SS_ERROR", exception.getMessage());
+        assertEquals("Error in file creation flow, save storage: Error creating file", exception.getMessage());
 
         // Verifica che i metodi siano stati chiamati con gli argomenti corretti
         verify(safeStorageClient, times(1)).createFile(eq(fileCreationRequest), eq(sha256));
