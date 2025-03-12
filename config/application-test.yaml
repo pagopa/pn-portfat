@@ -1,0 +1,21 @@
+mockserver:
+  bean:
+    port: 1050
+
+pn:
+  portfat:
+    queue: local-pn-portfat-inputs-requests.fifo
+
+aws:
+  region-code: us-east-1
+  profile-name: ${PN_AWS_PROFILE_NAME:default}
+  endpoint-url: http://localhost:4566
+  dynamodbPrtFatTable: PortFatDownload
+
+cloud:
+  aws:
+    region:
+      static: us-east-1
+    credentials:
+      access-key: test
+      secret-key: test

@@ -24,11 +24,78 @@ Parameters:
     Type: String
     Description: 'Where to send CDC'
 
+  PortFatDownloadTableName:
+    Description: Name of dynamodb table containing Downloads files
+    Value: !Ref PortFatDownloadTable
+
+  PortFatSqsInputRequestsName:
+    Description: Name of dynamodb table containing Downloads files
+    Value: !Ref PortFatInputRequestsSqs
+
 Resources:
-    NullResource:
-        Type: AWS::CloudFormation::WaitConditionHandle
+  # Internal queues
+  PortFatInputRequestsSqs:
+    Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/sqs-queue.yaml"
+      Parameters:
+        QueueName: !Sub '${ProjectName}-portfat-input-requests'
+        AlarmSNSTopicName: !Ref AlarmSNSTopicName
+        VisibilityTimeout: 60
+        MaxReceiveCount: 10
+        DelaySeconds: 1
+        FifoQueue: true
+
+  PortFatDownloadTable:
+    Type: AWS::DynamoDB::Table
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      TableName: !Sub '${ProjectName}-PortFatDownload'
+      AttributeDefinitions:
+        - AttributeName: "downloadId"
+          AttributeType: "S"
+        - AttributeName: "downloadUrl"
+          AttributeType: "S"
+        - AttributeName: "fileVersion"
+          AttributeType: "S"
+        - AttributeName: "sha256"
+          AttributeType: "S"
+        - AttributeName: "sha256"
+          AttributeType: "S"
+        - AttributeName: "status"
+          AttributeType: "S"
+        - AttributeName: "createdAt"
+          AttributeType: "S"
+        - AttributeName: "updatedAt"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "downloadId"
+          KeyType: "HASH"
+      BillingMode: "PAY_PER_REQUEST"
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
 
 Outputs:
     SampleOutput:
       Description: A Sample Output
       Value: 'na'
+
+  # Scheduled Actions
+    PortFatSqsInputRequestsName:
+      Value: !GetAtt PortFatInputRequestsSqs.Outputs.QueueName
+      Description: pn-portfact queue name
+    PortFatSqsInputRequestsURL:
+      Value: !GetAtt PortFatInputRequestsSqs.Outputs.QueueURL
+      Description: pn-portfact queue URL
+    PortFatSqsInputRequestsARN:
+      Value: !GetAtt PortFatInputRequestsSqs.Outputs.QueueARN
+      Description: pn-portfact queue ARN
+    PortFatSqsInputRequestsAlarmARN:
+      Value: !GetAtt PortFatInputRequestsSqs.Outputs.SqsDLQAlarmArn
+      Description: pn-portfact queue dlq alarm queue
+    PortFatSqsInputRequestsAgeAlarmARN:
+      Value: !GetAtt PortFatInputRequestsSqs.Outputs.SqsAgeAlarmArn
+      Description: pn-portfact queue age alarm ARN

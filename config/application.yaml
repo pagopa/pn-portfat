@@ -1,0 +1,37 @@
+logging:
+  config: config/logback-local.xml
+server:
+  port: 8099
+
+pn:
+  env:
+    runtime: DEVELOPMENT
+  portfat:
+    queue: local-pn-portfat-inputs-requests.fifo
+    blobStorageBaseUrl: https://storage.portalefatturazione.pagopa.it
+    filePathWhiteList: temp, portfatt, port-fatt
+    basePathZipFiele: port-fat-zips
+    zipExtension: .zip
+    clientSafeStorageBasePath: http://localhost:8889
+    safeStorageCxId: pn-portfat-in
+
+  # Technology activation
+  middleware:
+    init:
+      kafka: false
+      aws: true
+
+# AWS specific configurations
+aws:
+  region-code: us-east-1
+  profile-name: ${PN_AWS_PROFILE_NAME:default}
+  endpoint-url: http://localhost:4566
+  dynamodbPrtFatTable: PortFatDownload
+
+cloud:
+  aws:
+    credentials.profile-name: ${PN_AWS_PROFILE_NAME:default}
+    region.static: us-east-1
+    sqs.endpoint: http://localhost:4566
+
+
