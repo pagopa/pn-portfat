@@ -31,7 +31,7 @@ public class FileCreationWithContentRequestMapper {
         request.setContent(bytesPdf);
         Map<String, List<String>> tags = new HashMap<>();
         tags.put(SENDER_PA_ID, List.of(model.getFkIdEnte()));
-        tags.put(REFERENCE_PERIOD, List.of(model.getAnnoValidita() + monthFormatter(model.getMeseValidita())));
+        tags.put(REFERENCE_PERIOD, List.of(model.getAnnoValidita() +"-"+ monthFormatter(model.getMeseValidita())));
 
         // TODO ORIGINAL_DATA_UPDATE
         tags.put(ORIGINAL_DATA_UPDATE, List.of(ZonedDateTime.now().format(formatter)));
