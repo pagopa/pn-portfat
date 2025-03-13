@@ -1,37 +1,18 @@
-const scanner = require("sonarqube-scanner").default;
-
 const options = {
     "sonar.organization": "pagopa",
     "sonar.projectKey": "pagopa_pn-portfat_eventfileready",
 };
-
 if (process.env.PR_NUM) {
     options["sonar.pullrequest.base"] = process.env.BRANCH_TARGET;
     options["sonar.pullrequest.branch"] = process.env.BRANCH_NAME;
     options["sonar.pullrequest.key"] = process.env.PR_NUM;
 }
+const scanner = require("sonarqube-scanner");
 
-(async () => {
-    try {
-        await new Promise((resolve, reject) => {
-            scanner(
-                {
-                    serverUrl: "https://sonarcloud.io",
-                    options: options,
-                },
-                (error) => {
-                    if (error) {
-                        reject(error);
-                    } else {
-                        console.log("SonarQube Scanner execution completed.");
-                        resolve();
-                    }
-                }
-            );
-        });
-        process.exit(0);
-    } catch (error) {
-        console.error("SonarQube Scanner failed:", error);
-        process.exit(1);
-    }
-})();
+scanner(
+    {
+        serverUrl: "https://sonarcloud.io",
+        options: options,
+    },
+    () => process.exit()
+);
