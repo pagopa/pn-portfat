@@ -5,6 +5,13 @@ mockserver:
 pn:
   portfat:
     queue: local-pn-portfat-inputs-requests.fifo
+    blobStorageBaseUrl: http://localhost:1050
+    filePathWhiteList: temp, portfatt, port-fatt
+    basePathZipFiele: port-fat-zips
+    zipExtension: .zip
+    clientSafeStorageBasePath: http://localhost:${mockserver.bean.port}
+    safeStorageCxId: pn-portfat-in
+    zipIntegrationTest: portFatt.zip
 
 aws:
   region-code: us-east-1
