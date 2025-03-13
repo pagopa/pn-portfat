@@ -16,7 +16,7 @@ public class FileCreationWithContentRequestMapper {
         throw new IllegalCallerException();
     }
 
-    static final String SEND_SERVICE_ORDER = "SEND_SERVICE_ORDER";
+    static final String PN_SERVICE_ORDER = "PN_SERVICE_ORDER";
     static final String SAVED_STATUS = "SAVED";
     static final String SENDER_PA_ID = "sender_pa_id";
     static final String REFERENCE_PERIOD = "reference_period_year_month";
@@ -26,7 +26,7 @@ public class FileCreationWithContentRequestMapper {
     public static FileCreationWithContentRequest mapper(byte[] bytesPdf, PortaleFatturazioneModel model) {
         FileCreationWithContentRequest request = new FileCreationWithContentRequest();
         request.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        request.setDocumentType(SEND_SERVICE_ORDER);
+        request.setDocumentType(PN_SERVICE_ORDER);
         request.setStatus(SAVED_STATUS);
         request.setContent(bytesPdf);
         Map<String, List<String>> tags = new HashMap<>();
