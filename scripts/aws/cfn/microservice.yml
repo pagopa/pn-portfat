@@ -252,14 +252,14 @@ Parameters:
       - false
     Description: 'Enables retry of the notification validation in case of SafeStorage 404 error'
 
-  InvoicingServiceIP:
+  InvoicingServiceIPCidrs:
     Type: String
-    Description: 'IP of invoicing service'
+    Description: 'IPs of invoicing service'
 
   PortfatWafLimit:
     Default: 6000
     Type: Number
-    Description: web waf limit
+    Description: WAF limit
 
 Resources:
   PortFatMicroservice:
@@ -350,7 +350,7 @@ Resources:
       Parameters:
         MicroServiceUniqueName: !Sub '${ProjectName}-portfat'
         IntendedUsage: CN_BE
-        DnsName: !Ref WebApiDnsName
+        DnsName: !Ref ApiDnsName
         ProjectName: !Ref ProjectName
         ServiceApiPath: 'pn-portfat-in'
         NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
@@ -558,4 +558,3 @@ Resources:
 Outputs:
   Version:
     Value: !Ref Version
->>>>>>> feature/PN-14045
