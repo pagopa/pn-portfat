@@ -30,7 +30,7 @@ class HttpConnectorWebClientTest {
     private HttpConnectorWebClient httpConnectorWebClient;
 
     @BeforeEach
-    public void init() {
+    void init() {
         mockServer = ClientAndServer.startClientAndServer(1585);
         // Mock di WebClient.Builder
         WebClient.Builder webClientBuilder = mock(WebClient.Builder.class);

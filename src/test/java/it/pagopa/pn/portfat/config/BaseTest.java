@@ -34,18 +34,18 @@ public abstract class BaseTest {
         private MockServerBean mockServer;
 
         @BeforeEach
-        public void init() {
+        void init() {
             log.info(this.getClass().getSimpleName());
             setExpection(this.getClass().getSimpleName() + ".json");
         }
 
         @AfterEach
-        public void kill() {
+        void kill() {
             log.info("Killed");
             this.mockServer.stop();
         }
 
-        public void setExpection(String file) {
+        void setExpection(String file) {
             this.mockServer.initializationExpection(file);
         }
     }
