@@ -2,7 +2,6 @@ package it.pagopa.pn.portfat.utils;
 
 import it.pagopa.pn.portfat.exception.PnGenericException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import reactor.core.publisher.Mono;
 
 import java.io.File;
@@ -90,6 +89,10 @@ public class ZipUtility {
     }
 
     private static void writeFileContent(ZipFile zipFile, ZipEntry zipEntry, File destFile) throws IOException {
+        File file = new File(destFile, zipEntry.getName());
+        if (!file.toPath().normalize().startsWith(destFile.toPath())) {
+            throw new PnGenericException(ZIP_ERROR, "Bad zip entry: " + zipEntry.getName());
+        }
         try (InputStream is = zipFile.getInputStream(zipEntry);
              FileOutputStream fos = new FileOutputStream(destFile)) {
             byte[] buffer = new byte[4096];
