@@ -43,9 +43,6 @@ public class QueueListenerTestIT extends BaseTest.WithMockServer {
     @Value("${pn.portfat.queue}")
     private String QUEUE_NAME;
 
-    @Value("${pn.portfat.zipIntegrationTest}")
-    private String fileZipIntegrationTest;
-
     private static final String MESSAGE_GROUP_ID = "port-fat_1";
 
     private final AtomicReference<Mono<Void>> processingMonoRef = new AtomicReference<>();
@@ -65,7 +62,7 @@ public class QueueListenerTestIT extends BaseTest.WithMockServer {
         String queueUrl = amazonSQS.getQueueUrl(QUEUE_NAME).getQueueUrl();
 
         FileReadyEvent event = new FileReadyEvent();
-        event.setDownloadUrl(blobStorageBaseUrl + "/portfatt/invoices/" + fileZipIntegrationTest);
+        event.setDownloadUrl(blobStorageBaseUrl + "/portfatt/invoices/portFatt.zip");
         event.setFileVersion("1.0");
 
         String messageBody = objectMapper.writeValueAsString(event);
