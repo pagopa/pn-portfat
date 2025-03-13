@@ -34,9 +34,6 @@ class QueueListenerTestIT extends BaseTest.WithMockServer {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private WebClientTestConfig webClientTestConfig;
-
-    @Autowired
     private PortFatDownloadDAO portFatDownloadDAO;
 
     @SpyBean
