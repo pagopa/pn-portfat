@@ -75,6 +75,15 @@ Parameters:
     Type: String
     Description: 'Name of SQS that contain file input request'
 
+  InvoicingServiceIP:
+    Type: String
+    Description: 'IP of invoicing service'
+
+  PortfatWafLimit:
+    Default: 6000
+    Type: Number
+    Description: web waf limit
+
 Resources:
   # PN-TemplateBeMs microservice
   TemplateBeMsMicroservice:
@@ -98,3 +107,40 @@ Resources:
         CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
         DynamoDBTableNames:
           - !Ref PortFatDownloadTableName
+
+  PnPortfatAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service-openapi.yaml"
+      Parameters:
+        MicroServiceUniqueName: !Sub '${ProjectName}-portfat'
+        IntendedUsage: TBD
+        DnsName: !Ref WebApiDnsName
+        ProjectName: !Ref ProjectName
+        ServiceApiPath: 'pn-portfat-in'
+        NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
+        ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
+        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
+        CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
+        OpenApiBucketName: !Ref MicroserviceBucketName
+        OpenApiBucketKey: !Sub ${MicroserviceBucketBaseKey}/docs/openapi/pn-internal-portfat-v1.yaml
+
+  PortfatApiWaf:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-waf-acl.yaml"
+      Parameters:
+        WAFName: !Sub '${ProjectName}-portfat'
+        IntendedUsage: TBD
+        APIGatewayARNs: !GetAtt PnPortfatAPI.Outputs.APIGatewayARN
+        Limit: !Ref WebWafLimitPortfat # disable IP limit based rule
+        AllowedCidrs: !Ref InvoicingServiceIP
+
+   CNUsagePlan:
+    Type: 'AWS::ApiGateway::UsagePlan'
+    Properties:
+      UsagePlanName: PORTFAT
+      ApiStages:
+        - ApiId: !GetAtt PnPortfatAPI.Outputs.RestApiId
+          Stage: unique
+      Description: Usage Plan for pn-portfat
