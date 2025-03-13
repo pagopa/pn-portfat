@@ -65,7 +65,7 @@ class ZipUtilityTest {
         StepVerifier.create(ZipUtility.unzip(zipFile.toString(), tempDir.toString()))
                 .expectErrorMatches(throwable ->
                         throwable instanceof PnGenericException &&
-                                throwable.getMessage().contains("No JSON files found"))
+                                throwable.getMessage().contains("JSONS not found in the ZIP file"))
                 .verify();
     }
 
@@ -84,7 +84,7 @@ class ZipUtilityTest {
         StepVerifier.create(ZipUtility.unzip(invalidZipFile.toString(), tempDir.toString()))
                 .expectErrorMatches(throwable ->
                         throwable instanceof PnGenericException &&
-                                throwable.getMessage().contains("No JSON files found in the ZIP archive"))
+                                throwable.getMessage().contains("Error processing ZIP file: zip END header not found"))
                 .verify();
     }
 

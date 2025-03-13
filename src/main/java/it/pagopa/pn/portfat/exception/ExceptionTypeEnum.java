@@ -16,7 +16,7 @@ public enum ExceptionTypeEnum {
     SHA256_ERROR("SHA256_ERROR", "Failed to create SHA-256: "),
     CREATION_FILE_SS_ERROR("CREATION_FILE_SS_ERROR", "Error in file creation flow, save storage: "),
     CONVERT_TO_JSON_ERROR("SHA256_ERROR", "Failed convert to JSON: "),
-    ZIP_NOT_FOND("ZIP_NOT_FOND", "JSONS not found in the ZIP file: ");
+    JSONS_NOT_FOND_IN_ZIP("JSONS_NOT_FOND_IN_ZIP", "JSONS not found in the ZIP file: ");
 
     private final String title;
     private final String message;
