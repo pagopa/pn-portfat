@@ -70,7 +70,7 @@ public class ZipUtility {
     private static void saveZipEntry(ZipFile zipFile, ZipEntry zipEntry, String destDirectory) throws IOException {
         File destFile = new File(destDirectory, sanitizeEntryName(zipEntry.getName()));
         writeFileContent(zipFile, zipEntry, destFile);
-        log.info("Extracted JSON: {}", destFile.getAbsolutePath());
+        log.info("Extracted JSON: {}", destFile.getName());
     }
 
     private static String sanitizeEntryName(String entryName) {
