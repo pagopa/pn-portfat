@@ -69,11 +69,6 @@ public class ZipUtility {
 
     private static void saveZipEntry(ZipFile zipFile, ZipEntry zipEntry, String destDirectory) throws IOException {
         File destFile = new File(destDirectory, sanitizeEntryName(zipEntry.getName()));
-
-        if (!isValidPath(destFile, new File(destDirectory))) {
-            throw new PnGenericException(ZIP_ERROR, "Potential Zip Slip detected: " + zipEntry.getName());
-        }
-
         writeFileContent(zipFile, zipEntry, destFile);
         log.info("Extracted JSON: {}", destFile.getAbsolutePath());
     }
@@ -84,9 +79,6 @@ public class ZipUtility {
                 .replace("\\", File.separator);
     }
 
-    private static boolean isValidPath(File newFile, File destDir) throws IOException {
-        return newFile.getCanonicalPath().startsWith(destDir.getCanonicalPath());
-    }
 
     private static void writeFileContent(ZipFile zipFile, ZipEntry zipEntry, File destFile) throws IOException {
         File file = new File(destFile, zipEntry.getName());
