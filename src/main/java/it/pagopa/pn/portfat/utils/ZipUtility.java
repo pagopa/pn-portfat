@@ -2,7 +2,6 @@ package it.pagopa.pn.portfat.utils;
 
 import it.pagopa.pn.portfat.exception.PnGenericException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import reactor.core.publisher.Mono;
 
 import java.io.File;
@@ -51,10 +50,15 @@ public class ZipUtility {
 
     private static boolean extractJsonFiles(ZipFile zipFile, String destDirectory) throws IOException {
         boolean foundJson = false;
-        Enumeration<ZipEntry> entries = (Enumeration<ZipEntry>) zipFile.entries();
+        Enumeration<? extends ZipEntry> entries = zipFile.entries();
         while (entries.hasMoreElements()) {
             ZipEntry zipEntry = entries.nextElement();
-
+            // Controllo del path traversal (zip slip) per evitare l'estrazione in posizioni indesiderate
+            File destFile = new File(destDirectory, sanitizeEntryName(zipEntry.getName()));
+            // Verifica se il file estratto si trova effettivamente all'interno della directory di destinazione
+            if (!destFile.toPath().normalize().startsWith(destDirectory)) {
+                throw new IOException("Path traversal attempt: " + destDirectory);
+            }
             if (!zipEntry.isDirectory() && zipEntry.getName().endsWith(".json")) {
                 foundJson = true;
                 saveZipEntry(zipFile, zipEntry, destDirectory);
@@ -65,13 +69,8 @@ public class ZipUtility {
 
     private static void saveZipEntry(ZipFile zipFile, ZipEntry zipEntry, String destDirectory) throws IOException {
         File destFile = new File(destDirectory, sanitizeEntryName(zipEntry.getName()));
-
-        if (!isValidPath(destFile, new File(destDirectory))) {
-            throw new PnGenericException(ZIP_ERROR, "Potential Zip Slip detected: " + zipEntry.getName());
-        }
-
         writeFileContent(zipFile, zipEntry, destFile);
-        log.info("Extracted JSON: {}", destFile.getAbsolutePath());
+        log.info("Extracted JSON: {}", destFile.getName());
     }
 
     private static String sanitizeEntryName(String entryName) {
@@ -80,11 +79,12 @@ public class ZipUtility {
                 .replace("\\", File.separator);
     }
 
-    private static boolean isValidPath(File newFile, File destDir) throws IOException {
-        return newFile.getCanonicalPath().startsWith(destDir.getCanonicalPath());
-    }
 
     private static void writeFileContent(ZipFile zipFile, ZipEntry zipEntry, File destFile) throws IOException {
+        File file = new File(destFile, zipEntry.getName());
+        if (!file.toPath().normalize().startsWith(destFile.toPath())) {
+            throw new PnGenericException(ZIP_ERROR, "Bad zip entry: " + zipEntry.getName());
+        }
         try (InputStream is = zipFile.getInputStream(zipEntry);
              FileOutputStream fos = new FileOutputStream(destFile)) {
             byte[] buffer = new byte[4096];

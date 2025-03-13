@@ -11,9 +11,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -82,6 +82,25 @@ class SafeStorageServiceImplTest {
 
         // Verifica che i metodi siano stati chiamati con gli argomenti corretti
         verify(safeStorageClient, times(1)).createFile(fileCreationRequest, sha256);
+    }
+
+    @Test
+    void shouldReturnErrorWhenSafeStorageClientFails() {
+        when(safeStorageClient.createFile(any(), anyString()))
+                .thenReturn(Mono.error(new RuntimeException("Storage error")));
+        byte[] content = "Test content".getBytes();
+
+        FileCreationWithContentRequest fileCreationRequest = new FileCreationWithContentRequest();
+        fileCreationRequest.setContent(content);
+        fileCreationRequest.setDocumentType("DOC_TYPE");
+
+        StepVerifier.create(safeStorageService.createAndUploadContent(fileCreationRequest))
+                .expectErrorMatches(e -> e instanceof PnGenericException &&
+                        e.getMessage().contains("Storage error"))
+                .verify();
+
+        verify(safeStorageClient, times(1)).createFile(any(), anyString());
+        verifyNoInteractions(httpConnector);
     }
 
 }

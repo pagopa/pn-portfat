@@ -82,7 +82,7 @@ public class PortFatServiceImpl implements PortFatService {
     }
 
     private Mono<Void> processFile(Path file, String parentDirectoryName) {
-        log.info("Processing file: {} in folder: {}", file, parentDirectoryName);
+        log.info("Processing file: {} in folder: {}", file.getFileName(), parentDirectoryName);
         return Mono.fromCallable(() -> convertToObject(file.toFile(), PortaleFatturazioneModel.class))
                 .flatMap(portaleFatturazioneModel ->
                         Mono.just(jsonToByteArray(portaleFatturazioneModel))
