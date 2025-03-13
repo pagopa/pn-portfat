@@ -1,28 +1,78 @@
 [
   {
     "httpRequest": {
-      "path": "/portfatt/pn-example_it/pn-example_it",
       "method": "GET",
-      "headers": {
-        "Host": [
-          "storage.portalefatturazione.pagopa.it"
-        ]
-      }
+      "path": "/portfatt/invoices/portFatt.zip"
     },
     "httpResponse": {
       "statusCode": 200,
       "headers": {
         "content-type": ["application/zip"],
+        "content-transfer-encoding": ["base64"],
         "content-disposition": ["attachment; filename=\"file.zip\""]
       },
-      "body": "BASE64_ENCODED_ZIP_FILE"
+      "body": "UEsDBBQACAAIAOV4ZloAAAAAAAAAAAAAAAApACAAMDI5ZGNjMTktMWQ1OS00ODFlLTlhNzctOWQ2N2FhYzMxYmMwLmpzb251eAsAAQQAAAAABAAAAABVVA0ABw+syWcPrMln66rJZ32RTU/DMAyG75P2H6qcKbgd7VZuVcukiQ9NbHDiYhKvs+gS1GQcQPx3UljHOgS5RMrzvLYVvw8HgT9iejVTl9qRuAgExJmSMsrCSCVZeD6JKMxwPA4zlY4R5Sh6kiBOdsFca/OANSt26MMxxEmHbsjSIerel8ZhTbnG2lQsjUdwCtCnJVfc3h6OfsFb43jFct2v8YdzUCntK//XPvRnaskvpjDaNehc2y3q0JwaSdptfbRAR5VpGEsvJPu60+eZWjj8iolizVuLj2cLx5v2qZPusGKjaWEkf08mCrPZagoUB3Osa2xo7xZGsaQpW7lTAeI0hRggm+yl44HFPL/+WZq19EoNvrU9PVxhbamDJTq8t9J/2rEm2u2GEIeQiOHg4xNQSwcI09rZ8iEBAAA8AgAAUEsBAhQAFAAIAAgA5XhmWtPa2fIhAQAAPAIAACkAGAAAAAAAAAAAALaBAAAAADAyOWRjYzE5LTFkNTktNDgxZS05YTc3LTlkNjdhYWMzMWJjMC5qc29udXgLAAEEAAAAAAQAAAAAVVQFAAEPrMlnUEsFBgAAAAABAAEAbwAAAJgBAAAAAA=="
     }
   },
   {
     "httpRequest": {
+      "method": "POST",
       "path": "/safe-storage/v1/files",
-      "method": "POST",
-      "body": "{\"contentType\":\"application/pdf\",\"documentType\":\"PN_RADD_FSU_ATTACHMENT\",\"status\":\"PRELOADED\"}"
+      "headers": {
+        "x-pagopa-safestorage-cx-id": ["pn-portfat-in"],
+        "x-checksum-value": ["G5Y2cQMjdWXtEusZLmopR7XM1wxiZj2f1JxyUp1o1RE="],
+        "x-checksum": ["SHA-256"],
+        "Content-Type": ["application/json"],
+        "Accept": ["application/json"]
+      },
+      "body": {
+        "matchType": "JSON_SCHEMA",
+        "jsonSchema": "{\"type\":\"object\",\"properties\":{\"documentType\":{\"type\":\"string\",\"pattern\":\"^PN_SERVICE_ORDER$\"},\"status\":{\"type\":\"string\",\"pattern\":\"^SAVED$\"},\"tags\":{\"type\":\"object\",\"properties\":{\"sender_pa_id\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"pattern\":\"^029dcc19-1d59-481e-9a77-9d67aac31bc0$\"}},\"reference_period_year_month\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"pattern\":\"^2025-02$\"}},\"original_data_update_timestamp\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"pattern\":\".*\"}}},\"required\":[\"sender_pa_id\",\"reference_period_year_month\",\"original_data_update_timestamp\"]},\"content\":{\"type\":\"string\",\"pattern\":\".*\"}},\"required\":[\"documentType\",\"status\",\"tags\",\"content\"]}"
+      }
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+        "content-type": ["application/json"]
+      },
+      "body": {
+        "uploadMethod": "PUT",
+        "uploadUrl": "http://localhost:1050/safe-storage/storage/invoice.json",
+        "secret": "AZ23RF12",
+        "key": "8F7E/9A3B/1234/AB87"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "PUT",
+      "path": "/safe-storage/storage/invoice.json",
+      "headers": {
+        "x-amz-checksum-sha256": ["G5Y2cQMjdWXtEusZLmopR7XM1wxiZj2f1JxyUp1o1RE="],
+        "x-amz-meta-secret": ["AZ23RF12"],
+        "Content-Type": ["application/json"]
+      },
+      "body" : {
+        "FKIdEnte" : "029dcc19-1d59-481e-9a77-9d67aac31bc0",
+        "AnnoValidita" : 2025,
+        "MeseValidita" : 2,
+        "TotaleAnalogico" : 0.0,
+        "TotaleDigitale" : 3.0,
+        "TotaleNotificheAnalogico" : 0,
+        "TotaleNotificheDigitale" : 6,
+        "Totale" : 3.0,
+        "TotaleNotifiche" : 6,
+        "IdTipoContratto" : 1,
+        "PercentualeCategoriaA" : null,
+        "PercentualeCategoriaD" : 50,
+        "FkIdStato" : "Chiusa/Stimato",
+        "Fatturabile" : null,
+        "RagioneSociale" : "Comune di Pallare",
+        "CodiceFiscale" : "00266020098",
+        "TipoContratto" : "PAL",
+        "Asseverazione" : false,
+        "DataUscitaAsseverazione" : "2025-02-05"
+      }
     },
     "httpResponse": {
       "statusCode": 200,
@@ -31,115 +81,7 @@
           "application/json"
         ]
       },
-      "body": "{\"uploadMethod\":\"PUT\",\"uploadUrl\":\"http://localhost:1080/safe-storage/storage/unFile\",\"secret\":\"AZ23RF12\",\"key\":\"8F7E/9A3B/1234/AB87\"}"
-    }
-  },
-  {
-    "httpRequest": {
-      "path": "/safe-storage/v1/files",
-      "method": "POST",
-      "body": "{\"contentType\":\"application/json\",\"documentType\":\"PN_RADD_FSU_ATTACHMENT\",\"status\":\"PRELOADED\"}"
-    },
-    "httpResponse": {
-      "statusCode": 404,
-      "headers": {
-        "content-type": [
-          "application/json"
-        ]
-      },
-      "body": "{\"resultDescription\":\"Il file non è stato trovato.\"}"
-    }
-  },
-  {
-    "httpRequest": {
-      "path": "/safe-storage/v1/files/AB87",
-      "method": "GET"
-    },
-    "httpResponse": {
-      "statusCode": 200,
-      "headers": {
-        "content-type": [
-          "application/json"
-        ]
-      },
-      "body": "{\"key\": \"random/path/of/the/file\", \"versionId\": \"3Z9SdhZ50PBeIj617KEMrztNKDMJj8FZ\", \"contentType\": \"application/pdf\", \"contentLength\": \"3028\", \"checksum\": \"jezIVxlG1M1woCSUngM6KipUN3/p8cG5RMIPnuEanlE=\", \"retentionUntil\": \"2032-04-12T12:32:04.000Z\", \"documentType\": \"PN_LEGALFACT\", \"documentStatus\": \"PRELOADED\", \"download\" : {\"url\":\"http://localhost:1080/safe-storage/storage/unFile\"}}"
-    }
-  },
-  {
-    "httpRequest": {
-      "path": "/safe-storage/v1/files/ABC",
-      "method": "GET"
-    },
-    "httpResponse": {
-      "statusCode": 404,
-      "headers": {
-        "content-type": [
-          "application/json"
-        ]
-      },
-      "body": "{\"resultDescription\":\"Il file non è stato trovato.\"}"
-    }
-  },
-  {
-    "httpRequest": {
-      "path": "/safe-storage/v1/files/AB49",
-      "method": "GET"
-    },
-    "httpResponse": {
-      "statusCode": 200,
-      "headers": {
-        "content-type": [
-          "application/json"
-        ]
-      },
-      "body": "{\"key\": \"random/path/of/the/file\", \"versionId\": \"3Z9SdhZ50PBeIj617KEMrztNKDMJj8FZ\", \"contentType\": \"application/pdf\", \"contentLength\": \"3028\", \"checksum\": \"jezIVxlG1M1woCSUngM6KipUN3/p8cG5RMIPnuEanlE=\", \"retentionUntil\": \"2032-04-12T12:32:04.000Z\", \"documentType\": \"PN_LEGALFACT\", \"documentStatus\": \"PRELOADED\", \"download\" : {\"url\":\"https://presignedurldemo.s3.eu-west-2.amazonaws.com/\"}}"
-    }
-  },
-  {
-    "httpRequest": {
-      "path": "/safe-storage/v1/files/XYZ",
-      "method": "GET"
-    },
-    "httpResponse": {
-      "statusCode": 404,
-      "headers": {
-        "content-type": [
-          "application/json"
-        ]
-      },
-      "body": "{\"resultDescription\":\"Il file non è stato trovato.\"}"
-    }
-  },
-  {
-    "httpRequest": {
-      "path": "/safe-storage/v1/files/8F7E/9A3B",
-      "method": "POST",
-      "body": "{\"status\":\"ATTACHED\",\"retentionUntil\":\"2022-09-30T07:44:15.626Z\"}"
-    },
-    "httpResponse": {
-      "statusCode": 200,
-      "headers": {
-        "content-type": [
-          "application/json"
-        ]
-      },
-      "body": "{\"resultCode\":\"200.00\",\"resultDescription\":\"Non trovato.\",\"errorList\":\"[\"retentionDate cannot be anticipated\"]\"}"
-    }
-  },
-  {
-    "httpRequest": {
-      "path": "/safe-storage/v1/files/8F7E",
-      "method": "POST",
-      "body": "{\"status\":\"ATTACHED\",\"retentionUntil\":\"2022-09-30T07:44:15.626Z\"}"
-    },
-    "httpResponse": {
-      "statusCode": 404,
-      "headers": {
-        "content-type": [
-          "application/json"
-        ]
-      },
-      "body": "{\"resultDescription\":\"Il file non è stato trovato.\"}"
+      "body": "{\"resultCode\":\"200.00\"}"
     }
   }
 ]
