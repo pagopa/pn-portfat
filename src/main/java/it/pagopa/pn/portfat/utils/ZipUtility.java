@@ -2,17 +2,19 @@ package it.pagopa.pn.portfat.utils;
 
 import it.pagopa.pn.portfat.exception.PnGenericException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import reactor.core.publisher.Mono;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Enumeration;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+import java.util.zip.ZipFile;
 
+import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.JSONS_NOT_FOND_IN_ZIP;
 import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.ZIP_ERROR;
-import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.ZIP_NOT_FOND;
 
 @Slf4j
 public class ZipUtility {
@@ -36,12 +38,10 @@ public class ZipUtility {
     }
 
     private static Void processZipFile(String zipFilePath, String destDirectory) {
-        try (FileInputStream fis = new FileInputStream(zipFilePath);
-             ZipInputStream zipInputStream = new ZipInputStream(fis)) {
-
-            boolean foundJson = extractJsonFiles(zipInputStream, destDirectory);
+        try (ZipFile zipFile = new ZipFile(new File(zipFilePath))) {
+            boolean foundJson = extractJsonFiles(zipFile, destDirectory);
             if (!foundJson) {
-                throw new PnGenericException(ZIP_NOT_FOND, "No JSON files found in the ZIP archive.");
+                throw new PnGenericException(JSONS_NOT_FOND_IN_ZIP, JSONS_NOT_FOND_IN_ZIP.getMessage());
             }
         } catch (IOException e) {
             throw new PnGenericException(ZIP_ERROR, "Error processing ZIP file: " + e.getMessage());
@@ -49,28 +49,29 @@ public class ZipUtility {
         return null;
     }
 
-    private static boolean extractJsonFiles(ZipInputStream zipInputStream, String destDirectory) throws IOException {
+    private static boolean extractJsonFiles(ZipFile zipFile, String destDirectory) throws IOException {
         boolean foundJson = false;
-        ZipEntry zipEntry;
+        Enumeration<ZipEntry> entries = (Enumeration<ZipEntry>) zipFile.entries();
+        while (entries.hasMoreElements()) {
+            ZipEntry zipEntry = entries.nextElement();
 
-        while ((zipEntry = zipInputStream.getNextEntry()) != null) {
-            if (zipEntry.getName().endsWith(".json")) {
+            if (!zipEntry.isDirectory() && zipEntry.getName().endsWith(".json")) {
                 foundJson = true;
-                saveZipEntry(zipEntry, zipInputStream, destDirectory);
+                saveZipEntry(zipFile, zipEntry, destDirectory);
             }
         }
         return foundJson;
     }
 
-    private static void saveZipEntry(ZipEntry zipEntry, ZipInputStream zipInputStream, String destDirectory) throws IOException {
-        File newFile = new File(destDirectory, sanitizeEntryName(zipEntry.getName()));
+    private static void saveZipEntry(ZipFile zipFile, ZipEntry zipEntry, String destDirectory) throws IOException {
+        File destFile = new File(destDirectory, sanitizeEntryName(zipEntry.getName()));
 
-        if (!isValidPath(newFile, new File(destDirectory))) {
+        if (!isValidPath(destFile, new File(destDirectory))) {
             throw new PnGenericException(ZIP_ERROR, "Potential Zip Slip detected: " + zipEntry.getName());
         }
 
-        writeFileContent(zipInputStream, newFile);
-        log.info("Extracted JSON: {}", newFile.getAbsolutePath());
+        writeFileContent(zipFile, zipEntry, destFile);
+        log.info("Extracted JSON: {}", destFile.getAbsolutePath());
     }
 
     private static String sanitizeEntryName(String entryName) {
@@ -83,11 +84,12 @@ public class ZipUtility {
         return newFile.getCanonicalPath().startsWith(destDir.getCanonicalPath());
     }
 
-    private static void writeFileContent(ZipInputStream zis, File newFile) throws IOException {
-        try (FileOutputStream fos = new FileOutputStream(newFile)) {
+    private static void writeFileContent(ZipFile zipFile, ZipEntry zipEntry, File destFile) throws IOException {
+        try (InputStream is = zipFile.getInputStream(zipEntry);
+             FileOutputStream fos = new FileOutputStream(destFile)) {
             byte[] buffer = new byte[4096];
             int bytesRead;
-            while ((bytesRead = zis.read(buffer)) != -1) {
+            while ((bytesRead = is.read(buffer)) != -1) {
                 fos.write(buffer, 0, bytesRead);
             }
         }
