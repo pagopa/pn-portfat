@@ -12,42 +12,66 @@ Parameters:
     Description: An unique number that identify the microservice inside the ECS cluster.
 
   # Unused but required by CD pipeline
+  AlarmSNSTopicName:
+    Type: String
+    Description: 'Topic alarm'
+
   TemplateBucketBaseUrl:
     Type: String
     Description: URL da cui caricare i frammenti di template di infrastruttura
-  
-  Version:
-    Type: String
-    Description: 'keep track of used projects commitIds'
-  
+
   CdcKinesisSourceStreamArn:
     Type: String
     Description: 'Where to send CDC'
 
-  PortFatDownloadTableName:
-    Description: Name of dynamodb table containing Downloads files
-    Value: !Ref PortFatDownloadTable
+  LogsKinesisSourceStreamArn:
+    Type: String
+    Description: 'Where to send Logs'
 
-  PortFatSqsInputRequestsName:
-    Description: Name of dynamodb table containing Downloads files
-    Value: !Ref PortFatInputRequestsSqs
+  LogRetention:
+    Type: Number
+    Default: 14
+
+  Version:
+    Type: String
+    Description: 'keep track of used projects commitIds'
 
 Resources:
   # Internal queues
-  PortFatInputRequestsSqs:
+  PortFatRequestActionsQueue:
     Type: AWS::CloudFormation::Stack
     UpdateReplacePolicy: Retain
     DeletionPolicy: Retain
     Properties:
+      StackName: pn-portfat-actions-queue
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/sqs-queue.yaml"
       Parameters:
-        QueueName: !Sub '${ProjectName}-portfat-input-requests'
-        AlarmSNSTopicName: !Ref AlarmSNSTopicName
-        VisibilityTimeout: 60
-        MaxReceiveCount: 10
-        DelaySeconds: 1
+        QueueName: !Sub '${ProjectName}-portfat_request_actions'
         FifoQueue: true
+        DelaySeconds: 1
+        AlarmSNSTopicName: !Ref AlarmSNSTopicName
+        VisibilityTimeout: 1200
+        MaxReceiveCount: 5
+        HasDLQ: "true"
+        DLQArn: !GetAtt PortFatRequestActionsQueueDLQ.Outputs.QueueARN
+        QueueHasAlarm: "true"
 
+  # Internal queues DLQ
+  PortFatRequestActionsQueueDLQ:
+    Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      StackName: pn-portfat-actions-queue-dlq
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/sqs-queue.yaml"
+      Parameters:
+        QueueName: !Sub '${ProjectName}-portfat_request_actions_DLQ'
+        DelaySeconds: 1
+        AlarmSNSTopicName: !Ref AlarmSNSTopicName
+        HasDLQ: "false"
+        QueueHasAlarm: "true"
+
+  # Dynamo table
   PortFatDownloadTable:
     Type: AWS::DynamoDB::Table
     UpdateReplacePolicy: Retain
@@ -57,45 +81,104 @@ Resources:
       AttributeDefinitions:
         - AttributeName: "downloadId"
           AttributeType: "S"
-        - AttributeName: "downloadUrl"
-          AttributeType: "S"
-        - AttributeName: "fileVersion"
-          AttributeType: "S"
-        - AttributeName: "sha256"
-          AttributeType: "S"
-        - AttributeName: "sha256"
-          AttributeType: "S"
-        - AttributeName: "status"
-          AttributeType: "S"
-        - AttributeName: "createdAt"
-          AttributeType: "S"
-        - AttributeName: "updatedAt"
-          AttributeType: "S"
       KeySchema:
         - AttributeName: "downloadId"
           KeyType: "HASH"
       BillingMode: "PAY_PER_REQUEST"
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
+      KinesisStreamSpecification:
+        StreamArn: !Ref CdcKinesisSourceStreamArn
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+
+  # Log group
+  PortFatLogGroup:
+    Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      StackName: pn-portfat-log-group
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/log-group.yaml"
+      Parameters:
+        LogGroupName: !Sub '${ProjectName}-portfat'
+        LogGroupRetention: !Ref LogRetention
+        LogsKinesisSourceStreamArn: !Ref LogsKinesisSourceStreamArn
+
+  # Log group
+  EventFileReadyLambdaLogGroup:
+    Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      StackName: pn-portfat-lambda-log-group
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/log-group.yaml"
+      Parameters:
+        LogGroupName: !Sub "${ProjectName}-eventFileReadyLambda"
+        LogGroupRetention: !Ref LogRetention
+        LogGroupPrefix: '/aws/lambda'
 
 Outputs:
-    SampleOutput:
-      Description: A Sample Output
-      Value: 'na'
+  # Log group exports
+  EcsLogGroup:
+    Value: !GetAtt PortFatLogGroup.Outputs.LogGroupName
 
-  # Scheduled Actions
-    PortFatSqsInputRequestsName:
-      Value: !GetAtt PortFatInputRequestsSqs.Outputs.QueueName
-      Description: pn-portfact queue name
-    PortFatSqsInputRequestsURL:
-      Value: !GetAtt PortFatInputRequestsSqs.Outputs.QueueURL
-      Description: pn-portfact queue URL
-    PortFatSqsInputRequestsARN:
-      Value: !GetAtt PortFatInputRequestsSqs.Outputs.QueueARN
-      Description: pn-portfact queue ARN
-    PortFatSqsInputRequestsAlarmARN:
-      Value: !GetAtt PortFatInputRequestsSqs.Outputs.SqsDLQAlarmArn
-      Description: pn-portfact queue dlq alarm queue
-    PortFatSqsInputRequestsAgeAlarmARN:
-      Value: !GetAtt PortFatInputRequestsSqs.Outputs.SqsAgeAlarmArn
-      Description: pn-portfact queue age alarm ARN
+  LambdaLogGroup:
+    Value: !GetAtt EventFileReadyLambdaLogGroup.Outputs.LogGroupName
+
+  # Dynamo table
+  PortFatDownloadTableName:
+    Description: Name of dynamodb table containing Downloads files
+    Value: !Ref PortFatDownloadTable
+
+  PortFatDownloadTableArn:
+    Description: ARN of dynamodb table containing Downloads files
+    Value: !GetAtt PortFatDownloadTable.Arn
+
+  # Queue
+  PortFatRequestActionsQueueName:
+    Description: pn-portfat_request_actions queue name
+    Value: !GetAtt PortFatRequestActionsQueue.Outputs.QueueName
+
+  PortFatRequestActionsQueueURL:
+    Description: pn-portfat_request_actions queue URL
+    Value: !GetAtt PortFatRequestActionsQueue.Outputs.QueueURL
+
+  PortFatRequestActionsQueueARN:
+    Description: pn-portfat_request_actions queue ARN
+    Value: !GetAtt PortFatRequestActionsQueue.Outputs.QueueARN
+
+  PortFatRequestActionsQueueAlarmARN:
+    Description: pn-portfat_request_actions alarm ARN
+    Value: !GetAtt PortFatRequestActionsQueue.Outputs.SqsDLQAlarmArn
+
+  PortFatRequestActionsQueueAgeAlarmARN:
+    Description: pn-portfat_request_actions age alarm ARN
+    Value: !GetAtt PortFatRequestActionsQueue.Outputs.SqsAgeAlarmArn
+
+  # Queue DLQ
+  PortFatRequestActionsQueueDLQName:
+    Description: pn-portfat_request_actions_DLQ queue name
+    Value: !GetAtt PortFatRequestActionsQueueDLQ.Outputs.QueueName
+
+  PortFatRequestActionsQueueDLQURL:
+    Description: pn-portfat_request_actions_DLQ queue URL
+    Value: !GetAtt PortFatRequestActionsQueueDLQ.Outputs.QueueURL
+
+  PortFatRequestActionsQueueDLQARN:
+    Description: pn-portfat_request_actions_DLQ queue ARN
+    Value: !GetAtt PortFatRequestActionsQueueDLQ.Outputs.QueueARN
+
+  PortFatRequestActionsQueueDLQAlarmARN:
+    Description: pn-portfat_request_actions_DLQ alarm ARN
+    Value: !GetAtt PortFatRequestActionsQueueDLQ.Outputs.SqsDLQAlarmArn
+
+  # Lambda functions
+  EventFileReadyLambdaName:
+    Description: Name of event file ready lambda
+    Value: !Sub "${ProjectName}-eventFileReadyLambda"
+
+  EventFileReadyLambdaSqsService:
+    Description: Identifier of sqs service
+    Value: "sqs"
+
