@@ -17,6 +17,7 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -58,7 +59,7 @@ public class HttpConnectorWebClient implements HttpConnector {
                     return Mono.fromCallable(() -> {
                         Files.write(fileOutput, decodedBytes);
                         return fileOutput;
-                    });
+                    }).subscribeOn(Schedulers.boundedElastic());
                 })
                 .doOnTerminate(() -> log.info("Download completed and saved to: {}", fileOutput))
                 .onErrorMap(ex -> {

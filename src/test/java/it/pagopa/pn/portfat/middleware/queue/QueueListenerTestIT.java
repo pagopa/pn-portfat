@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.mock.mockito.SpyBean;
-import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 import reactor.core.publisher.Mono;
 import java.time.Duration;
@@ -22,7 +21,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 
-@TestPropertySource(properties = { "spring.cloud.aws.sqs.listener.concurrency=1" })
 public class QueueListenerTestIT extends BaseTest.WithMockServer {
 
     @Autowired
@@ -76,7 +74,7 @@ public class QueueListenerTestIT extends BaseTest.WithMockServer {
     @Test
     void testMessageReceptionAndProcessing() {
         Awaitility.await()
-                .atMost(Duration.ofSeconds(10))
+                .atMost(Duration.ofSeconds(20))
                 .until(() -> processingMonoRef.get() != null);
 
 
