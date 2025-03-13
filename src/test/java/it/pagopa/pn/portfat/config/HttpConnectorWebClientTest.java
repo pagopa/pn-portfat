@@ -13,8 +13,10 @@ import org.mockserver.model.HttpResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Base64;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -48,25 +50,26 @@ class HttpConnectorWebClientTest {
 
     @Test
     void testDownloadFileAsByteArray() throws Exception {
-        // Simula una risposta HTTP 200 con un contenuto fittizio
+        String fakeContent = "Fake file content";
+        String base64Content = Base64.getEncoder().encodeToString(fakeContent.getBytes(StandardCharsets.UTF_8));
+
         mockServer
                 .when(request().withMethod("GET").withPath("/test.zip"))
                 .respond(response().withStatusCode(200)
-                        .withBody("Fake file content")
+                        .withBody(base64Content)
                         .withHeader("Content-Type", "application/octet-stream"));
 
         Path tempFile = Files.createTempFile("test", ".zip");
 
         Mono<Void> result = httpConnectorWebClient.downloadFileAsByteArray("http://localhost:1585/test.zip", tempFile);
-        result.block(); // Esegui e attendi il completamento
+        result.block();
 
-        // Verifica che il file sia stato scritto
         assertTrue(Files.exists(tempFile));
         assertTrue(Files.size(tempFile) > 0);
 
-        // Cleanup
         Files.deleteIfExists(tempFile);
     }
+
 
     @Test
     void testUploadContent() {

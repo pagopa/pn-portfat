@@ -19,7 +19,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Base64;
 
 import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.DOWNLOAD_ZIP_ERROR;
 
@@ -43,7 +46,20 @@ public class HttpConnectorWebClient implements HttpConnector {
                 .bodyToFlux(DataBuffer.class)
                 .doOnError(ex -> log.error("Error in WebClient", ex));
 
-        return DataBufferUtils.write(dataBufferFlux, fileOutput)
+        return DataBufferUtils.join(dataBufferFlux)
+                .flatMap(buffer -> {
+                    byte[] bytes = new byte[buffer.readableByteCount()];
+                    buffer.read(bytes);
+                    DataBufferUtils.release(buffer);
+
+                    String base64String = new String(bytes, StandardCharsets.UTF_8);
+                    byte[] decodedBytes = Base64.getDecoder().decode(base64String);
+
+                    return Mono.fromCallable(() -> {
+                        Files.write(fileOutput, decodedBytes);
+                        return fileOutput;
+                    });
+                })
                 .doOnTerminate(() -> log.info("Download completed and saved to: {}", fileOutput))
                 .onErrorMap(ex -> {
                     log.error("Error writing to file: {}", ex.getMessage());
