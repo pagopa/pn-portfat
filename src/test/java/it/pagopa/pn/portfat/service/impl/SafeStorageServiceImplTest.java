@@ -42,11 +42,9 @@ class SafeStorageServiceImplTest {
         fileCreationResponseDto.setUploadUrl("http://mockupload.url");
 
         // Definisci cosa deve fare il mock di safeStorageClient quando createFile viene chiamato
-        when(safeStorageClient.createFile(eq(fileCreationRequest), eq(sha256)))
-                .thenReturn(Mono.just(fileCreationResponseDto));
+        when(safeStorageClient.createFile(any(), any())).thenReturn(Mono.just(fileCreationResponseDto));
 
-        when(httpConnector.uploadContent(eq(fileCreationRequest), eq(fileCreationResponseDto), eq(sha256)))
-                .thenReturn(Mono.empty());
+        when(httpConnector.uploadContent(any(), any(), any())).thenReturn(Mono.empty());
 
         // Esegui il metodo da testare
         Mono<String> result = safeStorageService.createAndUploadContent(fileCreationRequest);
@@ -58,9 +56,9 @@ class SafeStorageServiceImplTest {
 
         // Verifica che i metodi mockati siano stati chiamati
         verify(safeStorageClient, times(1))
-                .createFile(eq(fileCreationRequest), eq(sha256));
+                .createFile(fileCreationRequest, sha256);
         verify(httpConnector, times(1))
-                .uploadContent(eq(fileCreationRequest), eq(fileCreationResponseDto), eq(sha256));
+                .uploadContent(fileCreationRequest, fileCreationResponseDto, sha256);
     }
 
     @Test
@@ -72,7 +70,7 @@ class SafeStorageServiceImplTest {
         String sha256 = "mLGuRQWbAEF4qO7gwfYXnc6hOcD9imnuR6bwLZevHxc=";
 
         // Crea una risposta errore per safeStorageClient
-        when(safeStorageClient.createFile(eq(fileCreationRequest), eq(sha256)))
+        when(safeStorageClient.createFile(any(), any()))
                 .thenReturn(Mono.error(new RuntimeException("Error creating file")));
 
         // Esegui il metodo da testare e verifica che venga lanciata l'eccezione
@@ -83,7 +81,7 @@ class SafeStorageServiceImplTest {
         assertEquals("Error in file creation flow, save storage: Error creating file", exception.getMessage());
 
         // Verifica che i metodi siano stati chiamati con gli argomenti corretti
-        verify(safeStorageClient, times(1)).createFile(eq(fileCreationRequest), eq(sha256));
+        verify(safeStorageClient, times(1)).createFile(fileCreationRequest, sha256);
     }
 
 }
