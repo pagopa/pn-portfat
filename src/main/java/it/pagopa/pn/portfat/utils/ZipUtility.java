@@ -51,10 +51,15 @@ public class ZipUtility {
 
     private static boolean extractJsonFiles(ZipFile zipFile, String destDirectory) throws IOException {
         boolean foundJson = false;
-        Enumeration<ZipEntry> entries = (Enumeration<ZipEntry>) zipFile.entries();
+        Enumeration<? extends ZipEntry> entries = zipFile.entries();
         while (entries.hasMoreElements()) {
             ZipEntry zipEntry = entries.nextElement();
-
+            // Controllo del path traversal (zip slip) per evitare l'estrazione in posizioni indesiderate
+            File destFile = new File(destDirectory, sanitizeEntryName(zipEntry.getName()));
+            // Verifica se il file estratto si trova effettivamente all'interno della directory di destinazione
+            if (!destFile.getCanonicalPath().startsWith(new File(destDirectory).getCanonicalPath())) {
+                throw new IOException("Potential zip slip detected: " + zipEntry.getName());
+            }
             if (!zipEntry.isDirectory() && zipEntry.getName().endsWith(".json")) {
                 foundJson = true;
                 saveZipEntry(zipFile, zipEntry, destDirectory);
