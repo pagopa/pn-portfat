@@ -34,12 +34,13 @@ public class QueueListener {
     private final PortFatPropertiesConfig portFatConfig;
     private final PortFatService portfatService;
     private final PortFatDownloadDAO portFatDownloadDAO;
+    private static final String MESSAGE_GROUP_ID = "MessageGroupId";
 
     @SqsListener(value = "${pn.portfat.queue}", deletionPolicy = SqsMessageDeletionPolicy.DEFAULT)
     public void pullPortFat(@Payload String payload, @Headers Map<String, Object> headers) {
         FileReadyEvent fileReady = convertToObject(payload, FileReadyEvent.class);
         setMDCContext(headers);
-        log.logStartingProcess("portFat");
+        log.logStartingProcess("portFat with MessageGroupId=" + headers.get(MESSAGE_GROUP_ID) + ", and Body= " + payload);
         MDCUtils.addMDCToContextAndExecute(Mono.just(fileReady))
                 .filter(this::isFileReadyEvent)
                 .flatMap(fileReadyEvent -> {
@@ -50,7 +51,8 @@ public class QueueListener {
                             .switchIfEmpty(Mono.defer(() -> {
                                 log.info("No PortFatDownload found, creating a new one with IN_PROGRESS status");
                                 return createAndSaveNewDownload(fileReadyEvent)
-                                        .doOnNext(newPortFatDownload -> log.info("Creating new PortFatDownload with IN_PROGRESS status"))
+                                        .doOnNext(newPortFatDownload -> log.info("Creating new PortFatDownload with IN_PROGRESS status, DOWNLOAD_ID={}",
+                                                newPortFatDownload.getDownloadId()))
                                         .flatMap(newPortFatDownload ->
                                                 portfatService.processZipFile(newPortFatDownload)
                                                         .then(updateStatusToCompleted(newPortFatDownload))
@@ -59,7 +61,7 @@ public class QueueListener {
                             }))
                             .flatMap(portFatDownload -> {
                                 if (portFatDownload.getStatus() == DownloadStatus.ERROR) {
-                                    log.info("PortFatDownload is in ERROR state, updating to IN_PROGRESS");
+                                    log.info("PortFatDownload is in ERROR state, updating to IN_PROGRESS, DOWNLOAD_ID={}", portFatDownload.getDownloadId());
                                     portFatDownload.setStatus(DownloadStatus.IN_PROGRESS);
                                     portFatDownload.setUpdatedAt(Instant.now().toString());
                                     return portFatDownloadDAO.updatePortFatDownload(portFatDownload)
@@ -67,7 +69,7 @@ public class QueueListener {
                                                     .then(updateStatusToCompleted(portFatDownloadInProgress))
                                             );
                                 }
-                                log.info("PortFatDownload is in {} state, doing nothing", portFatDownload.getStatus());
+                                log.info("PortFatDownload is in {} state, DOWNLOAD_ID={}, doing nothing", portFatDownload.getStatus(), portFatDownload.getDownloadId());
                                 return Mono.empty();
                             });
                 })
@@ -79,6 +81,7 @@ public class QueueListener {
                                 portFatDownload.setUpdatedAt(Instant.now().toString());
                                 portFatDownload.setErrorMessage(e.getMessage());
                                 return portFatDownloadDAO.updatePortFatDownload(portFatDownload)
+                                        .doOnNext(error -> log.logEndingProcess("portFat " + error.getDownloadId()))
                                         .then(Mono.error(e));
                             });
                 }).block();
@@ -87,7 +90,8 @@ public class QueueListener {
     private Mono<PortFatDownload> updateStatusToCompleted(PortFatDownload portFatDownload) {
         completed(portFatDownload);
         return portFatDownloadDAO.updatePortFatDownload(portFatDownload)
-                .doOnNext(portFatDownloadUpdated -> log.info("updated To {}", portFatDownloadUpdated.getStatus()));
+                .doOnNext(download ->
+                        log.logEndingProcess("portFat updated To " + download.getStatus() + ", DOWNLOAD_ID=" + download.getDownloadId()));
     }
 
     private Mono<PortFatDownload> createAndSaveNewDownload(FileReadyEvent fileReadyEvent) {
