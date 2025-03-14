@@ -260,6 +260,10 @@ Parameters:
     Default: 6000
     Type: Number
     Description: WAF limit
+  
+  ApiDnsName:
+    Type: String
+    Description: "The DNS name used for B2B rest API."
 
 Resources:
   PortFatMicroservice:
@@ -368,10 +372,10 @@ Resources:
         WAFName: !Sub '${ProjectName}-portfat'
         IntendedUsage: CN_BE
         APIGatewayARNs: !GetAtt PnPortfatAPI.Outputs.APIGatewayARN
-        Limit: !Ref WebWafLimitPortfat # disable IP limit based rule
-        AllowedCidrs: !Ref InvoicingServiceIP
+        Limit: !Ref PortfatWafLimit # disable IP limit based rule
+        AllowedCidrs: !Ref InvoicingServiceIPCidrs
 
-   PortfatUsagePlan:
+  PortfatUsagePlan:
     Type: 'AWS::ApiGateway::UsagePlan'
     Properties:
       UsagePlanName: PORTFAT
