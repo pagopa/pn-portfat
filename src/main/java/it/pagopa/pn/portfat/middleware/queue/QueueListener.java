@@ -110,7 +110,8 @@ public class QueueListener {
         if (isFileReadyEvent) {
             log.info("The message received is valid {} ", fileReadyEvent);
         } else {
-            log.error("The message received is not valid {}", fileReadyEvent);
+            log.error("The message received is not valid Message={}. Must satisfy the following: must start with={} and path contain one of ={}",
+                    fileReadyEvent, portFatConfig.getBlobStorageBaseUrl(), portFatConfig.getFilePathWhiteList());
         }
         return isFileReadyEvent;
     }
