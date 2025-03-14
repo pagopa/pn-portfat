@@ -14,6 +14,7 @@ import lombok.CustomLog;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -62,6 +63,7 @@ public class PortFatServiceImpl implements PortFatService {
                 .then(unzip(zipFilePath.toString(), outputFilesPath.toString()))
                 .thenMany(processDirectory(outputFilesPath))
                 .then()
+                .publishOn(Schedulers.boundedElastic())
                 .doOnTerminate(() -> deleteFileOrDirectory(outputPath.toFile()).subscribe());
     }
 

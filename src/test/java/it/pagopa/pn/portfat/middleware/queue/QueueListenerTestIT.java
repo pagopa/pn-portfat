@@ -13,16 +13,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
+import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicReference;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 
 class QueueListenerTestIT extends BaseTest.WithMockServer {
@@ -44,9 +45,20 @@ class QueueListenerTestIT extends BaseTest.WithMockServer {
 
     private static final String MESSAGE_GROUP_ID = "port-fat_1";
 
+    private final AtomicReference<Mono<Void>> processingMonoRef = new AtomicReference<>();
+
 
     @BeforeEach
     void setup() throws Exception {
+        doAnswer(invocation -> {
+            Object result = invocation.callRealMethod();
+            if (result instanceof Mono) {
+                processingMonoRef.set((Mono<Void>) result);
+            }
+            return result;
+        }).when(portfatService).processZipFile(any());
+
+
         amazonSQS.createQueue(new CreateQueueRequest().withQueueName(portFatPropertiesConfig.getSqsQueue()));
         String queueUrl = amazonSQS.getQueueUrl(portFatPropertiesConfig.getSqsQueue()).getQueueUrl();
 
@@ -65,8 +77,14 @@ class QueueListenerTestIT extends BaseTest.WithMockServer {
     @Test
     void testMessageReceptionAndProcessing() throws IOException {
         configMockServer();
-        await().atMost(Duration.ofSeconds(15))
-                .untilAsserted(() -> verify(portfatService, times(1)).processZipFile(any()));
+        Awaitility.await()
+                .atMost(Duration.ofSeconds(20))
+                .until(() -> processingMonoRef.get() != null);
+
+
+        verify(portfatService, times(1)).processZipFile(any());
+
+        processingMonoRef.get().block();
     }
 
 

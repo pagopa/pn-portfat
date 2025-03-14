@@ -38,13 +38,13 @@ public abstract class BaseTest {
         @Autowired
         private MockServerBean mockServerBean;
 
-        @BeforeEach
+        @BeforeAll
         public void init() {
             log.info("Starting tests in {}", this.getClass().getSimpleName());
             setExpection(this.getClass().getSimpleName() + ".json");
         }
 
-        @AfterEach
+        @AfterAll
         public void tearDown() {
             log.info("Stopping MockServer");
             this.mockServerBean.stop();
