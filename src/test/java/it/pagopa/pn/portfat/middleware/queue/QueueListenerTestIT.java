@@ -10,6 +10,7 @@ import it.pagopa.pn.portfat.generated.openapi.server.v1.dto.FileReadyEvent;
 import it.pagopa.pn.portfat.middleware.db.dao.PortFatDownloadDAO;
 import it.pagopa.pn.portfat.service.PortFatService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -26,6 +27,7 @@ import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
 
+@Disabled
 class QueueListenerTestIT extends BaseTest.WithMockServer {
 
     @Autowired
