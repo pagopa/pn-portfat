@@ -1,16 +1,17 @@
 package it.pagopa.pn.portfat.config;
 
-
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.mockserver.configuration.ConfigurationProperties;
 import org.mockserver.integration.ClientAndServer;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
-
 import java.io.IOException;
+
 
 @Slf4j
 public class MockServerBean {
+    @Getter
     private ClientAndServer mockServer;
     private final int port;
 
@@ -32,7 +33,7 @@ public class MockServerBean {
             ConfigurationProperties.initializationJsonPath(path);
             this.mockServer = ClientAndServer.startClientAndServer(port);
         } catch (IOException e) {
-            log.warn(" - File webhook not found");
+            log.warn(" - File json not found");
         }
     }
 }

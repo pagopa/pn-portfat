@@ -10,25 +10,21 @@ import it.pagopa.pn.portfat.generated.openapi.server.v1.dto.FileReadyEvent;
 import it.pagopa.pn.portfat.middleware.db.dao.PortFatDownloadDAO;
 import it.pagopa.pn.portfat.service.PortFatService;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.mockserver.client.MockServerClient;
-import org.mockserver.model.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
-
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
-
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
-@Disabled
+
 class QueueListenerTestIT extends BaseTest.WithMockServer {
 
     @Autowired
@@ -47,13 +43,14 @@ class QueueListenerTestIT extends BaseTest.WithMockServer {
     private PortFatPropertiesConfig portFatPropertiesConfig;
 
     private static final String MESSAGE_GROUP_ID = "port-fat_1";
-    private final FileReadyEvent event = new FileReadyEvent();
+
 
     @BeforeEach
     void setup() throws Exception {
-        amazonSQS.createQueue(new CreateQueueRequest().withQueueName(portFatPropertiesConfig.getQueue()));
-        String queueUrl = amazonSQS.getQueueUrl(portFatPropertiesConfig.getQueue()).getQueueUrl();
+        amazonSQS.createQueue(new CreateQueueRequest().withQueueName(portFatPropertiesConfig.getSqsQueue()));
+        String queueUrl = amazonSQS.getQueueUrl(portFatPropertiesConfig.getSqsQueue()).getQueueUrl();
 
+        FileReadyEvent event = new FileReadyEvent();
         event.setDownloadUrl(portFatPropertiesConfig.getBlobStorageBaseUrl() + "/portfatt/invoices/portFatt.zip");
         event.setFileVersion("1.0");
 
@@ -63,23 +60,29 @@ class QueueListenerTestIT extends BaseTest.WithMockServer {
                 .withMessageBody(messageBody)
                 .withMessageGroupId(MESSAGE_GROUP_ID);
         amazonSQS.sendMessage(sendMessageRequest);
+    }
 
+    @Test
+    void testMessageReceptionAndProcessing() throws IOException {
+        configMockServer();
+        await().atMost(Duration.ofSeconds(15))
+                .untilAsserted(() -> verify(portfatService, times(1)).processZipFile(any()));
+    }
+
+
+    private void configMockServer() throws IOException {
         byte[] zipBytes = Files.readAllBytes(Paths.get("src/test/resources/portFatt.zip"));
-        new MockServerClient("localhost", 1050)
+        super.getMockServerBean()
+                .getMockServer()
                 .when(request()
                         .withMethod("GET")
                         .withPath("/portfatt/invoices/portFatt.zip")
                 )
                 .respond(response()
                         .withStatusCode(200)
-                        .withContentType(MediaType.APPLICATION_OCTET_STREAM)
+                        .withHeader("Content-Type", "application/x-zip-compressed")
+                        .withHeader("Content-Disposition", "attachment; filename=\"file.zip\"")
                         .withBody(zipBytes)
                 );
-    }
-
-    @Test
-    void testMessageReceptionAndProcessing() {
-        await().atMost(Duration.ofSeconds(15))
-                .untilAsserted(() -> verify(portfatService, times(1)).processZipFile(any()));
     }
 }

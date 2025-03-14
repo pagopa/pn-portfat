@@ -17,11 +17,12 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
+import reactor.core.scheduler.Schedulers;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
-
 import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.DOWNLOAD_ZIP_ERROR;
+
 
 @Component
 @CustomLog
@@ -43,7 +44,17 @@ public class HttpConnectorWebClient implements HttpConnector {
                 .bodyToFlux(DataBuffer.class)
                 .doOnError(ex -> log.error("Error in WebClient", ex));
 
-        return DataBufferUtils.write(dataBufferFlux, fileOutput)
+        return DataBufferUtils.join(dataBufferFlux)
+                .flatMap(buffer -> {
+                    byte[] bytes = new byte[buffer.readableByteCount()];
+                    buffer.read(bytes);
+                    DataBufferUtils.release(buffer);
+
+                    return Mono.fromCallable(() -> {
+                        Files.write(fileOutput, bytes);
+                        return fileOutput;
+                    }).subscribeOn(Schedulers.boundedElastic());
+                })
                 .doOnTerminate(() -> log.info("Download completed and saved to: {}", fileOutput))
                 .onErrorMap(ex -> {
                     log.error("Error writing to file: {}", ex.getMessage());

@@ -36,7 +36,7 @@ public class QueueListener {
     private final PortFatDownloadDAO portFatDownloadDAO;
     private static final String MESSAGE_GROUP_ID = "MessageGroupId";
 
-    @SqsListener(value = "${pn.portfat.queue}", deletionPolicy = SqsMessageDeletionPolicy.DEFAULT)
+    @SqsListener(value = "${pn.portfat.sqsQueue}", deletionPolicy = SqsMessageDeletionPolicy.DEFAULT)
     public void pullPortFat(@Payload String payload, @Headers Map<String, Object> headers) {
         FileReadyEvent fileReady = convertToObject(payload, FileReadyEvent.class);
         setMDCContext(headers);

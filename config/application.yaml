@@ -7,7 +7,7 @@ pn:
   env:
     runtime: DEVELOPMENT
   portfat:
-    queue: local-pn-portfat-inputs-requests.fifo
+    sqsQueue: local-pn-portfat-inputs-requests.fifo
     blobStorageBaseUrl: https://storage.portalefatturazione.pagopa.it
     filePathWhiteList: temp, portfatt, port-fatt
     basePathZipFiele: port-fat-zips

@@ -10,8 +10,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
-
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 
 @SpringBootTest
 @Testcontainers
@@ -24,15 +24,15 @@ class AmazonSQSConfigIT extends LocalStackTestConfig {
     @Autowired
     private AwsPropertiesConfig awsConfigs;
 
-    @Value("${pn.portfat.queue}")
-    private String queue;
+    @Value("${pn.portfat.sqsQueue}")
+    private String sqsQueue;
 
     @SpyBean
     SQSConfig sqsConfig;
 
     @BeforeEach
     void setup() {
-        amazonSQS.createQueue(queue);
+        amazonSQS.createQueue(sqsQueue);
     }
 
     @Test
@@ -40,7 +40,6 @@ class AmazonSQSConfigIT extends LocalStackTestConfig {
         // Simula configurazione con endpoint personalizzato
         AmazonSQSAsync sqsClient = sqsConfig.amazonSQS();
         assertNotNull(sqsClient);
-        assertNotNull(sqsClient.getQueueUrl(queue));
+        assertNotNull(sqsClient.getQueueUrl(sqsQueue));
     }
-
 }

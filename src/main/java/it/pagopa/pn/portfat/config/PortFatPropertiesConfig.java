@@ -6,8 +6,8 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-
 import java.util.List;
+
 
 @Configuration
 @ConfigurationProperties("pn.portfat")
@@ -15,13 +15,11 @@ import java.util.List;
 @Setter
 @Import(SharedAutoConfiguration.class)
 public class PortFatPropertiesConfig {
-
-    private String queue;
     private List<String> filePathWhiteList;
+    private String sqsQueue;
     private String blobStorageBaseUrl;
+    private String safeStorageCxId;
     private String basePathZipFiele;
     private String zipExtension;
     private String clientSafeStorageBasePath;
-    private String safeStorageCxId;
-
 }

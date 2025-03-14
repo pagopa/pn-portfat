@@ -1,6 +1,7 @@
 package it.pagopa.pn.portfat.config;
 
 import it.pagopa.pn.portfat.LocalStackTestConfig;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,7 @@ public abstract class BaseTest {
     public static class WithLocalStack {
     }
 
+    @Getter
     @Slf4j
     @SpringBootTest
     @ActiveProfiles("test")
@@ -34,22 +36,22 @@ public abstract class BaseTest {
     public static class WithMockServer {
 
         @Autowired
-        private MockServerBean mockServer;
+        private MockServerBean mockServerBean;
 
-        @BeforeAll
+        @BeforeEach
         public void init() {
             log.info("Starting tests in {}", this.getClass().getSimpleName());
             setExpection(this.getClass().getSimpleName() + ".json");
         }
 
-        //@AfterAll
+        @AfterEach
         public void tearDown() {
             log.info("Stopping MockServer");
-            this.mockServer.stop();
+            this.mockServerBean.stop();
         }
 
         void setExpection(String file) {
-            this.mockServer.initializationExpection(file);
+            this.mockServerBean.initializationExpection(file);
         }
     }
 }

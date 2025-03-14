@@ -4,7 +4,7 @@ mockserver:
 
 pn:
   portfat:
-    queue: local-pn-portfat-inputs-requests.fifo
+    sqsQueue: local-pn-portfat-inputs-requests.fifo
     blobStorageBaseUrl: http://localhost:1050
     filePathWhiteList: temp, portfatt, port-fatt
     basePathZipFiele: port-fat-zips
