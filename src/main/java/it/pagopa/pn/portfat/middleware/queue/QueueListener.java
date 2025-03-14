@@ -81,7 +81,7 @@ public class QueueListener {
                                 portFatDownload.setUpdatedAt(Instant.now().toString());
                                 portFatDownload.setErrorMessage(e.getMessage());
                                 return portFatDownloadDAO.updatePortFatDownload(portFatDownload)
-                                        .doOnNext(error -> log.logEndingProcess("portFat " + error.getDownloadId()))
+                                        .doOnNext(error -> log.logEndingProcess("portFat STATUS= " + error.getStatus() + "DOWNLOAD_ID=" + error.getDownloadId()))
                                         .then(Mono.error(e));
                             });
                 }).block();
