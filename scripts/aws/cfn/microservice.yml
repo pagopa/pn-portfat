@@ -302,9 +302,6 @@ Resources:
         LoadBalancerListenerArn: !Ref ApplicationLoadBalancerListenerArn
         LoadBalancerRulePriority: !Ref MicroserviceNumber
         CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
-        DynamoDBTableNames:
-          - !Ref PortFatDownloadTableName
-        
         EcsLogGroup: !Ref EcsLogGroup
         LogAlarmStrategyV1: !Ref LogAlarmStrategy
         WireTapLogActivation: !Ref WireTapLogActivation
