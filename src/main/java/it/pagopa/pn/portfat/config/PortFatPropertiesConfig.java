@@ -16,6 +16,7 @@ import java.util.List;
 @Import(SharedAutoConfiguration.class)
 public class PortFatPropertiesConfig {
 
+    private String queue;
     private List<String> filePathWhiteList;
     private String blobStorageBaseUrl;
     private String basePathZipFiele;

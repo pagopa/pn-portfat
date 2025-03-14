@@ -1,21 +1,6 @@
 [
   {
     "httpRequest": {
-      "method": "GET",
-      "path": "/portfatt/invoices/portFatt.zip"
-    },
-    "httpResponse": {
-      "statusCode": 200,
-      "headers": {
-        "content-type": ["application/zip"],
-        "content-transfer-encoding": ["base64"],
-        "content-disposition": ["attachment; filename=\"file.zip\""]
-      },
-      "body": "UEsDBBQACAAIAOV4ZloAAAAAAAAAAAAAAAApACAAMDI5ZGNjMTktMWQ1OS00ODFlLTlhNzctOWQ2N2FhYzMxYmMwLmpzb251eAsAAQQAAAAABAAAAABVVA0ABw+syWcPrMln66rJZ32RTU/DMAyG75P2H6qcKbgd7VZuVcukiQ9NbHDiYhKvs+gS1GQcQPx3UljHOgS5RMrzvLYVvw8HgT9iejVTl9qRuAgExJmSMsrCSCVZeD6JKMxwPA4zlY4R5Sh6kiBOdsFca/OANSt26MMxxEmHbsjSIerel8ZhTbnG2lQsjUdwCtCnJVfc3h6OfsFb43jFct2v8YdzUCntK//XPvRnaskvpjDaNehc2y3q0JwaSdptfbRAR5VpGEsvJPu60+eZWjj8iolizVuLj2cLx5v2qZPusGKjaWEkf08mCrPZagoUB3Osa2xo7xZGsaQpW7lTAeI0hRggm+yl44HFPL/+WZq19EoNvrU9PVxhbamDJTq8t9J/2rEm2u2GEIeQiOHg4xNQSwcI09rZ8iEBAAA8AgAAUEsBAhQAFAAIAAgA5XhmWtPa2fIhAQAAPAIAACkAGAAAAAAAAAAAALaBAAAAADAyOWRjYzE5LTFkNTktNDgxZS05YTc3LTlkNjdhYWMzMWJjMC5qc29udXgLAAEEAAAAAAQAAAAAVVQFAAEPrMlnUEsFBgAAAAABAAEAbwAAAJgBAAAAAA=="
-    }
-  },
-  {
-    "httpRequest": {
       "method": "POST",
       "path": "/safe-storage/v1/files",
       "headers": {

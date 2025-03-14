@@ -42,7 +42,7 @@ public abstract class BaseTest {
             setExpection(this.getClass().getSimpleName() + ".json");
         }
 
-        @AfterAll
+        //@AfterAll
         public void tearDown() {
             log.info("Stopping MockServer");
             this.mockServer.stop();
