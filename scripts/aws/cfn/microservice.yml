@@ -256,7 +256,7 @@ Parameters:
     Type: String
     Description: 'IPs of invoicing service'
 
-  PortfatWafLimit:
+  PortFatWafLimit:
     Default: 6000
     Type: Number
     Description: WAF limit
@@ -344,9 +344,10 @@ Resources:
             Resource:
               - !Ref PortFatDownloadTableArn
 
-  PnPortfatAPI:
+  PnPortFatAPI:
     Type: AWS::CloudFormation::Stack
     Properties:
+      StackName: pn-portfat-api-stack
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service-openapi.yaml"
       Parameters:
         MicroServiceUniqueName: !Sub '${ProjectName}-portfat'
@@ -361,23 +362,24 @@ Resources:
         OpenApiBucketName: !Ref MicroserviceBucketName
         OpenApiBucketKey: !Sub ${MicroserviceBucketBaseKey}/docs/openapi/pn-internal-portfat-v1.yaml
 
-  PortfatApiWaf:
+  PortFatApiWaf:
     Type: AWS::CloudFormation::Stack
     Properties:
+      StackName: pn-portfat-api-waf-stack
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-waf-acl.yaml"
       Parameters:
         WAFName: !Sub '${ProjectName}-portfat'
         IntendedUsage: CN_BE
-        APIGatewayARNs: !GetAtt PnPortfatAPI.Outputs.APIGatewayARN
-        Limit: !Ref PortfatWafLimit # disable IP limit based rule
+        APIGatewayARNs: !GetAtt PnPortFatAPI.Outputs.APIGatewayARN
+        Limit: !Ref PortFatWafLimit # disable IP limit based rule
         AllowedCidrs: !Ref InvoicingServiceIPCidrs
 
-  PortfatUsagePlan:
+  PortFatUsagePlan:
     Type: 'AWS::ApiGateway::UsagePlan'
     Properties:
       UsagePlanName: PORTFAT
       ApiStages:
-        - ApiId: !GetAtt PnPortfatAPI.Outputs.RestApiId
+        - ApiId: !GetAtt PnPortFatAPI.Outputs.RestApiId
           Stage: unique
       Description: Usage Plan for pn-portfat
 
@@ -471,7 +473,7 @@ Resources:
       Handler: "index.handler"
       Code:
         S3Bucket: !Ref MicroserviceBucketName
-        S3Key: !Sub "${MicroserviceBucketBaseKey}/functions/pn-portfat_eventFilReadyLambda.zip"
+        S3Key: !Sub "${MicroserviceBucketBaseKey}/functions/pn-portfat_eventFileReadyLambda.zip"
       Role: !GetAtt PortFatLambdaRole.Arn
       VpcConfig:
         SecurityGroupIds:
@@ -539,7 +541,7 @@ Resources:
       FunctionName: !Ref PortFatLambdaFunction
       Action: "lambda:InvokeFunction"
       Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MyApiGateway}/*/POST/pn-portfat-in/file-ready-event"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${!GetAtt PnPortFatAPI.Outputs.RestApiId}/unique/POST/pn-portfat-in/file-ready-event"
 
   PortFatLambdaAlarms:
     Type: AWS::CloudFormation::Stack
