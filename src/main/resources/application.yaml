@@ -8,18 +8,18 @@ spring:
 
 pn:
   portfat:
-    sqsQueue: local-pn-portfat-inputs-requests.fifo
-    blobStorageBaseUrl: http://localhost:1050
+    sqsQueue: ${AWS_SQS_URL}
+    blobStorageBaseUrl: https://storage.portalefatturazione.pagopa.it
     filePathWhiteList: temp, portfatt, port-fatt
     basePathZipFiele: port-fat-zips
     zipExtension: .zip
-    clientSafeStorageBasePath: http://localhost:${mockserver.bean.port}
-    safeStorageCxId: pn-portfat-in
+    clientSafeStorageBasePath: ${PN_PORTFAT_SAFESTORAGEBASEURL}
+    safeStorageCxId: ${PN_PORTFAT_SAFESTORAGECXID}
 
 aws:
-  region-code: us-east-1
+  region-code: ${AWS_REGIONCODE}
   profile-name: ${PN_AWS_PROFILE_NAME:default}
-  endpoint-url: http://localhost:4566
+  endpoint-url: ${AWS_ENDPOINT_URL}
   dynamodbPrtFatTable: PortFatDownload
 
 cloud:
