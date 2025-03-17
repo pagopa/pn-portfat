@@ -7,7 +7,6 @@ import it.pagopa.pn.portfat.generated.openapi.server.v1.dto.FileReadyEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import reactor.core.publisher.Mono;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -16,9 +15,8 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.*;
+
 
 @Slf4j
 public class Utility {
@@ -28,8 +26,6 @@ public class Utility {
     }
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
-
-    private static final AtomicBoolean isDirectoryDeleted = new AtomicBoolean(false);
 
     public static byte[] jsonToByteArray(Object jsonObject) {
         try {
