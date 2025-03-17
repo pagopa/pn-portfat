@@ -1,11 +1,12 @@
 {
-  "Parameters": {
-    "PnCronAnalyzer": "* */1 * * * *",
+  "Parameters" : {
+    "PnCronAnalyzer": "-",
     "WireTapLogActivation": "false",
     "SandboxSafeStorageBaseUrl": "",
     "SafeStorageCxId": "pn-portfat-in",
     "SafeStorageFileNotFoundRetry": "false",
     "MinTasksNumber": "0",
-    "MaxTasksNumber": "10"
+    "MaxTasksNumber": "10",
+    "InvoicingServiceIPCidrs": ""
   }
 }
