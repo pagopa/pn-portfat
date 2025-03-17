@@ -10,7 +10,6 @@ import it.pagopa.pn.portfat.generated.openapi.server.v1.dto.FileReadyEvent;
 import it.pagopa.pn.portfat.middleware.db.dao.PortFatDownloadDAO;
 import it.pagopa.pn.portfat.service.PortFatService;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -27,7 +26,6 @@ import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
 
-@Disabled
 class QueueListenerTestIT extends BaseTest.WithMockServer {
 
     @Autowired
@@ -55,11 +53,13 @@ class QueueListenerTestIT extends BaseTest.WithMockServer {
         doAnswer(invocation -> {
             Object result = invocation.callRealMethod();
             if (result instanceof Mono) {
-                processingMonoRef.set((Mono<Void>) result);
+                if (processingMonoRef.get() == null) {
+                    processingMonoRef.set(Mono.from((Mono<?>) result).then());
+                }
+                return result;
             }
             return result;
         }).when(portfatService).processZipFile(any());
-
 
         amazonSQS.createQueue(new CreateQueueRequest().withQueueName(portFatPropertiesConfig.getSqsQueue()));
         String queueUrl = amazonSQS.getQueueUrl(portFatPropertiesConfig.getSqsQueue()).getQueueUrl();
@@ -79,10 +79,10 @@ class QueueListenerTestIT extends BaseTest.WithMockServer {
     @Test
     void testMessageReceptionAndProcessing() throws IOException {
         configMockServer();
-        Awaitility.await()
-                .atMost(Duration.ofSeconds(20))
-                .until(() -> processingMonoRef.get() != null);
 
+        Awaitility.await()
+                .atMost(Duration.ofSeconds(25))
+                .until(() -> processingMonoRef.get() != null);
 
         verify(portfatService, times(1)).processZipFile(any());
 

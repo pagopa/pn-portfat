@@ -33,7 +33,7 @@ public class MockServerBean {
             ConfigurationProperties.initializationJsonPath(path);
             this.mockServer = ClientAndServer.startClientAndServer(port);
         } catch (IOException e) {
-            log.warn(" - File json not found");
+            log.error(" - File json not found");
         }
     }
 }
