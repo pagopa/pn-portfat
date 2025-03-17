@@ -11,6 +11,7 @@ import it.pagopa.pn.portfat.middleware.db.entities.PortFatDownload;
 import it.pagopa.pn.portfat.service.PortFatService;
 import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.MDC;
 import org.springframework.messaging.handler.annotation.Headers;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -100,20 +101,30 @@ public class QueueListener {
 
     private boolean isFileReadyEvent(FileReadyEvent fileReadyEvent) {
         String downloadUrl = fileReadyEvent.getDownloadUrl();
-        boolean isFileReadyEvent = downloadUrl != null
-                && !downloadUrl.isBlank()
-                && downloadUrl.startsWith(portFatConfig.getBlobStorageBaseUrl())
-                && portFatConfig.getFilePathWhiteList().stream().anyMatch(downloadUrl::contains)
-                && fileReadyEvent.getFileVersion() != null
-                && !fileReadyEvent.getFileVersion().trim().isBlank();
+        String version = fileReadyEvent.getFileVersion();
 
-        if (isFileReadyEvent) {
-            log.info("The message received is valid {} ", fileReadyEvent);
-        } else {
-            log.error("The message received is not valid Message={}. Must satisfy the following: must start with={} and path contain one of ={}",
-                    fileReadyEvent, portFatConfig.getBlobStorageBaseUrl(), portFatConfig.getFilePathWhiteList());
+        if (StringUtils.isEmpty(downloadUrl)) {
+            log.error("The message received is not valid Message={}, Download Url is empty", fileReadyEvent);
+            return false;
         }
-        return isFileReadyEvent;
+
+        if (!downloadUrl.startsWith(portFatConfig.getBlobStorageBaseUrl())) {
+            log.error("The message received is not valid Message={}, Blob Storage Base Url is not valid", fileReadyEvent);
+            return false;
+        }
+
+        if (portFatConfig.getFilePathWhiteList().stream().noneMatch(downloadUrl::contains)) {
+            log.error("The message received is not valid Message={}, File Path is not valid", fileReadyEvent);
+            return false;
+        }
+
+        if (StringUtils.isEmpty(version)) {
+            log.error("The message received is not valid Message={}, Version is empty", fileReadyEvent);
+            return false;
+        }
+
+        log.info("The message received is valid {} ", fileReadyEvent);
+        return true;
     }
 
     private void setMDCContext(Map<String, Object> headers) {

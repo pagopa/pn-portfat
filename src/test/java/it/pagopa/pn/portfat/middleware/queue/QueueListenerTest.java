@@ -138,6 +138,54 @@ class QueueListenerTest extends BaseTest.WithLocalStack {
     }
 
     @Test
+    void testPullPortFatBlobStorageBaseUrlIsNotValid() throws JsonProcessingException {
+        //ARRANGE
+        headers = new HashMap<>();
+        FileReadyEvent event = new FileReadyEvent();
+        event.setFileVersion(FILE_VERSION);
+        event.setDownloadUrl("http://esample/");
+        payload = new ObjectMapper().writeValueAsString(event);
+        // Invoca il metodo pullPortFat
+        queueListener.pullPortFat(payload, headers);
+
+        //ASSERT
+        // Verifica che processZipFile non sia stato chiamato
+        verify(portFatService, times(0)).processZipFile(any());
+    }
+
+    @Test
+    void testPullPortFatPatIsNotValidIsNotValid() throws JsonProcessingException {
+        //ARRANGE
+        headers = new HashMap<>();
+        FileReadyEvent event = new FileReadyEvent();
+        event.setFileVersion(FILE_VERSION);
+        event.setDownloadUrl("https://portale-fatturazione-storage.blob.core.windows.net/portfatt/IsNodValid/IsNodValid/");
+        payload = new ObjectMapper().writeValueAsString(event);
+        // Invoca il metodo pullPortFat
+        queueListener.pullPortFat(payload, headers);
+
+        //ASSERT
+        // Verifica che processZipFile non sia stato chiamato
+        verify(portFatService, times(0)).processZipFile(any());
+    }
+
+    @Test
+    void testPullPortFatVersionIsNotValid() throws JsonProcessingException {
+        //ARRANGE
+        headers = new HashMap<>();
+        FileReadyEvent event = new FileReadyEvent();
+        event.setFileVersion(null);
+        event.setDownloadUrl("https://portale-fatturazione-storage.blob.core.windows.net/portfatt/IsNodValid/IsNodValid/");
+        payload = new ObjectMapper().writeValueAsString(event);
+        // Invoca il metodo pullPortFat
+        queueListener.pullPortFat(payload, headers);
+
+        //ASSERT
+        // Verifica che processZipFile non sia stato chiamato
+        verify(portFatService, times(0)).processZipFile(any());
+    }
+
+    @Test
     void testPullPortFatErrorHandling() throws JsonProcessingException {
         //ARRANGE
         headers = new HashMap<>();
