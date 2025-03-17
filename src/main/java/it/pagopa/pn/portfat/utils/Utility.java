@@ -85,7 +85,7 @@ public class Utility {
      */
     public static Mono<Void> deleteFileOrDirectory(File workPath) {
         return Mono.fromCallable(() -> {
-            FileUtils.forceDeleteOnExit(workPath);
+            FileUtils.forceDelete(workPath);
             log.info("Directory deleted: {}", workPath);
             return workPath;
         }).then();
