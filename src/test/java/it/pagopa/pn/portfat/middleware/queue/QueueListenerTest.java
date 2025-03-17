@@ -11,6 +11,9 @@ import it.pagopa.pn.portfat.middleware.db.entities.PortFatDownload;
 import it.pagopa.pn.portfat.service.PortFatService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -22,7 +25,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
@@ -121,68 +126,30 @@ class QueueListenerTest extends BaseTest.WithLocalStack {
         verify(portFatDownloadDAO, times(1)).updatePortFatDownload(portFatDownload);
     }
 
-    @Test
-    void testPullPortFatFileReadyEventIsNotValid() throws JsonProcessingException {
+    @ParameterizedTest
+    @MethodSource("provideInvalidFileReadyEvents")
+    void testPullPortFatWithInvalidFileReadyEvent(String fileVersion, String downloadUrl) throws JsonProcessingException {
         //ARRANGE
         headers = new HashMap<>();
         FileReadyEvent event = new FileReadyEvent();
-        event.setFileVersion(FILE_VERSION);
-        event.setDownloadUrl(null);
+        event.setFileVersion(fileVersion);
+        event.setDownloadUrl(downloadUrl);
         payload = new ObjectMapper().writeValueAsString(event);
-        // Invoca il metodo pullPortFat
+
+        //ACT
         queueListener.pullPortFat(payload, headers);
 
         //ASSERT
-        // Verifica che processZipFile non sia stato chiamato
         verify(portFatService, times(0)).processZipFile(any());
     }
 
-    @Test
-    void testPullPortFatBlobStorageBaseUrlIsNotValid() throws JsonProcessingException {
-        //ARRANGE
-        headers = new HashMap<>();
-        FileReadyEvent event = new FileReadyEvent();
-        event.setFileVersion(FILE_VERSION);
-        event.setDownloadUrl("http://esample/");
-        payload = new ObjectMapper().writeValueAsString(event);
-        // Invoca il metodo pullPortFat
-        queueListener.pullPortFat(payload, headers);
-
-        //ASSERT
-        // Verifica che processZipFile non sia stato chiamato
-        verify(portFatService, times(0)).processZipFile(any());
-    }
-
-    @Test
-    void testPullPortFatPatIsNotValidIsNotValid() throws JsonProcessingException {
-        //ARRANGE
-        headers = new HashMap<>();
-        FileReadyEvent event = new FileReadyEvent();
-        event.setFileVersion(FILE_VERSION);
-        event.setDownloadUrl("https://portale-fatturazione-storage.blob.core.windows.net/portfatt/IsNodValid/IsNodValid/");
-        payload = new ObjectMapper().writeValueAsString(event);
-        // Invoca il metodo pullPortFat
-        queueListener.pullPortFat(payload, headers);
-
-        //ASSERT
-        // Verifica che processZipFile non sia stato chiamato
-        verify(portFatService, times(0)).processZipFile(any());
-    }
-
-    @Test
-    void testPullPortFatVersionIsNotValid() throws JsonProcessingException {
-        //ARRANGE
-        headers = new HashMap<>();
-        FileReadyEvent event = new FileReadyEvent();
-        event.setFileVersion(null);
-        event.setDownloadUrl("https://portale-fatturazione-storage.blob.core.windows.net/portfatt/IsNodValid/IsNodValid/");
-        payload = new ObjectMapper().writeValueAsString(event);
-        // Invoca il metodo pullPortFat
-        queueListener.pullPortFat(payload, headers);
-
-        //ASSERT
-        // Verifica che processZipFile non sia stato chiamato
-        verify(portFatService, times(0)).processZipFile(any());
+    private static Stream<Arguments> provideInvalidFileReadyEvents() {
+        return Stream.of(
+                arguments(FILE_VERSION, null), // Invalid: downloadUrl is null
+                arguments(FILE_VERSION, "http://esample/"), // Invalid: downloadUrl does not start with base URL
+                arguments(FILE_VERSION, "https://portale-fatturazione-storage.blob.core.windows.net/portfatt/IsNodValid/IsNodValid/"), // Invalid path
+                arguments(null, DOWNLOAD_URL) // Invalid: fileVersion is null
+        );
     }
 
     @Test
