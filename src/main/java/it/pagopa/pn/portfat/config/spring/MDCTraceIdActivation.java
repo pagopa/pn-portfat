@@ -1,4 +1,4 @@
-package it.pagopa.pn.portfat.config;
+package it.pagopa.pn.portfat.config.spring;
 
 
 import it.pagopa.pn.commons.log.MDCWebFilter;

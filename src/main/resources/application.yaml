@@ -2,6 +2,10 @@ mockserver:
   bean:
     port: 1050
 
+spring:
+  application:
+    name: PN-PORTFAT
+
 pn:
   portfat:
     sqsQueue: local-pn-portfat-inputs-requests.fifo
