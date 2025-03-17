@@ -252,6 +252,19 @@ Parameters:
       - false
     Description: 'Enables retry of the notification validation in case of SafeStorage 404 error'
 
+  InvoicingServiceIPCidrs:
+    Type: String
+    Description: 'IPs of invoicing service'
+
+  PortfatWafLimit:
+    Default: 6000
+    Type: Number
+    Description: WAF limit
+  
+  ApiDnsName:
+    Type: String
+    Description: "The DNS name used for B2B rest API."
+
 Resources:
   PortFatMicroservice:
     Type: AWS::CloudFormation::Stack
@@ -300,6 +313,7 @@ Resources:
         ContainerEnvEntry3: !Sub 'PN_PORTFAT_SAFESTORAGECXID=${SafeStorageCxId}'
         ContainerEnvEntry4: !Sub 'PN_PORTFAT_SAFESTORAGEFILENOTFOUNDRETRY=${SafeStorageFileNotFoundRetry}'
 
+
   PortFatMicroserviceTaskManagedPolicy:
     Type: AWS::IAM::ManagedPolicy
     Properties:
@@ -329,6 +343,43 @@ Resources:
               - dynamodb:Query
             Resource:
               - !Ref PortFatDownloadTableArn
+
+  PnPortfatAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service-openapi.yaml"
+      Parameters:
+        MicroServiceUniqueName: !Sub '${ProjectName}-portfat'
+        IntendedUsage: CN_BE
+        DnsName: !Ref ApiDnsName
+        ProjectName: !Ref ProjectName
+        ServiceApiPath: 'pn-portfat-in'
+        NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
+        ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
+        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
+        CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
+        OpenApiBucketName: !Ref MicroserviceBucketName
+        OpenApiBucketKey: !Sub ${MicroserviceBucketBaseKey}/docs/openapi/pn-internal-portfat-v1.yaml
+
+  PortfatApiWaf:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-waf-acl.yaml"
+      Parameters:
+        WAFName: !Sub '${ProjectName}-portfat'
+        IntendedUsage: CN_BE
+        APIGatewayARNs: !GetAtt PnPortfatAPI.Outputs.APIGatewayARN
+        Limit: !Ref PortfatWafLimit # disable IP limit based rule
+        AllowedCidrs: !Ref InvoicingServiceIPCidrs
+
+  PortfatUsagePlan:
+    Type: 'AWS::ApiGateway::UsagePlan'
+    Properties:
+      UsagePlanName: PORTFAT
+      ApiStages:
+        - ApiId: !GetAtt PnPortfatAPI.Outputs.RestApiId
+          Stage: unique
+      Description: Usage Plan for pn-portfat
 
   PortFatCloudWatchDashboard:
     Type: AWS::CloudFormation::Stack
