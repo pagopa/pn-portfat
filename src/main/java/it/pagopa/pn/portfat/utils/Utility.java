@@ -16,6 +16,7 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.*;
 
@@ -27,6 +28,8 @@ public class Utility {
     }
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    private static final AtomicBoolean isDirectoryDeleted = new AtomicBoolean(false);
 
     public static byte[] jsonToByteArray(Object jsonObject) {
         try {
@@ -79,14 +82,22 @@ public class Utility {
     }
 
     /**
-     * Delete File or Directory.
+     * Delete File or Directory in a thread-safe manner.
      *
      * @param workPath path or file to delete
      */
     public static Mono<Void> deleteFileOrDirectory(File workPath) {
         return Mono.fromCallable(() -> {
-            FileUtils.forceDelete(workPath);
-            log.info("Directory deleted: {}", workPath);
+            if (isDirectoryDeleted.compareAndSet(false, true)) {
+                if (workPath.exists()) {
+                    FileUtils.forceDelete(workPath);
+                    log.info("Directory deleted: {}", workPath);
+                } else {
+                    log.info("Directory already deleted: {}", workPath);
+                }
+            } else {
+                log.info("Skipping deletion, already deleted by another thread: {}", workPath);
+            }
             return workPath;
         }).then();
     }
