@@ -2,7 +2,6 @@
   "Parameters" : {
     "PnCronAnalyzer": "-",
     "WireTapLogActivation": "false",
-    "SandboxSafeStorageBaseUrl": "",
     "SafeStorageCxId": "pn-portfat-in",
     "SafeStorageFileNotFoundRetry": "false",
     "MinTasksNumber": "0",
