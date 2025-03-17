@@ -112,6 +112,7 @@ class UtilityTest {
     @Test
     void testDeleteDirectories() throws IOException {
         Path tempDir = Files.createTempDirectory("testDir");
+        assertTrue(Files.exists(tempDir));
         Mono<Void> result = Utility.deleteFileOrDirectory(tempDir.toFile());
         result.block();
         assertFalse(Files.exists(tempDir));

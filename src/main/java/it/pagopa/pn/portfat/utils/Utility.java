@@ -88,15 +88,13 @@ public class Utility {
      */
     public static Mono<Void> deleteFileOrDirectory(File workPath) {
         return Mono.fromCallable(() -> {
-            if (isDirectoryDeleted.compareAndSet(false, true)) {
+            synchronized(Utility.class) {
                 if (workPath.exists()) {
                     FileUtils.forceDelete(workPath);
                     log.info("Directory deleted: {}", workPath);
                 } else {
                     log.info("Directory already deleted: {}", workPath);
                 }
-            } else {
-                log.info("Skipping deletion, already deleted by another thread: {}", workPath);
             }
             return workPath;
         }).then();
