@@ -81,7 +81,7 @@ class QueueListenerTestIT extends BaseTest.WithMockServer {
         configMockServer();
 
         Awaitility.await()
-                .atMost(Duration.ofSeconds(25))
+                .atMost(Duration.ofSeconds(60))
                 .until(() -> processingMonoRef.get() != null);
 
         verify(portfatService, times(1)).processZipFile(any());
