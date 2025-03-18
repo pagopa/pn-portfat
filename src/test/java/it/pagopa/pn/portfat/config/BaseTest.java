@@ -18,14 +18,12 @@ import java.time.Duration;
 @ActiveProfiles("test")
 @Import(LocalStackTestConfig.class)
 @AutoConfigureMockMvc
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public abstract class BaseTest {
 
     @Slf4j
     @SpringBootTest
     @ActiveProfiles("test")
     @Import(LocalStackTestConfig.class)
-    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     public static class WithLocalStack {
     }
 
@@ -34,20 +32,19 @@ public abstract class BaseTest {
     @SpringBootTest
     @ActiveProfiles("test")
     @Import(LocalStackTestConfig.class)
-    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     public static class WithMockServer {
 
         @Autowired
         private MockServerBean mockServerBean;
 
-        @BeforeAll
+        @BeforeEach
         public void init() {
             log.info("Starting tests in {}", this.getClass().getSimpleName());
             setExpection(this.getClass().getSimpleName() + ".json");
             Awaitility.await().atMost(Duration.ofSeconds(10)).until(() -> mockServerBean.getMockServer().isRunning());
         }
 
-        @AfterAll
+        @AfterEach
         public void tearDown() {
             log.info("Stopping MockServer");
             this.mockServerBean.stop();

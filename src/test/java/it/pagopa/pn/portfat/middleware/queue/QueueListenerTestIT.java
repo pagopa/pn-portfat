@@ -30,7 +30,6 @@ import static org.mockserver.model.HttpResponse.response;
 
 
 @Slf4j
-@Disabled
 class QueueListenerTestIT extends BaseTest.WithMockServer {
 
     @Autowired
