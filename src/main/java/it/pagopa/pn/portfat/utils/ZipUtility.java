@@ -8,6 +8,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -50,14 +52,14 @@ public class ZipUtility {
 
     private static boolean extractJsonFiles(ZipFile zipFile, String destDirectory) throws IOException {
         boolean foundJson = false;
+        Path destDirPath = Paths.get(destDirectory).toAbsolutePath().normalize();
         Enumeration<? extends ZipEntry> entries = zipFile.entries();
         while (entries.hasMoreElements()) {
             ZipEntry zipEntry = entries.nextElement();
-            // Controllo del path traversal (zip slip) per evitare l'estrazione in posizioni indesiderate
-            File destFile = new File(destDirectory, sanitizeEntryName(zipEntry.getName()));
-            // Verifica se il file estratto si trova effettivamente all'interno della directory di destinazione
-            if (!destFile.toPath().normalize().startsWith(destDirectory)) {
-                throw new IOException("Path traversal attempt: " + destDirectory);
+            String entryName = zipEntry.getName();
+            Path entryPath = destDirPath.resolve(entryName).normalize();
+            if (!entryPath.startsWith(destDirPath)) {
+                throw new IOException("Path traversal attempt detected: " + entryName);
             }
             if (!zipEntry.isDirectory() && zipEntry.getName().endsWith(".json")) {
                 foundJson = true;
