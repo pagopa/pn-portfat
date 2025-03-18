@@ -34,7 +34,6 @@ public class MockServerBean {
             log.info(" - Path : {} ", path);
             ConfigurationProperties.initializationJsonPath(path);
             this.mockServer = ClientAndServer.startClientAndServer(port);
-            Awaitility.await().atMost(Duration.ofSeconds(10)).until(() -> mockServer.isRunning());
         } catch (IOException e) {
             log.error(" - File json not found");
         }

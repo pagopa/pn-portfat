@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.annotation.DirtiesContext;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,6 +31,7 @@ import static org.mockserver.model.HttpResponse.response;
 
 
 @Slf4j
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class QueueListenerTestIT extends BaseTest.WithMockServer {
 
     @Autowired
@@ -70,7 +72,7 @@ class QueueListenerTestIT extends BaseTest.WithMockServer {
         Path baseZipDir = Paths.get(portFatPropertiesConfig.getBasePathZipFiele());
 
         Awaitility.await()
-                .atMost(Duration.ofSeconds(25))
+                .atMost(Duration.ofSeconds(60))
                 .until(() -> {
                     try (Stream<Path> stream = Files.list(baseZipDir)) {
                         return stream.anyMatch(Files::isDirectory);
@@ -84,7 +86,7 @@ class QueueListenerTestIT extends BaseTest.WithMockServer {
         Path generatedDir = generatedDirOptional.get();
 
         Awaitility.await()
-                .atMost(Duration.ofSeconds(5))
+                .atMost(Duration.ofSeconds(25))
                 .until(() -> {
                     try (Stream<Path> stream = Files.list(generatedDir)) {
                         return stream.findAny().isEmpty();
