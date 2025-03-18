@@ -22,6 +22,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.DOWNLOAD_ZIP_ERROR;
+import org.springframework.http.HttpStatus;
 
 
 @Component
@@ -41,8 +42,14 @@ public class HttpConnectorWebClient implements HttpConnector {
                 .uri(URI.create(url))
                 .accept(MediaType.APPLICATION_OCTET_STREAM)
                 .retrieve()
-                .bodyToFlux(DataBuffer.class)
-                .doOnError(ex -> log.error("Error in WebClient", ex));
+                .onStatus(HttpStatus::isError, response ->
+                        response.bodyToMono(String.class)
+                                .flatMap(errorBody -> {
+                                    log.error("Error in WebClient during download: HTTP {} - {}", response.statusCode(), errorBody);
+                                    return Mono.error(new PnGenericException(DOWNLOAD_ZIP_ERROR, "Error HTTP " + response.statusCode()));
+                        })
+                )
+                .bodyToFlux(DataBuffer.class);
 
         return DataBufferUtils.join(dataBufferFlux)
                 .flatMap(buffer -> {
