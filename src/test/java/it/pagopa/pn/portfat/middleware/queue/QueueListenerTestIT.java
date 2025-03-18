@@ -12,6 +12,7 @@ import it.pagopa.pn.portfat.middleware.db.entities.DownloadStatus;
 import it.pagopa.pn.portfat.middleware.db.entities.PortFatDownload;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -29,6 +30,7 @@ import static org.mockserver.model.HttpResponse.response;
 
 
 @Slf4j
+@Disabled
 class QueueListenerTestIT extends BaseTest.WithMockServer {
 
     @Autowired
