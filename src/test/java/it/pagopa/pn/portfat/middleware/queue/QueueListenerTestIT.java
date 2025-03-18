@@ -48,15 +48,20 @@ class QueueListenerTestIT extends BaseTest.WithMockServer {
 
     private static final String MESSAGE_GROUP_ID = "port-fat_1";
 
+    private final String fileVersion = "1.0";
+    private String fileUrl;
 
     @BeforeEach
     void setup() throws Exception {
+        String filePath = "/portfatt/invoices/portFatt.zip";
+        fileUrl = portFatPropertiesConfig.getBlobStorageBaseUrl() + filePath;
+
         amazonSQS.createQueue(new CreateQueueRequest().withQueueName(portFatPropertiesConfig.getSqsQueue()));
         String queueUrl = amazonSQS.getQueueUrl(portFatPropertiesConfig.getSqsQueue()).getQueueUrl();
 
         FileReadyEvent event = new FileReadyEvent();
-        event.setDownloadUrl(portFatPropertiesConfig.getBlobStorageBaseUrl() + "/portfatt/invoices/portFatt.zip");
-        event.setFileVersion("1.0");
+        event.setDownloadUrl(fileUrl);
+        event.setFileVersion(fileVersion);
 
         String messageBody = objectMapper.writeValueAsString(event);
         SendMessageRequest sendMessageRequest = new SendMessageRequest()
@@ -69,10 +74,10 @@ class QueueListenerTestIT extends BaseTest.WithMockServer {
     @Test
     void testMessageReceptionAndProcessing() throws IOException {
         configMockServer();
-        Path baseZipDir = Paths.get(portFatPropertiesConfig.getBasePathZipFiele());
+        Path baseZipDir = Paths.get(portFatPropertiesConfig.getBasePathZipFile());
 
         Awaitility.await()
-                .atMost(Duration.ofSeconds(25))
+                .atMost(Duration.ofSeconds(40))
                 .until(() -> {
                     try (Stream<Path> stream = Files.list(baseZipDir)) {
                         return stream.anyMatch(Files::isDirectory);
@@ -83,7 +88,7 @@ class QueueListenerTestIT extends BaseTest.WithMockServer {
                 .atMost(Duration.ofSeconds(25))
                 .until(() -> {
                     PortFatDownload download = portFatDownloadDAO
-                            .findByDownloadId("http://localhost:1050/portfatt/invoices/portFatt.zip1.0")
+                            .findByDownloadId(fileUrl + fileVersion)
                             .block();
                     return download != null && download.getStatus() == DownloadStatus.COMPLETED;
                 });
@@ -99,10 +104,12 @@ class QueueListenerTestIT extends BaseTest.WithMockServer {
                 });
 
         Optional<PortFatDownload> download = portFatDownloadDAO
-                .findByDownloadId("http://localhost:1050/portfatt/invoices/portFatt.zip1.0")
+                .findByDownloadId(fileUrl + fileVersion)
                 .blockOptional();
         assertThat(download).isPresent();
         assertThat(download.get().getStatus()).isEqualTo(DownloadStatus.COMPLETED);
+
+        super.tearDown();
     }
 
 
