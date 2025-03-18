@@ -72,30 +72,35 @@ class QueueListenerTestIT extends BaseTest.WithMockServer {
         Path baseZipDir = Paths.get(portFatPropertiesConfig.getBasePathZipFiele());
 
         Awaitility.await()
-                .atMost(Duration.ofSeconds(60))
+                .atMost(Duration.ofSeconds(25))
                 .until(() -> {
                     try (Stream<Path> stream = Files.list(baseZipDir)) {
                         return stream.anyMatch(Files::isDirectory);
                     }
                 });
 
-        Optional<Path> generatedDirOptional = Files.list(baseZipDir)
-                .filter(Files::isDirectory)
-                .findFirst();
-        assertThat(generatedDirOptional).isPresent();
-        Path generatedDir = generatedDirOptional.get();
+        Awaitility.await()
+                .atMost(Duration.ofSeconds(25))
+                .until(() -> {
+                    PortFatDownload download = portFatDownloadDAO
+                            .findByDownloadId("http://localhost:1050/portfatt/invoices/portFatt.zip1.0")
+                            .block();
+                    return download != null && download.getStatus() == DownloadStatus.COMPLETED;
+                });
 
         Awaitility.await()
                 .atMost(Duration.ofSeconds(25))
                 .until(() -> {
-                    try (Stream<Path> stream = Files.list(generatedDir)) {
-                        return stream.findAny().isEmpty();
+                    try (Stream<Path> stream = Files.list(baseZipDir)) {
+                        return stream.noneMatch(Files::isDirectory);
                     } catch (IOException e) {
-                        return !Files.exists(generatedDir);
+                        return true;
                     }
                 });
 
-        Optional<PortFatDownload> download = portFatDownloadDAO.findByDownloadId("http://localhost:1050/portfatt/invoices/portFatt.zip1.0").blockOptional();
+        Optional<PortFatDownload> download = portFatDownloadDAO
+                .findByDownloadId("http://localhost:1050/portfatt/invoices/portFatt.zip1.0")
+                .blockOptional();
         assertThat(download).isPresent();
         assertThat(download.get().getStatus()).isEqualTo(DownloadStatus.COMPLETED);
     }
