@@ -133,7 +133,7 @@ class HttpConnectorWebClientTest {
         when(fileCreationResponse.getSecret()).thenReturn("fake-secret");
 
         String sha256 = "fake-sha256";
-        PnGenericException ex = (PnGenericException)assertThrows(Exception.class, () -> {
+        Exception ex = assertThrows(Exception.class, () -> {
             httpConnectorWebClient.uploadContent(fileCreationRequest, fileCreationResponse, sha256)
                     .block();
         });
