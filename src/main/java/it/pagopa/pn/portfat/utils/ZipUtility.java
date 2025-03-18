@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Enumeration;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -53,13 +53,12 @@ public class ZipUtility {
     private static boolean extractJsonFiles(ZipFile zipFile, String destDirectory) throws IOException {
         boolean foundJson = false;
         Path destDirPath = Paths.get(destDirectory).toAbsolutePath().normalize();
-        Enumeration<? extends ZipEntry> entries = zipFile.entries();
-        while (entries.hasMoreElements()) {
-            ZipEntry zipEntry = entries.nextElement();
-            String entryName = zipEntry.getName();
-            Path entryPath = destDirPath.resolve(entryName).normalize();
+        List<? extends ZipEntry> zipEntries = zipFile.stream().toList();
+
+        for (ZipEntry zipEntry : zipEntries) {
+            Path entryPath = destDirPath.resolve(zipEntry.getName()).normalize();
             if (!entryPath.startsWith(destDirPath)) {
-                throw new IOException("Path traversal attempt detected: " + entryName);
+                throw new IOException("Path traversal attempt detected: " + zipEntry.getName());
             }
             if (!zipEntry.isDirectory() && zipEntry.getName().endsWith(".json")) {
                 foundJson = true;
