@@ -9,6 +9,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
+import java.time.Duration;
 
 
 @Slf4j
@@ -42,6 +44,7 @@ public abstract class BaseTest {
         public void init() {
             log.info("Starting tests in {}", this.getClass().getSimpleName());
             setExpection(this.getClass().getSimpleName() + ".json");
+            Awaitility.await().atMost(Duration.ofSeconds(10)).until(() -> mockServerBean.getMockServer().isRunning());
         }
 
         @AfterAll

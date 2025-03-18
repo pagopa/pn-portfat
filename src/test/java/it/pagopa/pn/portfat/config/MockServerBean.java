@@ -6,7 +6,9 @@ import org.mockserver.configuration.ConfigurationProperties;
 import org.mockserver.integration.ClientAndServer;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
 import java.io.IOException;
+import java.time.Duration;
 
 
 @Slf4j
@@ -32,6 +34,7 @@ public class MockServerBean {
             log.info(" - Path : {} ", path);
             ConfigurationProperties.initializationJsonPath(path);
             this.mockServer = ClientAndServer.startClientAndServer(port);
+            Awaitility.await().atMost(Duration.ofSeconds(10)).until(() -> mockServer.isRunning());
         } catch (IOException e) {
             log.error(" - File json not found");
         }
