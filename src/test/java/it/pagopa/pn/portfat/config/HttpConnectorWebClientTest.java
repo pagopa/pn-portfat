@@ -75,7 +75,10 @@ class HttpConnectorWebClientTest {
                 .respond(response().withStatusCode(404).withBody("Not Found"));
 
         Path tempFile = Paths.get("test-notfound.zip");
-        assertThrows(PnGenericException.class, () -> httpConnectorWebClient.downloadFileAsByteArray("http://localhost:1585/notfound.zip", tempFile).block());
+        assertThrows(PnGenericException.class, () -> {
+            httpConnectorWebClient.downloadFileAsByteArray("http://localhost:1585/notfound.zip", tempFile)
+                    .block();
+        });
     }
 
     @Test
@@ -85,7 +88,10 @@ class HttpConnectorWebClientTest {
                 .respond(response().withStatusCode(500).withBody("Internal Server Error"));
 
         Path tempFile = Paths.get("test-servererror.zip");
-        assertThrows(PnGenericException.class, () -> httpConnectorWebClient.downloadFileAsByteArray("http://localhost:1585/servererror.zip", tempFile).block());
+        assertThrows(PnGenericException.class, () -> {
+            httpConnectorWebClient.downloadFileAsByteArray("http://localhost:1585/servererror.zip", tempFile)
+                    .block();
+        });
     }
 
     @Test
@@ -125,6 +131,9 @@ class HttpConnectorWebClientTest {
         when(fileCreationResponse.getSecret()).thenReturn("fake-secret");
 
         String sha256 = "fake-sha256";
-        assertThrows(RuntimeException.class, () -> httpConnectorWebClient.uploadContent(fileCreationRequest, fileCreationResponse, sha256).block());
+        assertThrows(RuntimeException.class, () -> {
+            httpConnectorWebClient.uploadContent(fileCreationRequest, fileCreationResponse, sha256)
+                    .block();
+        });
     }
 }
