@@ -74,7 +74,7 @@ class QueueListenerTestIT extends BaseTest.WithMockServer {
     @Test
     void testMessageReceptionAndProcessing() throws IOException {
         configMockServer();
-        Path baseZipDir = Paths.get(portFatPropertiesConfig.getBasePathZipFile());
+        Path baseZipDir = Paths.get(portFatPropertiesConfig.getBasePathZipFiele());
 
         Awaitility.await()
                 .atMost(Duration.ofSeconds(40))
