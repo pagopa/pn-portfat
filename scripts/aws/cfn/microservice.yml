@@ -234,6 +234,10 @@ Parameters:
     Type: String
     Description: Name of the EventFileReady lambda function
 
+  BlobStorageBaseUrl:
+    Type: String
+    Description: URL of Azure blob storage
+
   SandboxSafeStorageBaseUrl:
     Type: String
     Default: ""
@@ -243,14 +247,6 @@ Parameters:
     Type: String
     Default: "pn-portfat-in"
     Description: "Identificativo della connessione di archiviazione sicura"
-
-  SafeStorageFileNotFoundRetry:
-    Default: false
-    Type: String
-    AllowedValues:
-      - true
-      - false
-    Description: 'Enables retry of the notification validation in case of SafeStorage 404 error'
 
   InvoicingServiceIPCidrs:
     Type: String
@@ -311,8 +307,8 @@ Resources:
         ContainerEnvEntry1: !Sub 'AWS_REGIONCODE=${AWS::Region}'
         ContainerEnvEntry2: !Sub 'PN_PORTFAT_SAFESTORAGEBASEURL=${SandboxSafeStorageBaseUrl}'
         ContainerEnvEntry3: !Sub 'PN_PORTFAT_SAFESTORAGECXID=${SafeStorageCxId}'
-        ContainerEnvEntry4: !Sub 'PN_PORTFAT_SAFESTORAGEFILENOTFOUNDRETRY=${SafeStorageFileNotFoundRetry}'
-
+        ContainerEnvEntry4: !Sub 'PN_PORTFAT_AWS_SQS_NAME=${PortFatRequestActionsQueueName}.fifo'
+        ContainerEnvEntry5: !Sub 'PN_PORTFAT_BLOB_STORAGE_BASE_URL=${BlobStorageBaseUrl}'
 
   PortFatMicroserviceTaskManagedPolicy:
     Type: AWS::IAM::ManagedPolicy

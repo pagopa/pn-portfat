@@ -176,9 +176,8 @@ Outputs:
   # Lambda functions
   EventFileReadyLambdaName:
     Description: Name of event file ready lambda
-    Value: !Sub "${ProjectName}-eventFileReadyLambda"
+    Value: !Sub "${ProjectName}-eventFileReady-lambda"
 
   EventFileReadyLambdaSqsService:
     Description: Identifier of sqs service
     Value: "sqs"
-

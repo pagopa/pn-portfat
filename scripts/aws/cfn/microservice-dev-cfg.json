@@ -6,6 +6,6 @@
     "SafeStorageFileNotFoundRetry": "false",
     "MinTasksNumber": "0",
     "MaxTasksNumber": "10",
-    "InvoicingServiceIPCidrs": ""
-  }
+    "InvoicingServiceIPCidrs": "",
+    "BlobStorageBaseUrl": "https://storage.portalefatturazione.pagopa.it"}
 }
