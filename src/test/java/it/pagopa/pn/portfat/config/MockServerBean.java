@@ -6,9 +6,7 @@ import org.mockserver.configuration.ConfigurationProperties;
 import org.mockserver.integration.ClientAndServer;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
-import org.testcontainers.shaded.org.awaitility.Awaitility;
 import java.io.IOException;
-import java.time.Duration;
 
 
 @Slf4j
