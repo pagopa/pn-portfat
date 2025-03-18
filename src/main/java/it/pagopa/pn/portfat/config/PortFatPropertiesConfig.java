@@ -19,7 +19,7 @@ public class PortFatPropertiesConfig {
     private String sqsQueue;
     private String blobStorageBaseUrl;
     private String safeStorageCxId;
-    private String basePathZipFiele;
+    private String basePathZipFile;
     private String zipExtension;
     private String clientSafeStorageBasePath;
 }

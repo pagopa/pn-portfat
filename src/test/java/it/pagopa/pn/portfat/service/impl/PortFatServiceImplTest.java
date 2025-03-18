@@ -57,7 +57,7 @@ class PortFatServiceImplTest {
         portFatDownload = new PortFatDownload();
         String downloadUrl = "http://example.com/test.zip";
         portFatDownload.setDownloadUrl(downloadUrl);
-        when(portFatConfig.getBasePathZipFiele()).thenReturn("target/test-zip");
+        when(portFatConfig.getBasePathZipFile()).thenReturn("target/test-zip");
         when(portFatConfig.getZipExtension()).thenReturn(".zip");
         mockedUtility = Mockito.mockStatic(Utility.class);
     }

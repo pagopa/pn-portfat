@@ -11,7 +11,7 @@ pn:
     sqsQueue: local-pn-portfat-inputs-requests.fifo
     blobStorageBaseUrl: http://localhost:1050
     filePathWhiteList: temp, portfatt, port-fatt
-    basePathZipFiele: port-fat-zips
+    basePathZipFile: port-fat-zips
     zipExtension: .zip
     clientSafeStorageBasePath: http://localhost:${mockserver.bean.port}
     safeStorageCxId: pn-portfat-in
