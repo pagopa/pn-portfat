@@ -12,7 +12,6 @@ import it.pagopa.pn.portfat.middleware.db.entities.DownloadStatus;
 import it.pagopa.pn.portfat.middleware.db.entities.PortFatDownload;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -76,40 +75,34 @@ class QueueListenerTestIT extends BaseTest.WithMockServer {
         configMockServer();
         Path baseZipDir = Paths.get(portFatPropertiesConfig.getBasePathZipFiele());
 
-        Awaitility.await()
-                .atMost(Duration.ofSeconds(40))
-                .until(() -> {
-                    try (Stream<Path> stream = Files.list(baseZipDir)) {
-                        return stream.anyMatch(Files::isDirectory);
-                    }
-                });
+        try {
+            Awaitility.await()
+                    .atMost(Duration.ofSeconds(40))
+                    .until(() -> {
+                        PortFatDownload download = portFatDownloadDAO
+                                .findByDownloadId(fileUrl + fileVersion)
+                                .block();
+                        return download != null && download.getStatus() == DownloadStatus.COMPLETED;
+                    });
 
-        Awaitility.await()
-                .atMost(Duration.ofSeconds(25))
-                .until(() -> {
-                    PortFatDownload download = portFatDownloadDAO
-                            .findByDownloadId(fileUrl + fileVersion)
-                            .block();
-                    return download != null && download.getStatus() == DownloadStatus.COMPLETED;
-                });
+            Awaitility.await()
+                    .atMost(Duration.ofSeconds(25))
+                    .until(() -> {
+                        try (Stream<Path> stream = Files.list(baseZipDir)) {
+                            return stream.noneMatch(Files::isDirectory);
+                        } catch (IOException e) {
+                            return true;
+                        }
+                    });
 
-        Awaitility.await()
-                .atMost(Duration.ofSeconds(25))
-                .until(() -> {
-                    try (Stream<Path> stream = Files.list(baseZipDir)) {
-                        return stream.noneMatch(Files::isDirectory);
-                    } catch (IOException e) {
-                        return true;
-                    }
-                });
-
-        Optional<PortFatDownload> download = portFatDownloadDAO
-                .findByDownloadId(fileUrl + fileVersion)
-                .blockOptional();
-        assertThat(download).isPresent();
-        assertThat(download.get().getStatus()).isEqualTo(DownloadStatus.COMPLETED);
-
-        super.tearDown();
+            Optional<PortFatDownload> download = portFatDownloadDAO
+                    .findByDownloadId(fileUrl + fileVersion)
+                    .blockOptional();
+            assertThat(download).isPresent();
+            assertThat(download.get().getStatus()).isEqualTo(DownloadStatus.COMPLETED);
+        } finally {
+            super.tearDown();
+        }
     }
 
 
