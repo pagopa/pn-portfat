@@ -1,9 +1,9 @@
 package it.pagopa.pn.portfat.service.impl;
 
-import it.pagopa.pn.portfat.config.HttpConnector;
+import it.pagopa.pn.portfat.middleware.msclient.webclient.HttpConnectorWebClient;
 import it.pagopa.pn.portfat.exception.PnGenericException;
 import it.pagopa.pn.portfat.generated.openapi.msclient.pnsafestorage.v1.dto.FileCreationResponseDto;
-import it.pagopa.pn.portfat.middleware.msclient.SafeStorageClient;
+import it.pagopa.pn.portfat.middleware.msclient.safestorage.SafeStorageClient;
 import it.pagopa.pn.portfat.model.FileCreationWithContentRequest;
 import it.pagopa.pn.portfat.service.SafeStorageService;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.SHA256_ERROR;
 public class SafeStorageServiceImpl implements SafeStorageService {
 
     private final SafeStorageClient safeStorageClient;
-    private final HttpConnector httpConnector;
+    private final HttpConnectorWebClient httpConnectorWebClient;
 
     @Override
     public Mono<String> createAndUploadContent(FileCreationWithContentRequest fileCreationRequest) {
@@ -34,7 +34,7 @@ public class SafeStorageServiceImpl implements SafeStorageService {
                     log.error("Cannot create file ", exception);
                     return Mono.error(new PnGenericException(CREATION_FILE_SS_ERROR, CREATION_FILE_SS_ERROR.getMessage() + exception.getMessage()));
                 })
-                .flatMap(fileCreationResponse -> httpConnector.uploadContent(fileCreationRequest, fileCreationResponse, sha256)
+                .flatMap(fileCreationResponse -> httpConnectorWebClient.uploadContent(fileCreationRequest, fileCreationResponse, sha256)
                         .thenReturn(fileCreationResponse))
                 .map(FileCreationResponseDto::getKey)
                 .doOnNext(s -> log.info("End createAndUploadFile - {}", s));

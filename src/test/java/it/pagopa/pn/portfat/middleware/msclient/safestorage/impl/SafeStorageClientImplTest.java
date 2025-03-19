@@ -1,4 +1,4 @@
-package it.pagopa.pn.portfat.middleware.msclient.impl;
+package it.pagopa.pn.portfat.middleware.msclient.safestorage.impl;
 
 import it.pagopa.pn.portfat.config.PortFatPropertiesConfig;
 import it.pagopa.pn.portfat.generated.openapi.msclient.pnsafestorage.v1.api.FileUploadApi;

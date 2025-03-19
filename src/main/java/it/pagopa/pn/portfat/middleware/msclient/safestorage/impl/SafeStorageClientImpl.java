@@ -1,10 +1,10 @@
-package it.pagopa.pn.portfat.middleware.msclient.impl;
+package it.pagopa.pn.portfat.middleware.msclient.safestorage.impl;
 
 import it.pagopa.pn.commons.log.PnLogger;
 import it.pagopa.pn.portfat.config.PortFatPropertiesConfig;
 import it.pagopa.pn.portfat.generated.openapi.msclient.pnsafestorage.v1.api.FileUploadApi;
 import it.pagopa.pn.portfat.generated.openapi.msclient.pnsafestorage.v1.dto.FileCreationResponseDto;
-import it.pagopa.pn.portfat.middleware.msclient.SafeStorageClient;
+import it.pagopa.pn.portfat.middleware.msclient.safestorage.SafeStorageClient;
 import it.pagopa.pn.portfat.model.FileCreationWithContentRequest;
 import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;

@@ -1,4 +1,4 @@
-package it.pagopa.pn.portfat.middleware.msclient;
+package it.pagopa.pn.portfat.middleware.msclient.safestorage;
 
 import it.pagopa.pn.portfat.generated.openapi.msclient.pnsafestorage.v1.dto.FileCreationResponseDto;
 import it.pagopa.pn.portfat.model.FileCreationWithContentRequest;

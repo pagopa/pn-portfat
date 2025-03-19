@@ -1,8 +1,9 @@
-package it.pagopa.pn.portfat.config;
+package it.pagopa.pn.portfat.middleware.msclient.webclient.impl;
 
 import it.pagopa.pn.commons.log.PnLogger;
 import it.pagopa.pn.portfat.exception.PnGenericException;
 import it.pagopa.pn.portfat.generated.openapi.msclient.pnsafestorage.v1.dto.FileCreationResponseDto;
+import it.pagopa.pn.portfat.middleware.msclient.webclient.HttpConnectorWebClient;
 import it.pagopa.pn.portfat.model.FileCreationWithContentRequest;
 import lombok.CustomLog;
 import org.springframework.core.io.ByteArrayResource;
@@ -27,11 +28,11 @@ import org.springframework.http.HttpStatus;
 
 @Component
 @CustomLog
-public class HttpConnectorWebClient implements HttpConnector {
+public class HttpConnectorWebClientImpl implements HttpConnectorWebClient {
 
     private final WebClient webClient;
 
-    public HttpConnectorWebClient(WebClient.Builder builder) {
+    public HttpConnectorWebClientImpl(WebClient.Builder builder) {
         this.webClient = builder.build();
     }
 

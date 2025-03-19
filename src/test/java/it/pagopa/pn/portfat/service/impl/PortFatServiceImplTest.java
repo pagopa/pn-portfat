@@ -1,9 +1,9 @@
 package it.pagopa.pn.portfat.service.impl;
 
-import it.pagopa.pn.portfat.config.HttpConnectorWebClient;
 import it.pagopa.pn.portfat.config.PortFatPropertiesConfig;
 import it.pagopa.pn.portfat.middleware.db.dao.PortFatDownloadDAO;
 import it.pagopa.pn.portfat.middleware.db.entities.PortFatDownload;
+import it.pagopa.pn.portfat.middleware.msclient.webclient.HttpConnectorWebClient;
 import it.pagopa.pn.portfat.model.PortaleFatturazioneModel;
 import it.pagopa.pn.portfat.service.SafeStorageService;
 import it.pagopa.pn.portfat.utils.Utility;
