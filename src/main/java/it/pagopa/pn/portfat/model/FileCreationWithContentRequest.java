@@ -4,6 +4,7 @@ import it.pagopa.pn.portfat.generated.openapi.msclient.pnsafestorage.v1.dto.File
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class FileCreationWithContentRequest extends FileCreationRequestDto {
