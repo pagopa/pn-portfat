@@ -1,7 +1,7 @@
 {
-  "name": "eventfileready",
+  "name": "eventfileready-lambda",
   "version": "1.0.0",
-  "description": "Lambda EventFileReady",
+  "description": "Lambda for handling and receive api request",
   "main": "index.js",
   "engines": {
     "node": "20.x"
