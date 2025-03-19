@@ -2,7 +2,6 @@ package it.pagopa.pn.portfat.config;
 
 import it.pagopa.pn.portfat.exception.PnGenericException;
 import it.pagopa.pn.portfat.generated.openapi.msclient.pnsafestorage.v1.dto.FileCreationResponseDto;
-import it.pagopa.pn.portfat.middleware.msclient.webclient.impl.HttpConnectorWebClientImpl;
 import it.pagopa.pn.portfat.model.FileCreationWithContentRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,7 +29,7 @@ import static org.mockserver.model.HttpResponse.response;
 class HttpConnectorWebClientImplTest {
 
     private ClientAndServer mockServer;
-    private HttpConnectorWebClientImpl httpConnectorWebClient;
+    private HttpConnectorWebClient httpConnectorWebClient;
 
 
     @BeforeEach
@@ -39,7 +38,7 @@ class HttpConnectorWebClientImplTest {
         WebClient.Builder webClientBuilder = mock(WebClient.Builder.class);
         WebClient webClient = WebClient.builder().baseUrl("http://localhost:1585").build();
         when(webClientBuilder.build()).thenReturn(webClient);
-        httpConnectorWebClient = new HttpConnectorWebClientImpl(webClientBuilder);
+        httpConnectorWebClient = new HttpConnectorWebClient(webClientBuilder);
     }
 
     @AfterEach
