@@ -53,8 +53,8 @@ Resources:
         MaxReceiveCount: 5
         HasDLQ: "true"
         QueueHasAlarm: "true"
-
-   # Dynamo table
+        
+  # Dynamo table
   PortFatDownloadTable:
     Type: AWS::DynamoDB::Table
     UpdateReplacePolicy: Retain
