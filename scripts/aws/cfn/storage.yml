@@ -43,7 +43,6 @@ Resources:
     UpdateReplacePolicy: Retain
     DeletionPolicy: Retain
     Properties:
-      StackName: pn-portfat-actions-queue
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/sqs-queue.yaml"
       Parameters:
         QueueName: !Sub '${ProjectName}-portfat_request_actions'

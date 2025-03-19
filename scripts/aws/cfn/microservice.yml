@@ -265,7 +265,6 @@ Resources:
   PortFatMicroservice:
     Type: AWS::CloudFormation::Stack
     Properties:
-      StackName: pn-portfat-microservice-stack
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/ecs-service.yaml"
       Parameters:
         MicroServiceUniqueName: !Sub '${ProjectName}-portfat'
@@ -343,7 +342,6 @@ Resources:
   PnPortFatAPI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      StackName: pn-portfat-api-stack
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service-openapi.yaml"
       Parameters:
         MicroServiceUniqueName: !Sub '${ProjectName}-portfat'
@@ -361,7 +359,6 @@ Resources:
   PortFatApiWaf:
     Type: AWS::CloudFormation::Stack
     Properties:
-      StackName: pn-portfat-api-waf-stack
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-waf-acl.yaml"
       Parameters:
         WAFName: !Sub '${ProjectName}-portfat'
@@ -382,7 +379,6 @@ Resources:
   PortFatCloudWatchDashboard:
     Type: AWS::CloudFormation::Stack
     Properties:
-      StackName: pn-portfat-cloudwatch-dashboard-stack
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/microservice-cloudwatch-dashboard.yaml"
       Parameters:
         DashboardName: !Sub "${ProjectName}-portfat"
@@ -542,7 +538,6 @@ Resources:
   PortFatLambdaAlarms:
     Type: AWS::CloudFormation::Stack
     Properties:
-      StackName: pn-portfat-lambda-alarms
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/lambda-alarms.yaml"
       Parameters:
         FunctionName: !Ref PortFatLambdaFunction
