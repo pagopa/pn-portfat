@@ -1,6 +1,6 @@
 package it.pagopa.pn.portfat.service.impl;
 
-import it.pagopa.pn.portfat.middleware.msclient.webclient.HttpConnectorWebClient;
+import it.pagopa.pn.portfat.config.HttpConnectorWebClient;
 import it.pagopa.pn.portfat.config.PortFatPropertiesConfig;
 import it.pagopa.pn.portfat.exception.PnGenericException;
 import it.pagopa.pn.portfat.middleware.db.dao.PortFatDownloadDAO;
@@ -15,17 +15,18 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
+
 import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.LIST_FILES_ERROR;
 import static it.pagopa.pn.portfat.mapper.FileCreationWithContentRequestMapper.mapper;
 import static it.pagopa.pn.portfat.utils.Utility.*;
 import static it.pagopa.pn.portfat.utils.ZipUtility.unzip;
-
 
 @Service
 @CustomLog

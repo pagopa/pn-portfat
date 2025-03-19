@@ -1,9 +1,9 @@
 package it.pagopa.pn.portfat.service.impl;
 
-import it.pagopa.pn.portfat.middleware.msclient.webclient.HttpConnectorWebClient;
+import it.pagopa.pn.portfat.config.HttpConnector;
 import it.pagopa.pn.portfat.exception.PnGenericException;
 import it.pagopa.pn.portfat.generated.openapi.msclient.pnsafestorage.v1.dto.FileCreationResponseDto;
-import it.pagopa.pn.portfat.middleware.msclient.safestorage.SafeStorageClient;
+import it.pagopa.pn.portfat.middleware.msclient.SafeStorageClient;
 import it.pagopa.pn.portfat.model.FileCreationWithContentRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,7 +26,7 @@ class SafeStorageServiceImplTest {
     private SafeStorageClient safeStorageClient;
 
     @Mock
-    private HttpConnectorWebClient httpConnectorWebClient;
+    private HttpConnector httpConnector;
 
     @Test
     void testCreateAndUploadContent() {
@@ -44,7 +44,7 @@ class SafeStorageServiceImplTest {
         // Definisci cosa deve fare il mock di safeStorageClient quando createFile viene chiamato
         when(safeStorageClient.createFile(any(), any())).thenReturn(Mono.just(fileCreationResponseDto));
 
-        when(httpConnectorWebClient.uploadContent(any(), any(), any())).thenReturn(Mono.empty());
+        when(httpConnector.uploadContent(any(), any(), any())).thenReturn(Mono.empty());
 
         // Esegui il metodo da testare
         Mono<String> result = safeStorageService.createAndUploadContent(fileCreationRequest);
@@ -57,7 +57,7 @@ class SafeStorageServiceImplTest {
         // Verifica che i metodi mockati siano stati chiamati
         verify(safeStorageClient, times(1))
                 .createFile(fileCreationRequest, sha256);
-        verify(httpConnectorWebClient, times(1))
+        verify(httpConnector, times(1))
                 .uploadContent(fileCreationRequest, fileCreationResponseDto, sha256);
     }
 
@@ -100,7 +100,7 @@ class SafeStorageServiceImplTest {
                 .verify();
 
         verify(safeStorageClient, times(1)).createFile(any(), anyString());
-        verifyNoInteractions(httpConnectorWebClient);
+        verifyNoInteractions(httpConnector);
     }
 
 }
