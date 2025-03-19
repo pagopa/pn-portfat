@@ -11,11 +11,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Base64Utils;
 import reactor.core.publisher.Mono;
-
 import java.security.MessageDigest;
-
 import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.CREATION_FILE_SS_ERROR;
 import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.SHA256_ERROR;
+
 
 @Component
 @Slf4j
