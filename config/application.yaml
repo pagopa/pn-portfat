@@ -9,12 +9,12 @@ pn:
     runtime: DEVELOPMENT
   portfat:
     sqsQueue: local-pn-portfat-inputs-requests.fifo
-#    blobStorageBaseUrl: https://storage.portalefatturazione.pagopa.it
+    blobStorageBaseUrl: https://storage.portalefatturazione.pagopa.it
     filePathWhiteList: temp, portfatt, port-fatt
     basePathZipFile: port-fat-zips
     zipExtension: .zip
     clientSafeStorageBasePath: http://localhost:8889
-#    safeStorageCxId: pn-portfat-in
+    safeStorageCxId: pn-portfat-in
 
   # Technology activation
   middleware:
