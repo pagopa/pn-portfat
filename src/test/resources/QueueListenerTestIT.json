@@ -1,0 +1,72 @@
+[
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/safe-storage/v1/files",
+      "headers": {
+        "x-pagopa-safestorage-cx-id": ["pn-portfat-in"],
+        "x-checksum-value": ["G5Y2cQMjdWXtEusZLmopR7XM1wxiZj2f1JxyUp1o1RE="],
+        "x-checksum": ["SHA-256"],
+        "Content-Type": ["application/json"],
+        "Accept": ["application/json"]
+      },
+      "body": {
+        "matchType": "JSON_SCHEMA",
+        "jsonSchema": "{\"type\":\"object\",\"properties\":{\"documentType\":{\"type\":\"string\",\"pattern\":\"^PN_SERVICE_ORDER$\"},\"status\":{\"type\":\"string\",\"pattern\":\"^SAVED$\"},\"tags\":{\"type\":\"object\",\"properties\":{\"sender_pa_id\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"pattern\":\"^029dcc19-1d59-481e-9a77-9d67aac31bc0$\"}},\"reference_period_year_month\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"pattern\":\"^2025-02$\"}},\"original_data_update_timestamp\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"pattern\":\".*\"}}},\"required\":[\"sender_pa_id\",\"reference_period_year_month\",\"original_data_update_timestamp\"]},\"content\":{\"type\":\"string\",\"pattern\":\".*\"}},\"required\":[\"documentType\",\"status\",\"tags\",\"content\"]}"
+      }
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+        "content-type": ["application/json"]
+      },
+      "body": {
+        "uploadMethod": "PUT",
+        "uploadUrl": "http://localhost:1050/safe-storage/storage/invoice.json",
+        "secret": "AZ23RF12",
+        "key": "8F7E/9A3B/1234/AB87"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "PUT",
+      "path": "/safe-storage/storage/invoice.json",
+      "headers": {
+        "x-amz-checksum-sha256": ["G5Y2cQMjdWXtEusZLmopR7XM1wxiZj2f1JxyUp1o1RE="],
+        "x-amz-meta-secret": ["AZ23RF12"],
+        "Content-Type": ["application/json"]
+      },
+      "body" : {
+        "FKIdEnte" : "029dcc19-1d59-481e-9a77-9d67aac31bc0",
+        "AnnoValidita" : 2025,
+        "MeseValidita" : 2,
+        "TotaleAnalogico" : 0.0,
+        "TotaleDigitale" : 3.0,
+        "TotaleNotificheAnalogico" : 0,
+        "TotaleNotificheDigitale" : 6,
+        "Totale" : 3.0,
+        "TotaleNotifiche" : 6,
+        "IdTipoContratto" : 1,
+        "PercentualeCategoriaA" : null,
+        "PercentualeCategoriaD" : 50,
+        "FkIdStato" : "Chiusa/Stimato",
+        "Fatturabile" : null,
+        "RagioneSociale" : "Comune di Pallare",
+        "CodiceFiscale" : "00266020098",
+        "TipoContratto" : "PAL",
+        "Asseverazione" : false,
+        "DataUscitaAsseverazione" : "2025-02-05"
+      }
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+        "content-type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"resultCode\":\"200.00\"}"
+    }
+  }
+]

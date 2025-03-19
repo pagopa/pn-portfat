@@ -1,0 +1,31 @@
+mockserver:
+  bean:
+    port: 1050
+
+spring:
+  application:
+    name: PN-PORTFAT
+
+pn:
+  portfat:
+    sqsQueue: local-pn-portfat-inputs-requests.fifo
+    blobStorageBaseUrl: http://localhost:1050
+    filePathWhiteList: temp, portfatt, port-fatt
+    basePathZipFile: port-fat-zips
+    zipExtension: .zip
+    clientSafeStorageBasePath: http://localhost:${mockserver.bean.port}
+    safeStorageCxId: pn-portfat-in
+
+aws:
+  region-code: us-east-1
+  profile-name: ${PN_AWS_PROFILE_NAME:default}
+  endpoint-url: http://localhost:4566
+  dynamodbPrtFatTable: PortFatDownload
+
+cloud:
+  aws:
+    region:
+      static: us-east-1
+    credentials:
+      access-key: test
+      secret-key: test

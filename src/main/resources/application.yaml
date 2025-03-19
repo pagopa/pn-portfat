@@ -1,0 +1,16 @@
+logging:
+  config: config/logback-local.xml
+
+spring:
+  application:
+    name: PN-PORTFAT
+
+pn:
+  portfat:
+    sqsQueue: ${PN_PORTFAT_AWS_SQS_NAME}
+    blobStorageBaseUrl: ${PN_PORTFAT_BLOB_STORAGE_BASE_URL}
+    filePathWhiteList: temp, portfatt, port-fatt
+    basePathZipFile: port-fat-zips
+    zipExtension: .zip
+    clientSafeStorageBasePath: ${PN_PORTFAT_SAFESTORAGEBASEURL}
+    safeStorageCxId: ${PN_PORTFAT_SAFESTORAGECXID}

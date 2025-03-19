@@ -1,3 +1,11 @@
 {
-  "Parameters" : {}
+  "Parameters" : {
+    "PnCronAnalyzer": "-",
+    "WireTapLogActivation": "false",
+    "SafeStorageCxId": "pn-portfat-in",
+    "SafeStorageFileNotFoundRetry": "false",
+    "MinTasksNumber": "0",
+    "MaxTasksNumber": "10",
+    "InvoicingServiceIPCidrs": "",
+    "BlobStorageBaseUrl": "https://storage.portalefatturazione.pagopa.it"}
 }
