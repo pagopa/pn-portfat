@@ -52,24 +52,9 @@ Resources:
         VisibilityTimeout: 1200
         MaxReceiveCount: 5
         HasDLQ: "true"
-        DLQArn: !GetAtt PortFatRequestActionsQueueDLQ.Outputs.QueueARN
         QueueHasAlarm: "true"
 
-  # Internal queues DLQ
-  PortFatRequestActionsQueueDLQ:
-    Type: AWS::CloudFormation::Stack
-    UpdateReplacePolicy: Retain
-    DeletionPolicy: Retain
-    Properties:
-      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/sqs-queue.yaml"
-      Parameters:
-        QueueName: !Sub '${ProjectName}-portfat_request_actions_DLQ'
-        DelaySeconds: 1
-        AlarmSNSTopicName: !Ref AlarmSNSTopicName
-        HasDLQ: "false"
-        QueueHasAlarm: "true"
-
-  # Dynamo table
+   # Dynamo table
   PortFatDownloadTable:
     Type: AWS::DynamoDB::Table
     UpdateReplacePolicy: Retain
@@ -110,7 +95,7 @@ Resources:
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/log-group.yaml"
       Parameters:
-        LogGroupName: !Sub "${ProjectName}-eventFileReadyLambda"
+        LogGroupName: !Sub "${ProjectName}-portfat-eventFileReady-lambda"
         LogGroupRetention: !Ref LogRetention
         LogGroupPrefix: '/aws/lambda'
 
@@ -155,24 +140,24 @@ Outputs:
   # Queue DLQ
   PortFatRequestActionsQueueDLQName:
     Description: pn-portfat_request_actions_DLQ queue name
-    Value: !GetAtt PortFatRequestActionsQueueDLQ.Outputs.QueueName
+    Value: !GetAtt PortFatRequestActionsQueue.Outputs.DeadLetterQueueName
 
   PortFatRequestActionsQueueDLQURL:
     Description: pn-portfat_request_actions_DLQ queue URL
-    Value: !GetAtt PortFatRequestActionsQueueDLQ.Outputs.QueueURL
+    Value: !GetAtt PortFatRequestActionsQueue.Outputs.DeadLetterQueueURL
 
   PortFatRequestActionsQueueDLQARN:
     Description: pn-portfat_request_actions_DLQ queue ARN
-    Value: !GetAtt PortFatRequestActionsQueueDLQ.Outputs.QueueARN
+    Value: !GetAtt PortFatRequestActionsQueue.Outputs.DeadLetterQueueARN
 
   PortFatRequestActionsQueueDLQAlarmARN:
     Description: pn-portfat_request_actions_DLQ alarm ARN
-    Value: !GetAtt PortFatRequestActionsQueueDLQ.Outputs.SqsDLQAlarmArn
+    Value: !GetAtt PortFatRequestActionsQueue.Outputs.SqsDLQAlarmArn
 
   # Lambda functions
   EventFileReadyLambdaName:
     Description: Name of event file ready lambda
-    Value: !Sub "${ProjectName}-eventFileReady-lambda"
+    Value: !Sub "${ProjectName}-portfat-eventFileReady-lambda"
 
   EventFileReadyLambdaSqsService:
     Description: Identifier of sqs service

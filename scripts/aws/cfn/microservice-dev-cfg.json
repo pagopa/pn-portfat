@@ -7,5 +7,6 @@
     "MinTasksNumber": "0",
     "MaxTasksNumber": "10",
     "InvoicingServiceIPCidrs": "",
-    "BlobStorageBaseUrl": "https://storage.portalefatturazione.pagopa.it"}
+    "BlobStorageBaseUrl": "https://storage.portalefatturazione.pagopa.it"
+  }
 }
