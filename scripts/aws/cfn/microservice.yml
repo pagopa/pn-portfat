@@ -4,8 +4,14 @@ Description: 'Example microservice deploy'
 Parameters:
   ProjectName:
     Type: String
+    Default: "Pn"
     Description: 'Usually pn can be pnXYZ where XYZ are the feature number, useful to create
       experimental environments without crash official development environment'
+
+  MicroServiceUniqueName:
+    Type: String
+    Default: "portfat"
+    Description: "Unique name for the microservice"
 
   AlarmSNSTopicArn:
     Type: String
