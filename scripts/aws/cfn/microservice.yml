@@ -171,6 +171,10 @@ Parameters:
     Type: String
     Description: 'Application load balancer security group'
 
+  LoadbalancerRulePriority:
+    Type: Number
+    Description: Routing rules in the dame load balancer listener must have different priorities
+
   JavaToolOptions:
     Type: String
     Default: ''

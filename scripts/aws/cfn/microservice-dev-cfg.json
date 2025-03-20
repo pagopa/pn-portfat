@@ -2,7 +2,6 @@
   "Parameters" : {
     "ProjectName": "pn",
     "MicroServiceUniqueName": "portfat",
-    "MicroserviceNumber": "100",
     "WireTapLogActivation": "false",
     "SafeStorageCxId": "pn-portfat-in",
     "SafeStorageFileNotFoundRetry": "false",
