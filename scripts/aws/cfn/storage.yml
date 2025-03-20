@@ -32,10 +32,6 @@ Parameters:
     Type: Number
     Default: 14
 
-  Version:
-    Type: String
-    Description: 'keep track of used projects commitIds'
-
 Resources:
   # Internal queues
   PortFatRequestActionsQueue:
@@ -53,8 +49,8 @@ Resources:
         MaxReceiveCount: 5
         HasDLQ: "true"
         QueueHasAlarm: "true"
-        
-  # Dynamo table
+
+   # Dynamo table
   PortFatDownloadTable:
     Type: AWS::DynamoDB::Table
     UpdateReplacePolicy: Retain
