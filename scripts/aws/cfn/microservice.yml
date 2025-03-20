@@ -22,7 +22,7 @@ Parameters:
 
   MicroserviceNumber:
     Type: Number
-    Default: 99999
+    Default: 100
     Description: 'Disambiguation useful for load balancer rules'
 
   TemplateBucketBaseUrl:
@@ -173,8 +173,9 @@ Parameters:
     Type: String
     Description: 'Application load balancer security group'
 
-  LoadbalancerRulePriority:
+  LoadBalancerRulePriority:
     Type: Number
+    Default: 100
     Description: Routing rules in the dame load balancer listener must have different priorities
 
   JavaToolOptions:
