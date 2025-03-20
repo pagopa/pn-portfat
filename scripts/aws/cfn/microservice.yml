@@ -14,7 +14,7 @@ Parameters:
   AlarmSNSTopicArn:
     Type: String
     Description: 'ARN of alarm topic'
-
+    
   ContainerImageUri:
     Type: String
     Description: 'Exact container image URI with full repository and image digest'
@@ -254,7 +254,7 @@ Resources:
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/ecs-service.yaml"
       Parameters:
-        MicroServiceUniqueName: !Sub '${ProjectName}-portfat'
+        MicroServiceUniqueName: !Sub "${ProjectName}-portfat"
         CpuValue: !Ref CpuValue
         MemoryAmount: !Ref MemoryAmount
 
@@ -274,7 +274,7 @@ Resources:
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
         ContainerImageURI: !Ref ContainerImageUri
 
-        MappedPaths: '/portfat/*,/portfat-private/*'
+        MappedPaths: '/pn-portfat-in/*'
         MicroServiceSecretPrefix: pn-PortFat-Secrets
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds
@@ -338,7 +338,7 @@ Resources:
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
         CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
         OpenApiBucketName: !Ref MicroserviceBucketName
-        OpenApiBucketKey: !Sub ${MicroserviceBucketBaseKey}/docs/openapi/pn-internal-portfat-v1.yaml
+        OpenApiBucketKey: !Sub "${MicroserviceBucketBaseKey}/docs/openapi/pn-internal-portfat-v1.yaml"
 
   PortFatApiWaf:
     Type: AWS::CloudFormation::Stack
@@ -392,7 +392,7 @@ Resources:
   PortFatAutoScalingRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: pn-portfat-ecs-autoscaling-role
+      RoleName: !Sub '${ProjectName}-portfat-ecs-autoscaling-role'
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -409,7 +409,7 @@ Resources:
                 Action:
                   - ecs:UpdateService
                   - ecs:DescribeServices
-                Resource: !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:service/${ECSClusterName}/${MicroServiceUniqueName}"
+                Resource: !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:service/${ECSClusterName}/${ProjectName}-portfat"
               - Effect: Allow
                 Action:
                   - cloudwatch:PutMetricAlarm
@@ -422,7 +422,7 @@ Resources:
     Properties:
       MaxCapacity: 10
       MinCapacity: 0
-      ResourceId: !Sub "service/${ECSClusterName}/${MicroServiceUniqueName}"
+      ResourceId: !Sub "service/${ECSClusterName}/${ProjectName}-portfat"
       RoleARN: !GetAtt PortFatAutoScalingRole.Arn
       ScalableDimension: "ecs:service:DesiredCount"
       ServiceNamespace: "ecs"
@@ -430,7 +430,7 @@ Resources:
   PortFatScalingPolicy:
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
     Properties:
-      PolicyName: pn-portfat-ECS-SQS-AutoScaling
+      PolicyName: !Sub '${ProjectName}-portfat-ECS-SQS-AutoScaling'
       PolicyType: TargetTrackingScaling
       ScalingTargetId: !Ref PortFatScalableTarget
       TargetTrackingScalingPolicyConfiguration:
@@ -467,7 +467,7 @@ Resources:
         Mode: Active
       Environment:
         Variables:
-          PN_PORTFAT_AWS_REGION: !Sub ${AWS::Region}
+          PN_PORTFAT_AWS_REGION: !Sub "${AWS::Region}"
           PN_PORTFAT_AWS_SERVICE: !Ref EventFileReadyLambdaSqsService
           PN_PORTFAT_SQS_QUEUE_NAME: !Ref PortFatRequestActionsQueueName
           PN_PORTFAT_SQS_QUEUE_URL: !Ref PortFatRequestActionsQueueURL
@@ -523,7 +523,9 @@ Resources:
       FunctionName: !Ref PortFatLambdaFunction
       Action: "lambda:InvokeFunction"
       Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${!GetAtt PnPortFatAPI.Outputs.RestApiId}/unique/POST/pn-portfat-in/file-ready-event"
+      SourceArn: !Sub
+        - "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${RestApiId}/unique/POST/pn-portfat-in/file-ready-event"
+        - { RestApiId: !GetAtt PnPortFatAPI.Outputs.RestApiId }
 
   PortFatLambdaAlarms:
     Type: AWS::CloudFormation::Stack
@@ -536,7 +538,7 @@ Resources:
   PortFatLambdaSecGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: !Sub '${EventFileReadyLambdaName}-sec-group'
+      GroupDescription: !Sub "${EventFileReadyLambdaName}-sec-group"
       VpcId: !Ref VpcId
 
 Outputs:
