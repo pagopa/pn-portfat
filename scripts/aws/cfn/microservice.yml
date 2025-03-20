@@ -10,7 +10,6 @@ Parameters:
 
   MicroServiceUniqueName:
     Type: String
-    Default: "portfat"
     Description: "Unique name for the microservice"
 
   AlarmSNSTopicArn:
