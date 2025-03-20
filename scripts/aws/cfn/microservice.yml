@@ -7,10 +7,14 @@ Parameters:
     Description: 'Usually pn can be pnXYZ where XYZ are the feature number, useful to create
       experimental environments without crash official development environment'
 
+  MicroServiceUniqueName:
+    Type: String
+    Description: 'Unique name for the microservice'
+
   AlarmSNSTopicArn:
     Type: String
     Description: 'ARN of alarm topic'
-
+    
   ContainerImageUri:
     Type: String
     Description: 'Exact container image URI with full repository and image digest'
