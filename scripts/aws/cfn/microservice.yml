@@ -7,17 +7,13 @@ Parameters:
     Description: 'Usually pn can be pnXYZ where XYZ are the feature number, useful to create
       experimental environments without crash official development environment'
 
+  MicroServiceUniqueName:
+    Type: String
+    Description: 'Unique name for the microservice'
+
   AlarmSNSTopicArn:
     Type: String
     Description: 'ARN of alarm topic'
-
-  WebApiDnsName:
-    Type: String
-    Description: 'The DNS name used for WEB rest API.'
-  
-  CorsAllowedDomains:
-    Type: String
-    Description: 'Comma separated list of domains allowed to make cross origin request'
 
   ContainerImageUri:
     Type: String
@@ -101,7 +97,7 @@ Parameters:
   # OpenApi Bucket params
   MicroserviceBucketName:
     Type: String
-    Default: ''
+    Default: 'default-microservice-bucket'
     Description: 'Name of the bucket where the microservice files are copied during deploy'
 
   MicroserviceBucketBaseKey:
@@ -117,11 +113,6 @@ Parameters:
     AllowedValues:
       - true
       - false
-
-  PnCronAnalyzer:
-    Type: String
-    Default: '-'
-    Description: 'Cron for which you send the metric to CloudWatch'
 
   # Log group parameters
   EcsLogGroup:
@@ -209,10 +200,6 @@ Parameters:
   PortFatRequestActionsQueueARN:
     Type: String
     Description: ARN of SQS request actions queue
-
-  PortFatRequestActionsQueueDLQName:
-    Type: String
-    Description: Name of DLQ for request actions queue
 
   PortFatRequestActionsQueueAlarmARN:
     Type: String
@@ -318,14 +305,11 @@ Resources:
           - Effect: Allow
             Action:
               - sqs:SendMessage
-              - sqs:SendMessageBatch
               - sqs:ReceiveMessage
               - sqs:DeleteMessage
-              - sqs:DeleteMessageBatch
               - sqs:GetQueueUrl
               - sqs:GetQueueAttributes
               - sqs:ChangeMessageVisibility
-              - sqs:ChangeMessageVisibilityBatch
             Resource:
               - !Ref PortFatRequestActionsQueueARN
               - !Ref PortFatRequestActionsQueueDLQARN
@@ -382,7 +366,7 @@ Resources:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/microservice-cloudwatch-dashboard.yaml"
       Parameters:
         DashboardName: !Sub "${ProjectName}-portfat"
-        DynamoDBTableNames: !Join
+        DynamoDBTableNames: !Split
           - ','
           - !Ref PortFatDownloadTableName
         RestApiStageArns: ''
@@ -446,13 +430,17 @@ Resources:
   PortFatScalingPolicy:
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
     Properties:
-      PolicyName: pn-portfat-SQSScalingPolicy
+      PolicyName: pn-portfat-ECS-SQS-AutoScaling
       PolicyType: TargetTrackingScaling
       ScalingTargetId: !Ref PortFatScalableTarget
       TargetTrackingScalingPolicyConfiguration:
-        PredefinedMetricSpecification:
-          PredefinedMetricType: SQSMessageVisible
-          ResourceLabel: !Sub "${AWS::AccountId}:${PortFatRequestActionsQueueName}.fifo"
+        CustomizedMetricSpecification:
+          MetricName: ApproximateNumberOfMessagesVisible
+          Namespace: AWS/SQS
+          Dimensions:
+            - Name: QueueName
+              Value: !Ref PortFatRequestActionsQueueName
+          Statistic: Average
         TargetValue: 1
         ScaleInCooldown: 300
         ScaleOutCooldown: 300
@@ -470,17 +458,19 @@ Resources:
       VpcConfig:
         SecurityGroupIds:
           - !GetAtt PortFatLambdaSecGroup.GroupId
-        SubnetIds: !Ref SubnetsIds
+        SubnetIds: !Split
+          - ','
+          - !Ref SubnetsIds
       Timeout: 30
       MemorySize: 512
       TracingConfig:
-        Mode: Activer
+        Mode: Active
       Environment:
         Variables:
-          AWS_REGION: !Sub ${AWS::Region}
-          AWS_SERVICE: !Ref EventFileReadyLambdaSqsService
-          SQS_QUEUE_NAME: !Ref PortFatRequestActionsQueueName
-          SQS_QUEUE_URL: !Ref PortFatRequestActionsQueueURL
+          PN_PORTFAT_AWS_REGION: !Sub ${AWS::Region}
+          PN_PORTFAT_AWS_SERVICE: !Ref EventFileReadyLambdaSqsService
+          PN_PORTFAT_SQS_QUEUE_NAME: !Ref PortFatRequestActionsQueueName
+          PN_PORTFAT_SQS_QUEUE_URL: !Ref PortFatRequestActionsQueueURL
 
   PortFatLambdaRole:
     Type: AWS::IAM::Role

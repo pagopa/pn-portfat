@@ -32,10 +32,6 @@ Parameters:
     Type: Number
     Default: 14
 
-  Version:
-    Type: String
-    Description: 'keep track of used projects commitIds'
-
 Resources:
   # Internal queues
   PortFatRequestActionsQueue:
