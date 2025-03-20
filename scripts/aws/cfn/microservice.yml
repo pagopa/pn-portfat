@@ -4,13 +4,11 @@ Description: 'Example microservice deploy'
 Parameters:
   ProjectName:
     Type: String
-    Default: "pn"
     Description: 'Usually pn can be pnXYZ where XYZ are the feature number, useful to create
       experimental environments without crash official development environment'
 
   MicroServiceUniqueName:
     Type: String
-    Default: "portfat"
     Description: "Unique name for the microservice"
 
   AlarmSNSTopicArn:
@@ -23,7 +21,6 @@ Parameters:
 
   MicroserviceNumber:
     Type: Number
-    Default: 99999
     Description: 'Disambiguation useful for load balancer rules'
 
   TemplateBucketBaseUrl:
