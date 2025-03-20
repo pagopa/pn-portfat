@@ -22,7 +22,6 @@ Parameters:
 
   MicroserviceNumber:
     Type: Number
-    Default: 100
     Description: 'Disambiguation useful for load balancer rules'
 
   TemplateBucketBaseUrl:
@@ -173,9 +172,8 @@ Parameters:
     Type: String
     Description: 'Application load balancer security group'
 
-  LoadBalancerRulePriority:
+  LoadbalancerRulePriority:
     Type: Number
-    Default: 100
     Description: Routing rules in the dame load balancer listener must have different priorities
 
   JavaToolOptions:
@@ -289,7 +287,7 @@ Resources:
         AlbSecurityGroup: !Ref AlbSecurityGroup
         EcsDefaultSecurityGroup: !Ref EcsDefaultSecurityGroup
         LoadBalancerListenerArn: !Ref ApplicationLoadBalancerListenerArn
-        LoadBalancerRulePriority: !Ref MicroserviceNumber
+        LoadbalancerRulePriority: !Ref MicroserviceNumber
         CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
         EcsLogGroup: !Ref EcsLogGroup
         LogAlarmStrategyV1: !Ref LogAlarmStrategy
