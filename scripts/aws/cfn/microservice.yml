@@ -23,6 +23,7 @@ Parameters:
 
   MicroserviceNumber:
     Type: Number
+    Default: 99999
     Description: 'Disambiguation useful for load balancer rules'
 
   TemplateBucketBaseUrl:
