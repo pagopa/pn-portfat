@@ -10,7 +10,6 @@ Parameters:
 
   MicroServiceUniqueName:
     Type: String
-    Default: "portfat"
     Description: "Unique name for the microservice"
 
   AlarmSNSTopicArn:
@@ -173,10 +172,6 @@ Parameters:
     Type: String
     Description: 'Application load balancer security group'
 
-  LoadbalancerRulePriority:
-    Type: Number
-    Description: Routing rules in the dame load balancer listener must have different priorities
-
   JavaToolOptions:
     Type: String
     Default: ''
@@ -288,7 +283,6 @@ Resources:
         AlbSecurityGroup: !Ref AlbSecurityGroup
         EcsDefaultSecurityGroup: !Ref EcsDefaultSecurityGroup
         LoadBalancerListenerArn: !Ref ApplicationLoadBalancerListenerArn
-        LoadbalancerRulePriority: !Ref MicroserviceNumber
         CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
         EcsLogGroup: !Ref EcsLogGroup
         LogAlarmStrategyV1: !Ref LogAlarmStrategy
