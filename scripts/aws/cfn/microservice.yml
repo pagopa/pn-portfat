@@ -4,7 +4,6 @@ Description: 'Example microservice deploy'
 Parameters:
   ProjectName:
     Type: String
-    Default: "pn"
     Description: 'Usually pn can be pnXYZ where XYZ are the feature number, useful to create
       experimental environments without crash official development environment'
 
@@ -15,10 +14,6 @@ Parameters:
   ContainerImageUri:
     Type: String
     Description: 'Exact container image URI with full repository and image digest'
-
-  MicroserviceNumber:
-    Type: Number
-    Description: 'Disambiguation useful for load balancer rules'
 
   TemplateBucketBaseUrl:
     Type: String
@@ -251,7 +246,6 @@ Resources:
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/ecs-service.yaml"
       Parameters:
-        MicroServiceUniqueName: !Sub "${ProjectName}-portfat"
         CpuValue: !Ref CpuValue
         MemoryAmount: !Ref MemoryAmount
 
@@ -324,7 +318,6 @@ Resources:
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service-openapi.yaml"
       Parameters:
-        MicroServiceUniqueName: !Sub '${ProjectName}-portfat'
         IntendedUsage: CN_BE
         DnsName: !Ref ApiDnsName
         ProjectName: !Ref ProjectName
