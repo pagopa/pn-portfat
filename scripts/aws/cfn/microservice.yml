@@ -15,6 +15,10 @@ Parameters:
     Type: String
     Description: 'Exact container image URI with full repository and image digest'
 
+  MicroserviceNumber:
+    Type: Number
+    Description: 'Disambiguation useful for load balancer rules'
+
   TemplateBucketBaseUrl:
     Type: String
     Description: 'The S3 bucket from which to fetch the templates used by this stack.'
@@ -30,7 +34,7 @@ Parameters:
   VpcId:
     Type: String
     Description: 'VpcId where the microservice is going to be deployed'
-  
+
   EcsDefaultSecurityGroup:
     Type: String
     Description: 'Default security group required by infrastructure'
@@ -46,11 +50,11 @@ Parameters:
   NetworkLoadBalancerLink:
     Type: String
     Description: 'network load balancer link for API-GW'
-  
+
   LogsKinesisSourceStreamArn:
     Type: String
     Description: 'Kinesis stream that receive logs'
-  
+
   Version:
     Type: String
     Description: 'keep track of used projects commitIds'
@@ -235,7 +239,7 @@ Parameters:
     Default: 6000
     Type: Number
     Description: WAF limit
-  
+
   ApiDnsName:
     Type: String
     Description: "The DNS name used for B2B rest API."
@@ -246,6 +250,7 @@ Resources:
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/ecs-service.yaml"
       Parameters:
+        MicroServiceUniqueName: !Sub "${ProjectName}-portfat"
         CpuValue: !Ref CpuValue
         MemoryAmount: !Ref MemoryAmount
 
@@ -273,6 +278,7 @@ Resources:
         AlbSecurityGroup: !Ref AlbSecurityGroup
         EcsDefaultSecurityGroup: !Ref EcsDefaultSecurityGroup
         LoadBalancerListenerArn: !Ref ApplicationLoadBalancerListenerArn
+        LoadbalancerRulePriority: !Ref MicroserviceNumber
         CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
         EcsLogGroup: !Ref EcsLogGroup
         LogAlarmStrategyV1: !Ref LogAlarmStrategy
@@ -318,6 +324,7 @@ Resources:
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service-openapi.yaml"
       Parameters:
+        MicroServiceUniqueName: !Sub '${ProjectName}-portfat'
         IntendedUsage: CN_BE
         DnsName: !Ref ApiDnsName
         ProjectName: !Ref ProjectName
