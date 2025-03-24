@@ -205,6 +205,10 @@ Parameters:
     Type: String
     Description: ARN of SQS age alarm for request actions queue
 
+  PortFatRequestActionsQueueDLQAlarmARN:
+    Type: String
+    Description: ARN of DLQ age alarm for request actions queue
+
   PortFatRequestActionsQueueDLQARN:
     Type: String
     Description: ARN of DLQ for request actions queue
@@ -376,7 +380,7 @@ Resources:
           - ','
           - - !Ref PortFatRequestActionsQueueAlarmARN
             - !Ref PortFatRequestActionsQueueAgeAlarmARN
-            - !Ref PortFatRequestActionsQueueDLQARN
+            - !Ref PortFatRequestActionsQueueDLQAlarmARN
             - !GetAtt PortFatLambdaAlarms.Outputs.LambdaInvocationErrorLogsMetricAlarm
         LambdaArns: !Join
           - ','
