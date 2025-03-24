@@ -1,0 +1,69 @@
+openapi: 3.0.1
+info:
+  title: API Portale Fatturazione Internal
+  description: |
+    # Interface definition for Pn-Portfat
+  x-summary: 'Ricezione dati dal Portale Fatturazione'
+  version: 1.0.0
+  contact:
+    name: API Support
+    url: http://www.pagopa.com/support
+    email: support@pagopa.com
+  termsOfService: termsOfService
+  x-api-id: port-fat-in
+servers:
+  - url: https://api.pn.pagopa.it
+    description: Generated server url
+
+tags:
+  - name: Portale Fatturazione
+    description: Servizi per la ricezione degli eventi dal sistema Portale Fatturazione
+  - name: HealthCheck
+    description: Stato del microservizio.
+
+paths:
+  /status:
+    get:
+      summary: healthCheck path
+      description: health check path per verificare lo stato del micro servizio
+      tags:
+        - HealthCheck
+
+      operationId: status
+      responses:
+        '200':
+          description: Ok
+        '500':
+          description: Internal Server Error
+
+  /pn-portfat-in/file-ready-event:
+    post:
+      summary: FileReadyEvent
+      operationId: fileReadyEvent
+      x-pagopa-lambda-name: 'pn-portfat-eventFileReady-lambda:live'
+      x-pagopa-lambda-account: core
+      tags:
+        - Portale Fatturazione
+      parameters:
+        - in: header
+          name: x-api-key
+          required: true
+          schema:
+            $ref: 'schemas-params.yaml#/components/schemas/ApiKey'
+      requestBody:
+        description: Parametri necessari per processare i file
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'schemas-params.yaml#/components/schemas/FileReadyEvent'
+
+      responses:
+        '400':
+          $ref: 'schemas-responses.yaml#/components/responses/FileReadyEventBadRequest'
+        '429':
+          $ref: 'schemas-responses.yaml#/components/responses/FileReadyEventToManyRequest'
+        '500':
+          $ref: 'schemas-responses.yaml#/components/responses/FailResponseInternalServerError'
+        '202':
+          description: "Richiesta accettata"
