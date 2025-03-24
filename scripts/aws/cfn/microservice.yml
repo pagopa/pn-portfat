@@ -365,7 +365,7 @@ Resources:
         DashboardName: !Sub "${ProjectName}-portfat"
         DynamoDBTableNames: !Join
           - ','
-          - !Ref PortFatDownloadTableName
+          - - !Ref PortFatDownloadTableName
         RestApiStageArns: ''
         RestApiNames: ''
         AlarmArns: !Join
