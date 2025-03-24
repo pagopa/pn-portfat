@@ -1,4 +1,4 @@
-if (!process.env.LOCALSTACK) {
+if (process.env.LOCALSTACK !== 'true') {
     require('dotenv').config();
     console.log('Dotenv loaded');
 } else {
