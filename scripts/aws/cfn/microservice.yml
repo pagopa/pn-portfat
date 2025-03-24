@@ -366,8 +366,12 @@ Resources:
         DynamoDBTableNames: !Join
           - ','
           - - !Ref PortFatDownloadTableName
-        RestApiStageArns: ''
-        RestApiNames: ''
+        RestApiStageArns: !Join
+          - ','
+          - - !GetAtt PnPortFatAPI.Outputs.RestApiStageArn
+        RestApiNames: !Join
+          - ','
+          - - !GetAtt PnPortFatAPI.Outputs.RestApiName
         AlarmArns: !Join
           - ','
           - - !Ref PortFatRequestActionsQueueAlarmARN
