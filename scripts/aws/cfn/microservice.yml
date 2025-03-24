@@ -61,7 +61,7 @@ Parameters:
 
   # Autoscaling parameters
   AutoscalingCheckPeriod:
-    Default: 60
+    Default: 300
     Type: Number
     Description: 'minimum autoscaling number of tasks'
 
@@ -76,7 +76,7 @@ Parameters:
     Description: 'activate when N datapoint on M'
 
   AutoscalingThreshold:
-    Default: 70
+    Default: 1
     Type: String
     Description: 'activate when default is reached'
 
@@ -259,9 +259,10 @@ Resources:
         HealthyThresholdCount: !Ref HealthyThresholdCount
         UnhealthyThresholdCount: !Ref UnhealthyThresholdCount
 
-        AutoscalingStrategy: CUSTOM
         MinTasksNumber: !Ref MinTasksNumber
         MaxTasksNumber: !Ref MaxTasksNumber
+        AutoscalingStrategy: SQS
+        AutoscalingQueueName: !Ref PortFatRequestActionsQueueName
         AutoscalingThreshold: !Ref AutoscalingThreshold
         AutoscalingCheckPeriod: !Ref AutoscalingCheckPeriod
         AutoscalingDataPointN: !Ref AutoscalingDataPointN
@@ -384,62 +385,6 @@ Resources:
           - ','
           - - !Ref EcsLogGroup
             - !Ref LambdaLogGroup
-
-  PortFatAutoScalingRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub '${ProjectName}-portfat-ecs-autoscaling-role'
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: application-autoscaling.amazonaws.com
-            Action: "sts:AssumeRole"
-      Policies:
-        - PolicyName: ECSAutoScalingPolicy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - ecs:UpdateService
-                  - ecs:DescribeServices
-                Resource: !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:service/${ECSClusterName}/${ProjectName}-portfat"
-              - Effect: Allow
-                Action:
-                  - cloudwatch:PutMetricAlarm
-                  - cloudwatch:DescribeAlarms
-                  - cloudwatch:DeleteAlarms
-                Resource: "*"
-
-  PortFatScalableTarget:
-    Type: AWS::ApplicationAutoScaling::ScalableTarget
-    Properties:
-      MaxCapacity: 10
-      MinCapacity: 0
-      ResourceId: !Sub "service/${ECSClusterName}/${ProjectName}-portfat"
-      RoleARN: !GetAtt PortFatAutoScalingRole.Arn
-      ScalableDimension: "ecs:service:DesiredCount"
-      ServiceNamespace: "ecs"
-
-  PortFatScalingPolicy:
-    Type: AWS::ApplicationAutoScaling::ScalingPolicy
-    Properties:
-      PolicyName: !Sub '${ProjectName}-portfat-ECS-SQS-AutoScaling'
-      PolicyType: TargetTrackingScaling
-      ScalingTargetId: !Ref PortFatScalableTarget
-      TargetTrackingScalingPolicyConfiguration:
-        CustomizedMetricSpecification:
-          MetricName: ApproximateNumberOfMessagesVisible
-          Namespace: AWS/SQS
-          Dimensions:
-            - Name: QueueName
-              Value: !Ref PortFatRequestActionsQueueName
-          Statistic: Average
-        TargetValue: 1
-        ScaleInCooldown: 300
-        ScaleOutCooldown: 300
 
   PortFatLambdaFunction:
     Type: AWS::Lambda::Function
