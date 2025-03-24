@@ -335,7 +335,7 @@ Resources:
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
         CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
         OpenApiBucketName: !Ref MicroserviceBucketName
-        OpenApiBucketKey: !Sub "${MicroserviceBucketBaseKey}/docs/openapi/pn-internal-portfat-v1.yaml"
+        OpenApiBucketKey: !Sub ${MicroserviceBucketBaseKey}/docs/openapi/aws/api-pn-portfat-in-B2B-aws.yaml
 
   PortFatApiWaf:
     Type: AWS::CloudFormation::Stack
