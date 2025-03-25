@@ -49,6 +49,7 @@ Resources:
         MaxReceiveCount: 5
         HasDLQ: "true"
         QueueHasAlarm: "true"
+        ContentBasedDeduplication: "true"
 
    # Dynamo table
   PortFatDownloadTable:
