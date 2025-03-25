@@ -1,0 +1,17 @@
+{
+    "openapi": [
+        {
+            "intendedUsage": "CN_BE",
+            "commonFiles": [
+                "schemas-params.yaml",
+                "schemas-responses.yaml"
+            ],
+            "openapiFiles": [
+                "pn-internal-portfat-v1.yaml"
+            ],
+            "servicePath": "pn-portfat-in",
+            "generateBundle": false,
+            "mergeBeforeBundleGeneration": false
+        }
+    ]
+}

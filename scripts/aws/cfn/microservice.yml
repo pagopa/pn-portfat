@@ -4,13 +4,8 @@ Description: 'Example microservice deploy'
 Parameters:
   ProjectName:
     Type: String
-    Default: "pn"
     Description: 'Usually pn can be pnXYZ where XYZ are the feature number, useful to create
       experimental environments without crash official development environment'
-
-  MicroServiceUniqueName:
-    Type: String
-    Description: "Unique name for the microservice"
 
   AlarmSNSTopicArn:
     Type: String
@@ -39,7 +34,7 @@ Parameters:
   VpcId:
     Type: String
     Description: 'VpcId where the microservice is going to be deployed'
-  
+
   EcsDefaultSecurityGroup:
     Type: String
     Description: 'Default security group required by infrastructure'
@@ -55,18 +50,18 @@ Parameters:
   NetworkLoadBalancerLink:
     Type: String
     Description: 'network load balancer link for API-GW'
-  
+
   LogsKinesisSourceStreamArn:
     Type: String
     Description: 'Kinesis stream that receive logs'
-  
+
   Version:
     Type: String
     Description: 'keep track of used projects commitIds'
 
   # Autoscaling parameters
   AutoscalingCheckPeriod:
-    Default: 60
+    Default: 300
     Type: Number
     Description: 'minimum autoscaling number of tasks'
 
@@ -81,7 +76,7 @@ Parameters:
     Description: 'activate when N datapoint on M'
 
   AutoscalingThreshold:
-    Default: 70
+    Default: 1
     Type: String
     Description: 'activate when default is reached'
 
@@ -190,10 +185,6 @@ Parameters:
     Type: String
     Description: ARN of dynamodb table containing Downloads files
 
-  EventFileReadyLambdaSqsService:
-    Type: String
-    Description: Identifier of sqs service
-
   PortFatRequestActionsQueueName:
     Type: String
     Description: Name of SQS request actions queue
@@ -213,6 +204,10 @@ Parameters:
   PortFatRequestActionsQueueAgeAlarmARN:
     Type: String
     Description: ARN of SQS age alarm for request actions queue
+
+  PortFatRequestActionsQueueDLQAlarmARN:
+    Type: String
+    Description: ARN of DLQ age alarm for request actions queue
 
   PortFatRequestActionsQueueDLQARN:
     Type: String
@@ -248,7 +243,7 @@ Parameters:
     Default: 6000
     Type: Number
     Description: WAF limit
-  
+
   ApiDnsName:
     Type: String
     Description: "The DNS name used for B2B rest API."
@@ -268,9 +263,10 @@ Resources:
         HealthyThresholdCount: !Ref HealthyThresholdCount
         UnhealthyThresholdCount: !Ref UnhealthyThresholdCount
 
-        AutoscalingStrategy: CUSTOM
         MinTasksNumber: !Ref MinTasksNumber
         MaxTasksNumber: !Ref MaxTasksNumber
+        AutoscalingStrategy: SQS
+        AutoscalingQueueName: !Ref PortFatRequestActionsQueueName
         AutoscalingThreshold: !Ref AutoscalingThreshold
         AutoscalingCheckPeriod: !Ref AutoscalingCheckPeriod
         AutoscalingDataPointN: !Ref AutoscalingDataPointN
@@ -343,7 +339,7 @@ Resources:
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
         CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
         OpenApiBucketName: !Ref MicroserviceBucketName
-        OpenApiBucketKey: !Sub "${MicroserviceBucketBaseKey}/docs/openapi/pn-internal-portfat-v1.yaml"
+        OpenApiBucketKey: !Sub ${MicroserviceBucketBaseKey}/docs/openapi/aws/api-pn-portfat-in-CN_BE-aws.yaml
 
   PortFatApiWaf:
     Type: AWS::CloudFormation::Stack
@@ -371,16 +367,20 @@ Resources:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/microservice-cloudwatch-dashboard.yaml"
       Parameters:
         DashboardName: !Sub "${ProjectName}-portfat"
-        DynamoDBTableNames: !Split
+        DynamoDBTableNames: !Join
           - ','
-          - !Ref PortFatDownloadTableName
-        RestApiStageArns: ''
-        RestApiNames: ''
+          - - !Ref PortFatDownloadTableName
+        RestApiStageArns: !Join
+          - ','
+          - - !GetAtt PnPortFatAPI.Outputs.RestApiStageArn
+        RestApiNames: !Join
+          - ','
+          - - !GetAtt PnPortFatAPI.Outputs.RestApiName
         AlarmArns: !Join
           - ','
           - - !Ref PortFatRequestActionsQueueAlarmARN
             - !Ref PortFatRequestActionsQueueAgeAlarmARN
-            - !Ref PortFatRequestActionsQueueDLQARN
+            - !Ref PortFatRequestActionsQueueDLQAlarmARN
             - !GetAtt PortFatLambdaAlarms.Outputs.LambdaInvocationErrorLogsMetricAlarm
         LambdaArns: !Join
           - ','
@@ -393,62 +393,6 @@ Resources:
           - ','
           - - !Ref EcsLogGroup
             - !Ref LambdaLogGroup
-
-  PortFatAutoScalingRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub '${ProjectName}-portfat-ecs-autoscaling-role'
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: application-autoscaling.amazonaws.com
-            Action: "sts:AssumeRole"
-      Policies:
-        - PolicyName: ECSAutoScalingPolicy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - ecs:UpdateService
-                  - ecs:DescribeServices
-                Resource: !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:service/${ECSClusterName}/${ProjectName}-portfat"
-              - Effect: Allow
-                Action:
-                  - cloudwatch:PutMetricAlarm
-                  - cloudwatch:DescribeAlarms
-                  - cloudwatch:DeleteAlarms
-                Resource: "*"
-
-  PortFatScalableTarget:
-    Type: AWS::ApplicationAutoScaling::ScalableTarget
-    Properties:
-      MaxCapacity: 10
-      MinCapacity: 0
-      ResourceId: !Sub "service/${ECSClusterName}/${ProjectName}-portfat"
-      RoleARN: !GetAtt PortFatAutoScalingRole.Arn
-      ScalableDimension: "ecs:service:DesiredCount"
-      ServiceNamespace: "ecs"
-
-  PortFatScalingPolicy:
-    Type: AWS::ApplicationAutoScaling::ScalingPolicy
-    Properties:
-      PolicyName: !Sub '${ProjectName}-portfat-ECS-SQS-AutoScaling'
-      PolicyType: TargetTrackingScaling
-      ScalingTargetId: !Ref PortFatScalableTarget
-      TargetTrackingScalingPolicyConfiguration:
-        CustomizedMetricSpecification:
-          MetricName: ApproximateNumberOfMessagesVisible
-          Namespace: AWS/SQS
-          Dimensions:
-            - Name: QueueName
-              Value: !Ref PortFatRequestActionsQueueName
-          Statistic: Average
-        TargetValue: 1
-        ScaleInCooldown: 300
-        ScaleOutCooldown: 300
 
   PortFatLambdaFunction:
     Type: AWS::Lambda::Function
@@ -473,7 +417,6 @@ Resources:
       Environment:
         Variables:
           PN_PORTFAT_AWS_REGION: !Sub "${AWS::Region}"
-          PN_PORTFAT_AWS_SERVICE: !Ref EventFileReadyLambdaSqsService
           PN_PORTFAT_SQS_QUEUE_NAME: !Ref PortFatRequestActionsQueueName
           PN_PORTFAT_SQS_QUEUE_URL: !Ref PortFatRequestActionsQueueURL
 
