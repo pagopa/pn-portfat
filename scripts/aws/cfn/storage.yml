@@ -154,7 +154,3 @@ Outputs:
   EventFileReadyLambdaName:
     Description: Name of event file ready lambda
     Value: !Sub "${ProjectName}-portfat-eventFileReady-lambda"
-
-  EventFileReadyLambdaSqsService:
-    Description: Identifier of sqs service
-    Value: "sqs"
