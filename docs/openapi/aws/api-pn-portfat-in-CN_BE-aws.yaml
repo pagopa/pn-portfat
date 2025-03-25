@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: Bw/KbZCbqjJtkd/CXP+AtpK/cPxIflliZCmapq6gh6E=
+  version: 5v7sEaqx+ZroESlJ9j8hlWFUWgZTjApnj4BDaZvxCDY=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -15,7 +15,7 @@ paths:
     post:
       summary: FileReadyEvent
       operationId: fileReadyEvent
-      x-pagopa-lambda-name: pn-portfat-eventFileReady-lambda:live
+      x-pagopa-lambda-name: pn-portfat-eventFileReady-lambda
       x-pagopa-lambda-account: core
       tags:
         - Portale Fatturazione
@@ -45,7 +45,7 @@ paths:
         - api_key_openapi: []
       x-amazon-apigateway-integration:
         uri: >-
-          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:pn-portfat-eventFileReady-lambda:live/invocations
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:pn-portfat-eventFileReady-lambda/invocations
         httpMethod: POST
         requestParameters:
           integration.request.header.x-pagopa-pn-cx-id: context.authorizer.cx_id
