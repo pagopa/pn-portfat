@@ -167,10 +167,6 @@ Parameters:
     Type: String
     Description: 'Application load balancer security group'
 
-  LoadbalancerRulePriority:
-    Type: Number
-    Description: Routing rules in the dame load balancer listener must have different priorities
-
   JavaToolOptions:
     Type: String
     Default: ''
@@ -472,8 +468,9 @@ Resources:
       Action: "lambda:InvokeFunction"
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub
-        - "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${RestApiId}/unique/POST/pn-portfat-in/file-ready-event"
+        - "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${RestApiId}/*"
         - { RestApiId: !GetAtt PnPortFatAPI.Outputs.RestApiId }
+
 
   PortFatLambdaAlarms:
     Type: AWS::CloudFormation::Stack
