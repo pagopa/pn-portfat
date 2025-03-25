@@ -1,20 +1,15 @@
-if (process.env.LOCALSTACK !== 'true') {
-    require('dotenv').config();
-    console.log('Dotenv loaded');
-} else {
-    console.log('Dotenv NOT loaded (AWS Lambda execution)');
-}
+const appConfig = require('config');
 
-const isLocal = process.env.LOCALSTACK === 'true';
+const isLocal = appConfig.has('LOCALSTACK') && appConfig.get('LOCALSTACK') === 'true';
 
 module.exports = {
-    region: process.env.PN_PORTFAT_AWS_REGION,
-    queueUrl: process.env.PN_PORTFAT_SQS_QUEUE_URL,
-    queueName: process.env.PN_PORTFAT_SQS_QUEUE_NAME,
-    endpoint: isLocal ? process.env.SQS_ENDPOINT : undefined,
-    service: process.env.PN_PORTFAT_AWS_SERVICE,
+    region: appConfig.get('PN_PORTFAT_AWS_REGION'),
+    queueUrl: appConfig.get('PN_PORTFAT_SQS_QUEUE_URL'),
+    queueName: appConfig.get('PN_PORTFAT_SQS_QUEUE_NAME'),
+    endpoint: isLocal ? appConfig.get('SQS_ENDPOINT') : undefined,
     credentials: isLocal ? {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-    } : undefined
+        accessKeyId: appConfig.get('AWS_ACCESS_KEY_ID'),
+        secretAccessKey: appConfig.get('AWS_SECRET_ACCESS_KEY')
+    } : undefined,
+    isLocal
 };
