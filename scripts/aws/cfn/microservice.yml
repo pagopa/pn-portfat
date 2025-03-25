@@ -468,8 +468,9 @@ Resources:
       Action: "lambda:InvokeFunction"
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub
-        - "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${RestApiId}/unique/POST/pn-portfat-in/file-ready-event"
+        - "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${RestApiId}/*"
         - { RestApiId: !GetAtt PnPortFatAPI.Outputs.RestApiId }
+
 
   PortFatLambdaAlarms:
     Type: AWS::CloudFormation::Stack
