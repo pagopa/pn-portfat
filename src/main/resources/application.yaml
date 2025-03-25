@@ -14,3 +14,7 @@ pn:
     zipExtension: .zip
     clientSafeStorageBasePath: ${PN_PORTFAT_SAFESTORAGEBASEURL}
     safeStorageCxId: ${PN_PORTFAT_SAFESTORAGECXID}
+
+aws:
+  region-code: ${AWS_REGIONCODE}
+  dynamodbPrtFatTable: ${PN_PORTFAT_PORTFAT_TABLE_NAME}
