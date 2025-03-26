@@ -4,10 +4,10 @@ import io.awspring.cloud.messaging.listener.SqsMessageDeletionPolicy;
 import io.awspring.cloud.messaging.listener.annotation.SqsListener;
 import it.pagopa.pn.commons.utils.MDCUtils;
 import it.pagopa.pn.portfat.config.PortFatPropertiesConfig;
-import it.pagopa.pn.portfat.generated.openapi.server.v1.dto.FileReadyEvent;
 import it.pagopa.pn.portfat.middleware.db.dao.PortFatDownloadDAO;
 import it.pagopa.pn.portfat.middleware.db.entities.DownloadStatus;
 import it.pagopa.pn.portfat.middleware.db.entities.PortFatDownload;
+import it.pagopa.pn.portfat.model.FileReadyModel;
 import it.pagopa.pn.portfat.service.PortFatService;
 import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;
@@ -39,9 +39,9 @@ public class QueueListener {
 
     @SqsListener(value = "${pn.portfat.sqsQueue}", deletionPolicy = SqsMessageDeletionPolicy.DEFAULT)
     public void pullPortFat(@Payload String payload, @Headers Map<String, Object> headers) {
-        FileReadyEvent fileReady = convertToObject(payload, FileReadyEvent.class);
-        setMDCContext(headers);
         log.logStartingProcess("portFat with MessageGroupId=" + headers.get(MESSAGE_GROUP_ID) + ", and Body= " + payload);
+        FileReadyModel fileReady = convertToObject(payload, FileReadyModel.class);
+        setMDCContext(headers);
         MDCUtils.addMDCToContextAndExecute(Mono.just(fileReady))
                 .filter(this::isFileReadyEvent)
                 .flatMap(fileReadyEvent -> {
@@ -95,16 +95,17 @@ public class QueueListener {
                         log.logEndingProcess("portFat updated To " + download.getStatus() + ", DOWNLOAD_ID=" + download.getDownloadId()));
     }
 
-    private Mono<PortFatDownload> createAndSaveNewDownload(FileReadyEvent fileReadyEvent) {
+    private Mono<PortFatDownload> createAndSaveNewDownload(FileReadyModel fileReadyEvent) {
         return portFatDownloadDAO.createPortFatDownload(portFatDownload(fileReadyEvent));
     }
 
-    private boolean isFileReadyEvent(FileReadyEvent fileReadyEvent) {
+    private boolean isFileReadyEvent(FileReadyModel fileReadyEvent) {
         String downloadUrl = fileReadyEvent.getDownloadUrl();
         String version = fileReadyEvent.getFileVersion();
+        String filePath = fileReadyEvent.getFilePath();
 
-        if (StringUtils.isEmpty(downloadUrl)) {
-            log.error("The message received is not valid Message={}, Download Url is empty", fileReadyEvent);
+        if (StringUtils.isEmpty(downloadUrl) || StringUtils.isEmpty(filePath)) {
+            log.error("The message received is not valid Message={}, Download Url or FilePath are empty", fileReadyEvent);
             return false;
         }
 
@@ -113,7 +114,8 @@ public class QueueListener {
             return false;
         }
 
-        if (portFatConfig.getFilePathWhiteList().stream().noneMatch(downloadUrl::contains)) {
+        if (portFatConfig.getFilePathWhiteList().stream().noneMatch(downloadUrl::contains)
+                && portFatConfig.getFilePathWhiteList().stream().noneMatch(filePath::contains)) {
             log.error("The message received is not valid Message={}, File Path is not valid", fileReadyEvent);
             return false;
         }

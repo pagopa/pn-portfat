@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pn.portfat.exception.PnGenericException;
 import it.pagopa.pn.portfat.generated.openapi.server.v1.dto.FileReadyEvent;
+import it.pagopa.pn.portfat.model.FileReadyModel;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import reactor.core.publisher.Mono;
@@ -55,7 +56,7 @@ public class Utility {
         return entity;
     }
 
-    public static String downloadId(FileReadyEvent fileReady) {
+    public static String downloadId(FileReadyModel fileReady) {
         return fileReady.getDownloadUrl() + fileReady.getFileVersion();
     }
 
