@@ -4,10 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pn.portfat.config.BaseTest;
 import it.pagopa.pn.portfat.config.PortFatPropertiesConfig;
-import it.pagopa.pn.portfat.generated.openapi.server.v1.dto.FileReadyEvent;
 import it.pagopa.pn.portfat.middleware.db.dao.PortFatDownloadDAO;
 import it.pagopa.pn.portfat.middleware.db.entities.DownloadStatus;
 import it.pagopa.pn.portfat.middleware.db.entities.PortFatDownload;
+import it.pagopa.pn.portfat.model.FileReadyModel;
 import it.pagopa.pn.portfat.service.PortFatService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +32,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+
 @SpringBootTest
 @ActiveProfiles("test")
 class QueueListenerTest extends BaseTest.WithLocalStack {
@@ -55,6 +56,8 @@ class QueueListenerTest extends BaseTest.WithLocalStack {
     Map<String, Object> headers;
     private static final String DOWNLOAD_URL = "https://portale-fatturazione-storage.blob.core.windows.net/portfatt/pn-example_it";
     private static final String FILE_VERSION = "v1.0";
+    private static final String FILE_PATH = "/temp/invoices.zip";
+
 
     @BeforeEach
     void setup() {
@@ -70,9 +73,10 @@ class QueueListenerTest extends BaseTest.WithLocalStack {
         //ARRANGE
         headers = new HashMap<>();
         headers.put("id", UUID.randomUUID());
-        FileReadyEvent event = new FileReadyEvent();
+        FileReadyModel event = new FileReadyModel();
         event.setFileVersion(FILE_VERSION);
         event.setDownloadUrl(DOWNLOAD_URL);
+        event.setFilePath(FILE_PATH);
         payload = new ObjectMapper().writeValueAsString(event);
 
         // Mock di portFatDownloadDAO.findByDownloadId() per restituire un Mono.empty()
@@ -99,9 +103,10 @@ class QueueListenerTest extends BaseTest.WithLocalStack {
         //ARRANGE
         headers = new HashMap<>();
         headers.put("AWSTraceHeader", UUID.randomUUID());
-        FileReadyEvent event = new FileReadyEvent();
+        FileReadyModel event = new FileReadyModel();
         event.setFileVersion(FILE_VERSION);
         event.setDownloadUrl(DOWNLOAD_URL);
+        event.setFilePath(FILE_PATH);
         payload = new ObjectMapper().writeValueAsString(event);
 
         // Mock di portFatDownloadDAO.findByDownloadId() per restituire un PortFatDownload in stato ERROR
@@ -131,7 +136,7 @@ class QueueListenerTest extends BaseTest.WithLocalStack {
     void testPullPortFatWithInvalidFileReadyEvent(String fileVersion, String downloadUrl) throws JsonProcessingException {
         //ARRANGE
         headers = new HashMap<>();
-        FileReadyEvent event = new FileReadyEvent();
+        FileReadyModel event = new FileReadyModel();
         event.setFileVersion(fileVersion);
         event.setDownloadUrl(downloadUrl);
         payload = new ObjectMapper().writeValueAsString(event);
@@ -146,6 +151,7 @@ class QueueListenerTest extends BaseTest.WithLocalStack {
     private static Stream<Arguments> provideInvalidFileReadyEvents() {
         return Stream.of(
                 arguments(FILE_VERSION, null), // Invalid: downloadUrl is null
+                arguments(FILE_PATH, null), // Invalid: filePath is null
                 arguments(FILE_VERSION, "http://esample/"), // Invalid: downloadUrl does not start with base URL
                 arguments(FILE_VERSION, "https://portale-fatturazione-storage.blob.core.windows.net/portfatt/IsNodValid/IsNodValid/"), // Invalid path
                 arguments(null, DOWNLOAD_URL) // Invalid: fileVersion is null
@@ -156,9 +162,10 @@ class QueueListenerTest extends BaseTest.WithLocalStack {
     void testPullPortFatErrorHandling() throws JsonProcessingException {
         //ARRANGE
         headers = new HashMap<>();
-        FileReadyEvent event = new FileReadyEvent();
+        FileReadyModel event = new FileReadyModel();
         event.setFileVersion(FILE_VERSION);
         event.setDownloadUrl(DOWNLOAD_URL);
+        event.setFilePath(FILE_PATH);
         payload = new ObjectMapper().writeValueAsString(event);
 
         // Mock PortFatDownload con stato ERROR
