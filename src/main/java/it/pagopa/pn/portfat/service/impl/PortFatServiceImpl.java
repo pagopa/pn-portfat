@@ -51,20 +51,29 @@ public class PortFatServiceImpl implements PortFatService {
         Path outputFilesPath = Path.of(outputPath.toString(), PATH_FIELS);
         String fileName = UUID.randomUUID().toString();
         Path zipFilePath = outputPath.resolve(fileName + portFatConfig.getZipExtension());
-        return createDirectories(outputPath)
-                .then(createDirectories(outputFilesPath))
-                .then(webClient.downloadFileAsByteArray(portFatDownload.getDownloadUrl(), zipFilePath))
-                .then(Mono.fromCallable(() -> computeSHA256(zipFilePath)))
-                .doOnNext(hash -> log.info("SHA-256 Hash: {}", hash))
-                .flatMap(hash -> {
+        return Mono.defer(() -> createDirectories(outputPath)
+                        .then(createDirectories(outputFilesPath))
+                        .then(webClient.downloadFileAsByteArray(portFatDownload.getDownloadUrl(), zipFilePath))
+                )
+                .then(Mono.fromCallable(() -> computeSHA256(zipFilePath))
+                        .subscribeOn(Schedulers.boundedElastic()))
+                .doOnNext(hash -> {
+                    log.info("SHA-256 Hash: {}", hash);
                     portFatDownload.setSha256(hash);
-                    return portFatDownloadDAO.updatePortFatDownload(portFatDownload);
                 })
+                .flatMap(hash -> portFatDownloadDAO.updatePortFatDownload(portFatDownload))
                 .then(unzip(zipFilePath.toString(), outputFilesPath.toString()))
+                .then(Mono.fromRunnable(() -> {
+                    try {
+                        Files.deleteIfExists(zipFilePath);
+                    } catch (IOException e) {
+                        log.error("Errore nell'eliminazione dello ZIP: {}", zipFilePath, e);
+                    }
+                }).subscribeOn(Schedulers.boundedElastic()))
                 .thenMany(processDirectory(outputFilesPath))
                 .then()
                 .publishOn(Schedulers.boundedElastic())
-                .doOnTerminate(() -> deleteFileOrDirectory(outputPath.toFile()).subscribe());
+                .doFinally(signal -> deleteFileOrDirectory(outputPath.toFile()).subscribe());
     }
 
     public Mono<Void> processDirectory(Path directoryPath) {

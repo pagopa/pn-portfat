@@ -37,8 +37,7 @@ public class HttpConnectorWebClient implements HttpConnector {
 
     public Mono<Void> downloadFileAsByteArray(String url, Path fileOutput) {
         log.info("Url to download zip: {}", url);
-        Flux<DataBuffer> dataBufferFlux = webClient
-                .get()
+        return webClient.get()
                 .uri(URI.create(url))
                 .accept(MediaType.APPLICATION_OCTET_STREAM)
                 .retrieve()
@@ -47,25 +46,17 @@ public class HttpConnectorWebClient implements HttpConnector {
                                 .flatMap(errorBody -> {
                                     log.error("Error in WebClient during download: HTTP {} - {}", response.statusCode(), errorBody);
                                     return Mono.error(new PnGenericException(DOWNLOAD_ZIP_ERROR, "Error HTTP " + response.statusCode()));
-                        })
+                                })
                 )
-                .bodyToFlux(DataBuffer.class);
-
-        return DataBufferUtils.join(dataBufferFlux)
-                .flatMap(buffer -> {
-                    byte[] bytes = new byte[buffer.readableByteCount()];
-                    buffer.read(bytes);
-                    DataBufferUtils.release(buffer);
-
-                    return Mono.fromCallable(() -> {
-                        Files.write(fileOutput, bytes);
-                        return fileOutput;
-                    }).subscribeOn(Schedulers.boundedElastic());
-                })
-                .onErrorMap(ex -> {
-                    log.error("Error writing to file: {}", ex.getMessage());
-                    return new PnGenericException(DOWNLOAD_ZIP_ERROR, DOWNLOAD_ZIP_ERROR.getMessage() + ex.getMessage());
-                })
+                .bodyToFlux(DataBuffer.class)
+                .doOnNext(buffer -> log.info("Received buffer with {} bytes", buffer.readableByteCount()))
+                .flatMap(buffer ->
+                        DataBufferUtils.write(Mono.just(buffer), fileOutput)
+                                .doFinally(signalType -> DataBufferUtils.release(buffer))
+                                .then()
+                )
+                .doOnError(ex -> log.error("Error during file download or writing: {}", ex.getMessage()))
+                .onErrorMap(ex -> new PnGenericException(DOWNLOAD_ZIP_ERROR, DOWNLOAD_ZIP_ERROR.getMessage() + ex.getMessage()))
                 .then();
     }
 
