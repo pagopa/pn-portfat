@@ -3,7 +3,7 @@ const { fromEnv } = require('@aws-sdk/credential-providers');
 const config = require('../../config/config');
 const AppError = require('../../utils/appError');
 
-const isLocalStack = process.env.LOCALSTACK === 'true';
+const isLocalStack = config.isLocal;
 
 
 const sqsClient = new SQSClient({

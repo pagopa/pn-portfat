@@ -181,10 +181,6 @@ Parameters:
     Type: String
     Description: ARN of dynamodb table containing Downloads files
 
-  EventFileReadyLambdaSqsService:
-    Type: String
-    Description: Identifier of sqs service
-
   PortFatRequestActionsQueueName:
     Type: String
     Description: Name of SQS request actions queue
@@ -294,8 +290,10 @@ Resources:
         ContainerEnvEntry1: !Sub 'AWS_REGIONCODE=${AWS::Region}'
         ContainerEnvEntry2: !Sub 'PN_PORTFAT_SAFESTORAGEBASEURL=${SandboxSafeStorageBaseUrl}'
         ContainerEnvEntry3: !Sub 'PN_PORTFAT_SAFESTORAGECXID=${SafeStorageCxId}'
-        ContainerEnvEntry4: !Sub 'PN_PORTFAT_AWS_SQS_NAME=${PortFatRequestActionsQueueName}.fifo'
+        ContainerEnvEntry4: !Sub 'PN_PORTFAT_AWS_SQS_NAME=${PortFatRequestActionsQueueName}'
         ContainerEnvEntry5: !Sub 'PN_PORTFAT_BLOB_STORAGE_BASE_URL=${BlobStorageBaseUrl}'
+        ContainerEnvEntry6: !Sub 'PN_PORTFAT_PORTFAT_TABLE_NAME=${PortFatDownloadTableName}'
+
 
   PortFatMicroserviceTaskManagedPolicy:
     Type: AWS::IAM::ManagedPolicy
@@ -417,7 +415,6 @@ Resources:
       Environment:
         Variables:
           PN_PORTFAT_AWS_REGION: !Sub "${AWS::Region}"
-          PN_PORTFAT_AWS_SERVICE: !Ref EventFileReadyLambdaSqsService
           PN_PORTFAT_SQS_QUEUE_NAME: !Ref PortFatRequestActionsQueueName
           PN_PORTFAT_SQS_QUEUE_URL: !Ref PortFatRequestActionsQueueURL
 
@@ -473,8 +470,9 @@ Resources:
       Action: "lambda:InvokeFunction"
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub
-        - "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${RestApiId}/unique/POST/pn-portfat-in/file-ready-event"
+        - "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${RestApiId}/*"
         - { RestApiId: !GetAtt PnPortFatAPI.Outputs.RestApiId }
+
 
   PortFatLambdaAlarms:
     Type: AWS::CloudFormation::Stack

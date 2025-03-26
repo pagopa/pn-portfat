@@ -1,11 +1,13 @@
 logging:
-  config: config/logback-local.xml
+  config: classpath:logback-base.xml
 
 spring:
   application:
     name: PN-PORTFAT
 
 pn:
+  env:
+    runtime: PROD
   portfat:
     sqsQueue: ${PN_PORTFAT_AWS_SQS_NAME}
     blobStorageBaseUrl: ${PN_PORTFAT_BLOB_STORAGE_BASE_URL}
@@ -14,3 +16,6 @@ pn:
     zipExtension: .zip
     clientSafeStorageBasePath: ${PN_PORTFAT_SAFESTORAGEBASEURL}
     safeStorageCxId: ${PN_PORTFAT_SAFESTORAGECXID}
+
+aws:
+  dynamodbPrtFatTable: ${PN_PORTFAT_PORTFAT_TABLE_NAME}

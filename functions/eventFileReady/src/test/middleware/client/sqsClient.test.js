@@ -2,6 +2,7 @@ const { expect } = require('chai');
 const sinon = require('sinon');
 const { SendMessageCommand } = require('@aws-sdk/client-sqs');
 const proxyquire = require('proxyquire');
+const { queueUrl } = require('../../../app/config/config');
 
 const mockSend = sinon.stub();
 
@@ -33,7 +34,7 @@ describe('sqsClient - sendMessageToQueue', () => {
         const sendCommand = mockSend.firstCall.args[0];
 
         expect(sendCommand).to.be.instanceOf(SendMessageCommand);
-        expect(sendCommand.input.QueueUrl).to.equal(process.env.PN_PORTFAT_SQS_QUEUE_URL);
+        expect(sendCommand.input.QueueUrl).to.equal(queueUrl);
         expect(sendCommand.input.MessageBody).to.equal(JSON.stringify(message));
         expect(sendCommand.input.MessageGroupId).to.equal(filePath);
     });
