@@ -8,7 +8,6 @@ import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pn.portfat.config.BaseTest;
 import it.pagopa.pn.portfat.config.PortFatPropertiesConfig;
-import it.pagopa.pn.portfat.generated.openapi.server.v1.dto.FileReadyEvent;
 import it.pagopa.pn.portfat.middleware.db.dao.PortFatDownloadDAO;
 import it.pagopa.pn.portfat.middleware.db.entities.DownloadStatus;
 import it.pagopa.pn.portfat.middleware.db.entities.PortFatDownload;
@@ -21,6 +20,7 @@ import org.mockserver.verify.VerificationTimes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
+
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,6 +30,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockserver.model.HttpRequest.request;
