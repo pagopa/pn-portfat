@@ -12,6 +12,7 @@ import it.pagopa.pn.portfat.generated.openapi.server.v1.dto.FileReadyEvent;
 import it.pagopa.pn.portfat.middleware.db.dao.PortFatDownloadDAO;
 import it.pagopa.pn.portfat.middleware.db.entities.DownloadStatus;
 import it.pagopa.pn.portfat.middleware.db.entities.PortFatDownload;
+import it.pagopa.pn.portfat.model.FileReadyModel;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -122,9 +123,10 @@ class QueueListenerTestIT extends BaseTest.WithMockServer {
 
     private void pushOnQueue(String fileVersion, String messageGroupId) throws IOException {
         String queueUrl = amazonSQS.getQueueUrl(portFatPropertiesConfig.getSqsQueue()).getQueueUrl();
-        FileReadyEvent event = new FileReadyEvent();
+        FileReadyModel event = new FileReadyModel();
         event.setDownloadUrl(fileUrl);
         event.setFileVersion(fileVersion);
+        event.setFilePath(filePath);
         String messageBody = objectMapper.writeValueAsString(event);
         SendMessageRequest sendMessageRequest = new SendMessageRequest()
                 .withQueueUrl(queueUrl)

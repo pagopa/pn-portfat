@@ -1,11 +1,11 @@
 package it.pagopa.pn.portfat.middleware.db.converter;
 
-import it.pagopa.pn.portfat.generated.openapi.server.v1.dto.FileReadyEvent;
 import it.pagopa.pn.portfat.middleware.db.entities.DownloadStatus;
 import it.pagopa.pn.portfat.middleware.db.entities.PortFatDownload;
+import it.pagopa.pn.portfat.model.FileReadyModel;
 import static it.pagopa.pn.portfat.utils.Utility.downloadId;
-
 import java.time.Instant;
+
 
 public class PortFatConverter {
 
@@ -24,7 +24,7 @@ public class PortFatConverter {
         portFatDownload.setStatus(status);
     }
 
-    public static PortFatDownload portFatDownload(FileReadyEvent fileReadyEvent) {
+    public static PortFatDownload portFatDownload(FileReadyModel fileReadyEvent) {
         return PortFatDownload.builder()
                 .downloadId(downloadId(fileReadyEvent))
                 .downloadUrl(fileReadyEvent.getDownloadUrl())
