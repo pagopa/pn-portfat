@@ -62,7 +62,6 @@ public class HttpConnectorWebClient implements HttpConnector {
                         return fileOutput;
                     }).subscribeOn(Schedulers.boundedElastic());
                 })
-                .doOnTerminate(() -> log.info("Download completed and saved to: {}", fileOutput))
                 .onErrorMap(ex -> {
                     log.error("Error writing to file: {}", ex.getMessage());
                     return new PnGenericException(DOWNLOAD_ZIP_ERROR, DOWNLOAD_ZIP_ERROR.getMessage() + ex.getMessage());
