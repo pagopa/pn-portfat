@@ -16,7 +16,7 @@ describe('Lambda EventFileReady Handler', () => {
 
         const mockEvent = {
             httpMethod: 'POST',
-            resource: 'file-ready-event',
+            resource: '/file-ready-event',
             body: JSON.stringify({
                 downloadUrl: 'https://myaccount.blob.core.windows.net/fatture/file.zip?sv=2012-02-12&st=2009-02-09&se=2009-02-10&sr=c&sp=r&si=YWJjZGVmZw%3d%3d&sig=dD80ihBh5jfNpymO5Hg1IdiJIEvHcJpCMiCMnN%2fRnbI%3d',
                 fileVersion: '1.0.0'
@@ -35,7 +35,7 @@ describe('Lambda EventFileReady Handler', () => {
     it('Should return 400 for invalid body', async () => {
         const mockEvent = {
             httpMethod: 'POST',
-            resource: 'file-ready-event',
+            resource: '/file-ready-event',
             body: JSON.stringify({})
         };
 
@@ -53,7 +53,7 @@ describe('Lambda EventFileReady Handler', () => {
 
         const mockEvent = {
             httpMethod: 'POST',
-            resource: 'file-ready-event',
+            resource: '/file-ready-event',
             body: JSON.stringify({
                 downloadUrl: 'https://myaccount.blob.core.windows.net/fatture/file.zip?sv=2012-02-12&st=2009-02-09&se=2009-02-10&sr=c&sp=r&si=YWJjZGVmZw%3d%3d&sig=dD80ihBh5jfNpymO5Hg1IdiJIEvHcJpCMiCMnN%2fRnbI%3d',
                 fileVersion: '1.0.0'

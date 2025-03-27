@@ -136,8 +136,8 @@ public class QueueListener {
             MDC.put(MDCUtils.MDC_PN_CTX_MESSAGE_ID, awsMessageId);
         }
 
-        if (headers.containsKey("AWSTraceHeader")) {
-            String traceId = headers.get("AWSTraceHeader").toString();
+        if (headers.containsKey("X-Amzn-Trace-Id")) {
+            String traceId = headers.get("X-Amzn-Trace-Id").toString();
             MDC.put(MDCUtils.MDC_TRACE_ID_KEY, traceId);
         } else {
             MDC.put(MDCUtils.MDC_TRACE_ID_KEY, String.valueOf(UUID.randomUUID()));

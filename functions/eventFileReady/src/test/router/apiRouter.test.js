@@ -24,7 +24,7 @@ describe('apiRouter route handler', () => {
     it('Should throw 400 for invalid JSON', async () => {
         const event = {
             httpMethod: 'POST',
-            resource: 'file-ready-event',
+            resource: '/file-ready-event',
             body: '{invalid-json}'
         };
 
@@ -45,7 +45,7 @@ describe('apiRouter route handler', () => {
         };
         const event = {
             httpMethod: 'POST',
-            resource: 'file-ready-event',
+            resource: '/file-ready-event',
             body: JSON.stringify(mockBody)
         };
 
