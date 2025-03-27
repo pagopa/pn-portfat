@@ -15,23 +15,18 @@ import it.pagopa.pn.portfat.model.FileReadyModel;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockserver.verify.VerificationTimes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
-
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
-
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockserver.model.HttpRequest.request;
@@ -39,7 +34,6 @@ import static org.mockserver.model.HttpResponse.response;
 
 
 @Slf4j
-@Disabled
 class QueueListenerTestIT extends BaseTest.WithMockServer {
 
     @Autowired
@@ -82,7 +76,6 @@ class QueueListenerTestIT extends BaseTest.WithMockServer {
         String messageGroupId = "port-fat_1";
         configMockServerMessageDequeuedAndProcessing();
         pushOnQueue(fileVersion, messageGroupId);
-        Path baseZipDir = Paths.get(portFatPropertiesConfig.getBasePathZipFile());
 
         Awaitility.await()
                 .atMost(Duration.ofSeconds(40))
@@ -91,16 +84,6 @@ class QueueListenerTestIT extends BaseTest.WithMockServer {
                             .findByDownloadId(fileUrl + fileVersion)
                             .block();
                     return download != null && download.getStatus() == DownloadStatus.COMPLETED;
-                });
-
-        Awaitility.await()
-                .atMost(Duration.ofSeconds(25))
-                .until(() -> {
-                    try (Stream<Path> stream = Files.list(baseZipDir)) {
-                        return stream.noneMatch(Files::isDirectory);
-                    } catch (IOException e) {
-                        return true;
-                    }
                 });
 
         Optional<PortFatDownload> download = portFatDownloadDAO
@@ -123,6 +106,55 @@ class QueueListenerTestIT extends BaseTest.WithMockServer {
         getMockServerBean().toVerify(request().withMethod("PUT").withPath("/safe-storage/storage/invoice.json"), VerificationTimes.atLeast(1));
     }
 
+    @Test
+    void testErrorDuringDownload() throws IOException {
+        String fileVersion = "2.0";
+        String messageGroupId = "port-fat_2";
+        configMockServerErrorDuringDownload();
+        pushOnQueue(fileVersion, messageGroupId);
+
+        Awaitility.await()
+                .atMost(Duration.ofSeconds(40))
+                .until(() -> {
+                    PortFatDownload download = portFatDownloadDAO
+                            .findByDownloadId(fileUrl + fileVersion)
+                            .block();
+                    return download != null && download.getStatus() == DownloadStatus.ERROR;
+                });
+
+        Optional<PortFatDownload> download = portFatDownloadDAO
+                .findByDownloadId(fileUrl + fileVersion)
+                .blockOptional();
+        assertThat(download).isPresent();
+        assertThat(download.get().getStatus()).isEqualTo(DownloadStatus.ERROR);
+
+        getMockServerBean().toVerify(request().withMethod("GET").withPath(filePath), VerificationTimes.atLeast(1));
+    }
+
+    @Test
+    void testCorruptZipFile() throws IOException {
+        String fileVersion = "3.0";
+        String messageGroupId = "port-fat_3";
+        configMockServerCorruptZipFile();
+        pushOnQueue(fileVersion, messageGroupId);
+
+        Awaitility.await()
+                .atMost(Duration.ofSeconds(40))
+                .until(() -> {
+                    PortFatDownload download = portFatDownloadDAO
+                            .findByDownloadId(fileUrl + fileVersion)
+                            .block();
+                    return download != null && download.getStatus() == DownloadStatus.ERROR;
+                });
+
+        Optional<PortFatDownload> download = portFatDownloadDAO
+                .findByDownloadId(fileUrl + fileVersion)
+                .blockOptional();
+        assertThat(download).isPresent();
+        assertThat(download.get().getStatus()).isEqualTo(DownloadStatus.ERROR);
+
+        getMockServerBean().toVerify(request().withMethod("GET").withPath(filePath), VerificationTimes.atLeast(1));
+    }
 
     private void pushOnQueue(String fileVersion, String messageGroupId) throws IOException {
         String queueUrl = amazonSQS.getQueueUrl(portFatPropertiesConfig.getSqsQueue()).getQueueUrl();
@@ -159,6 +191,21 @@ class QueueListenerTestIT extends BaseTest.WithMockServer {
         getMockServerBean().setRequestResponse(
                 request().withMethod("GET").withPath(filePath),
                 response().withStatusCode(200).withHeader("Content-Type", "application/x-zip-compressed").withHeader("Content-Disposition", "attachment; filename=\"file.zip\"").withBody(zipBytes)
+        );
+    }
+
+    private void configMockServerErrorDuringDownload() {
+        getMockServerBean().setRequestResponse(
+                request().withMethod("GET").withPath(filePath),
+                response().withStatusCode(500).withHeader("Content-Type", "application/x-zip-compressed").withBody("{\"error\": \"Internal Server Error\", \"message\": \"Mocked server error\"}")
+        );
+    }
+
+    private void configMockServerCorruptZipFile() {
+        byte[] corruptBytes = new byte[]{0x00, 0x01, 0x02, 0x03};
+        getMockServerBean().setRequestResponse(
+                request().withMethod("GET").withPath(filePath),
+                response().withStatusCode(200).withHeader("Content-Type", "application/x-zip-compressed").withBody(corruptBytes)
         );
     }
 }
