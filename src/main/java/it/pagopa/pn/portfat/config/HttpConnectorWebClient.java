@@ -9,20 +9,19 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
+
 import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Path;
+
 import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.DOWNLOAD_ZIP_ERROR;
-import org.springframework.http.HttpStatus;
 
 
 @Component
@@ -37,8 +36,7 @@ public class HttpConnectorWebClient implements HttpConnector {
 
     public Mono<Void> downloadFileAsByteArray(String url, Path fileOutput) {
         log.info("Url to download zip: {}", url);
-        Flux<DataBuffer> dataBufferFlux = webClient
-                .get()
+        return webClient.get()
                 .uri(URI.create(url))
                 .accept(MediaType.APPLICATION_OCTET_STREAM)
                 .retrieve()
@@ -47,26 +45,17 @@ public class HttpConnectorWebClient implements HttpConnector {
                                 .flatMap(errorBody -> {
                                     log.error("Error in WebClient during download: HTTP {} - {}", response.statusCode(), errorBody);
                                     return Mono.error(new PnGenericException(DOWNLOAD_ZIP_ERROR, "Error HTTP " + response.statusCode()));
-                        })
+                                })
                 )
-                .bodyToFlux(DataBuffer.class);
-
-        return DataBufferUtils.join(dataBufferFlux)
-                .flatMap(buffer -> {
-                    byte[] bytes = new byte[buffer.readableByteCount()];
-                    buffer.read(bytes);
-                    DataBufferUtils.release(buffer);
-
-                    return Mono.fromCallable(() -> {
-                        Files.write(fileOutput, bytes);
-                        return fileOutput;
-                    }).subscribeOn(Schedulers.boundedElastic());
-                })
-                .doOnTerminate(() -> log.info("Download completed and saved to: {}", fileOutput))
-                .onErrorMap(ex -> {
-                    log.error("Error writing to file: {}", ex.getMessage());
-                    return new PnGenericException(DOWNLOAD_ZIP_ERROR, DOWNLOAD_ZIP_ERROR.getMessage() + ex.getMessage());
-                })
+                .bodyToFlux(DataBuffer.class)
+                .doOnNext(buffer -> log.info("Received buffer with {} bytes", buffer.readableByteCount()))
+                .flatMap(buffer ->
+                        DataBufferUtils.write(Mono.just(buffer), fileOutput)
+                                .doFinally(signalType -> DataBufferUtils.release(buffer))
+                                .then()
+                )
+                .doOnError(ex -> log.error("Error during file download or writing: {}", ex.getMessage()))
+                .onErrorMap(ex -> new PnGenericException(DOWNLOAD_ZIP_ERROR, DOWNLOAD_ZIP_ERROR.getMessage() + ex.getMessage()))
                 .then();
     }
 

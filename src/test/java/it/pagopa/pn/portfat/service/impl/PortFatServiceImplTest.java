@@ -148,7 +148,7 @@ class PortFatServiceImplTest {
         StepVerifier.create(portFatService.processZipFile(portFatDownload))
                 .expectErrorMatches(throwable ->
                         throwable instanceof RuntimeException &&
-                                throwable.getMessage().contains("Error calculating SHA-256"))
+                                throwable.getMessage().contains("Failed to create SHA-256"))
                 .verify();
     }
 
