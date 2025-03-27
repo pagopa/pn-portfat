@@ -18,9 +18,7 @@ public class SQSConfig {
 
     @Bean
     public AmazonSQSAsync amazonSQS() {
-        log.info("SQS client region code: {}", awsConfigs.getRegionCode());
         if (StringUtils.hasText(awsConfigs.getEndpointUrl())) {
-            log.info("SQS client endpoint: {}", awsConfigs.getEndpointUrl());
             return AmazonSQSAsyncClientBuilder.standard()
                     .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(awsConfigs.getEndpointUrl(), awsConfigs.getRegionCode()))
                     .build();

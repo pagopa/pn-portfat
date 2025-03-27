@@ -14,7 +14,6 @@ import lombok.CustomLog;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -55,8 +54,7 @@ public class PortFatServiceImpl implements PortFatService {
                         .then(createDirectories(outputFilesPath))
                         .then(webClient.downloadFileAsByteArray(portFatDownload.getDownloadUrl(), zipFilePath))
                 )
-                .then(Mono.fromCallable(() -> computeSHA256(zipFilePath))
-                        .subscribeOn(Schedulers.boundedElastic()))
+                .then(Mono.fromCallable(() -> computeSHA256(zipFilePath)))
                 .doOnNext(hash -> {
                     log.info("SHA-256 Hash: {}", hash);
                     portFatDownload.setSha256(hash);
@@ -69,11 +67,10 @@ public class PortFatServiceImpl implements PortFatService {
                     } catch (IOException e) {
                         log.error("Errore nell'eliminazione dello ZIP: {}", zipFilePath, e);
                     }
-                }).subscribeOn(Schedulers.boundedElastic()))
+                }))
                 .thenMany(processDirectory(outputFilesPath))
                 .then()
-                .publishOn(Schedulers.boundedElastic())
-                .doFinally(signal -> deleteFileOrDirectory(outputPath.toFile()).subscribe());
+                .doFinally(signal -> deleteFileOrDirectory(outputPath.toFile()));
     }
 
     public Mono<Void> processDirectory(Path directoryPath) {
