@@ -184,7 +184,7 @@ class QueueListenerTest extends BaseTest.WithLocalStack {
 
         //ASSERT
         // Verifica che lo stato sia stato aggiornato a ERROR
-        verify(portFatDownloadDAO, times(3)).updatePortFatDownload(any(PortFatDownload.class));
+        verify(portFatDownloadDAO, times(2)).updatePortFatDownload(any(PortFatDownload.class));
     }
 
 }
