@@ -41,7 +41,7 @@ public class QueueListener {
         log.logStartingProcess("portFat with MessageGroupId=" + headers.get(MESSAGE_GROUP_ID) + ", and Body= " + payload);
         FileReadyModel fileReady = convertToObject(payload, FileReadyModel.class);
         setMDCContext(headers);
-        MDCUtils.addMDCToContextAndExecute(Mono.just(fileReady))
+        var monoResult = Mono.just(fileReady)
                 .filter(this::isFileReadyEvent)
                 .flatMap(fileReadyEvent -> {
                     String downloadId = downloadId(fileReadyEvent);
@@ -84,7 +84,9 @@ public class QueueListener {
                                         .doOnNext(error -> log.logEndingProcess("portFat STATUS= " + error.getStatus() + "DOWNLOAD_ID=" + error.getDownloadId()))
                                         .then(Mono.error(e));
                             });
-                }).block();
+                });
+        MDCUtils.addMDCToContextAndExecute(monoResult)
+                .block();
     }
 
     private Mono<PortFatDownload> updateStatusToCompleted(PortFatDownload portFatDownload) {
