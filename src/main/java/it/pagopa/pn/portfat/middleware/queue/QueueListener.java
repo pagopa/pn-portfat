@@ -55,7 +55,7 @@ public class QueueListener {
                                                 newPortFatDownload.getDownloadId()))
                                         .flatMap(newPortFatDownload ->
                                                 portfatService.processZipFile(newPortFatDownload)
-                                                        .then(updateStatusToCompleted(newPortFatDownload))
+                                                        .then(Mono.defer(() -> updateStatusToCompleted(newPortFatDownload)))
                                                         .ignoreElement()
                                         );
                             }))
@@ -66,7 +66,7 @@ public class QueueListener {
                                     portFatDownload.setUpdatedAt(Instant.now().toString());
                                     return portFatDownloadDAO.updatePortFatDownload(portFatDownload)
                                             .flatMap(portFatDownloadInProgress -> portfatService.processZipFile(portFatDownloadInProgress)
-                                                    .then(updateStatusToCompleted(portFatDownloadInProgress))
+                                                    .then(Mono.defer(() -> updateStatusToCompleted(portFatDownloadInProgress)))
                                             );
                                 }
                                 log.info("PortFatDownload is in {} state, DOWNLOAD_ID={}, doing nothing", portFatDownload.getStatus(), portFatDownload.getDownloadId());

@@ -7,7 +7,7 @@ exports.route = async (event) => {
     console.log('ROUTING EVENT:', JSON.stringify(event));
     const { httpMethod, resource, body } = event;
 
-    if (httpMethod === 'POST' && resource === '/pn-portfat-in/file-ready-event') {
+    if (httpMethod === 'POST' && resource === 'file-ready-event') {
         let parsedBody;
         try {
             parsedBody = JSON.parse(body ?? '{}');
