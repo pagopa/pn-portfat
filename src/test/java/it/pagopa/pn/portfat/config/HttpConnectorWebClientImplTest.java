@@ -50,23 +50,33 @@ class HttpConnectorWebClientImplTest {
     @Test
     void testDownloadFileAsByteArray() throws Exception {
         String fakeContent = "Fake file content";
-        String base64Content = Base64.getEncoder().encodeToString(fakeContent.getBytes(StandardCharsets.UTF_8));
+        byte[] fakeBytes = fakeContent.getBytes(StandardCharsets.UTF_8);
 
         mockServer
-                .when(request().withMethod("GET").withPath("/test.zip"))
-                .respond(response().withStatusCode(200)
-                        .withBody(base64Content)
+                .when(request()
+                        .withMethod("GET")
+                        .withPath("/test.zip"))
+                .respond(response()
+                        .withStatusCode(200)
+                        .withBody(fakeBytes)
                         .withHeader("Content-Type", "application/octet-stream"));
 
         Path tempFile = Files.createTempFile("test", ".zip");
-        Mono<Void> result = httpConnectorWebClient.downloadFileAsByteArray("http://localhost:1585/test.zip", tempFile);
-        result.block();
 
-        assertTrue(Files.exists(tempFile));
-        assertTrue(Files.size(tempFile) > 0);
+        try {
+            Mono<Void> result = httpConnectorWebClient.downloadFileAsByteArray(
+                    "http://localhost:1585/test.zip",
+                    tempFile
+            );
+            result.block();
 
-        Files.deleteIfExists(tempFile);
+            assertTrue(Files.exists(tempFile), "Il file non è stato creato");
+            assertTrue(Files.size(tempFile) > 0, "Il file è vuoto");
+        } finally {
+            Files.deleteIfExists(tempFile);
+        }
     }
+
 
     @Test
     void testDownloadFileNotFound() {
