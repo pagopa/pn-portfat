@@ -9,4 +9,5 @@
     <root level="info">
         <appender-ref ref="STDOUT" />
     </root>
+    <logger name="it.pagopa.pn.commons.utils.dynamodb.async.DynamoDbAsyncTableDecorator" level="OFF" />
 </configuration>
