@@ -27,6 +27,11 @@ import static it.pagopa.pn.portfat.mapper.FileCreationWithContentRequestMapper.m
 import static it.pagopa.pn.portfat.utils.Utility.*;
 import static it.pagopa.pn.portfat.utils.ZipUtility.unzip;
 
+/**
+ * Implementazione del servizio per la gestione dei file Portale Fatturazione.
+ * <p>
+ * Questa classe fornisce metodi per il download, l'elaborazione e lo storage sicuro dei file ZIP ricevuti.
+ */
 @Service
 @CustomLog
 @AllArgsConstructor
@@ -42,6 +47,16 @@ public class PortFatServiceImpl implements PortFatService {
 
     // TODO ORIGINAL_DATA_UPDATE in FileCreationWithContentRequestMapper
 
+    /**
+     * Crea le directory
+     * Scarica il file zip da portale fatturazione
+     * Crea un SHA-256 del file ZIP, aggiorno a db l'entità con lo sha creato
+     * Estrae e processa i file contenuti nello ZIP
+     * La directory viene eliminata indifferentemente se il processo si terminato con successo o sia andato in errore.
+     *
+     * @param portFatDownload l'oggetto contenente le informazioni sul file da scaricare
+     * @return un Mono che completa l'elaborazione del file ZIP
+     */
     @Override
     public Mono<Void> processZipFile(PortFatDownload portFatDownload) {
         log.info("processZipFile,  downloadUrl {}, DOWNLOAD_ID={}", portFatDownload.getDownloadUrl(), portFatDownload.getDownloadId());
@@ -73,6 +88,12 @@ public class PortFatServiceImpl implements PortFatService {
                 .doFinally(signal -> deleteFileOrDirectory(outputPath.toFile()));
     }
 
+    /**
+     * Processa i file all'interno di una directory, elaborandoli singolarmente.
+     *
+     * @param directoryPath il percorso della directory contenente i file json
+     * @return un Mono che completa l'elaborazione dei file presenti nella directory
+     */
     public Mono<Void> processDirectory(Path directoryPath) {
         return Flux.fromStream(() -> {
                     try {
@@ -89,6 +110,14 @@ public class PortFatServiceImpl implements PortFatService {
                 .then();
     }
 
+    /**
+     * Processa un singolo file all'interno della directory,
+     * convertendolo in un oggetto di dominio e caricandolo in un safe storage.
+     *
+     * @param file                il file da processare
+     * @param parentDirectoryName il nome della directory di appartenenza del file
+     * @return un Mono che completa l'elaborazione del file
+     */
     private Mono<Void> processFile(Path file, String parentDirectoryName) {
         log.info("Processing file: {} in folder: {}", file.getFileName(), parentDirectoryName);
         return Mono.fromCallable(() -> convertToObject(file.toFile(), PortaleFatturazioneModel.class))

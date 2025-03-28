@@ -15,7 +15,10 @@ import java.security.MessageDigest;
 import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.CREATION_FILE_SS_ERROR;
 import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.SHA256_ERROR;
 
-
+/**
+ * Implementazione del servizio per la gestione del caricamento di contenuti su Safe Storage.
+ * Questa classe si occupa della creazione del file, del calcolo dell'hash SHA-256 e del caricamento su Safe Storage.
+ */
 @Component
 @Slf4j
 @RequiredArgsConstructor
@@ -24,6 +27,12 @@ public class SafeStorageServiceImpl implements SafeStorageService {
     private final SafeStorageClient safeStorageClient;
     private final HttpConnector httpConnector;
 
+    /**
+     * Crea un file su Safe Storage e carica il contenuto associato.
+     *
+     * @param fileCreationRequest l'oggetto contenente i dati del file da creare e caricare
+     * @return un {@code Mono<String>} che rappresenta la chiave del file caricato su Safe Storage
+     */
     @Override
     public Mono<String> createAndUploadContent(FileCreationWithContentRequest fileCreationRequest) {
         log.info("Start createAndUploadFile - documentType={} fileSize={}", fileCreationRequest.getDocumentType(), fileCreationRequest.getContent().length);
@@ -39,6 +48,12 @@ public class SafeStorageServiceImpl implements SafeStorageService {
                 .doOnNext(s -> log.info("End createAndUploadFile - {}", s));
     }
 
+    /**
+     * Calcola l'hash SHA-256 del contenuto del file.
+     *
+     * @param content il contenuto del file
+     * @return una stringa contenente l'hash SHA-256 del file in formato Base64
+     */
     private static String computeSha256(byte[] content) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");

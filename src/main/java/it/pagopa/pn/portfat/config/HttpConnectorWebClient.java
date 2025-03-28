@@ -24,6 +24,10 @@ import java.nio.file.Path;
 import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.DOWNLOAD_ZIP_ERROR;
 
 
+/**
+ * Implementazione del client HTTP per la gestione delle operazioni di download del file zip
+ * e upload dei singoli file estratti dal zip.
+ */
 @Component
 @CustomLog
 public class HttpConnectorWebClient implements HttpConnector {
@@ -34,6 +38,13 @@ public class HttpConnectorWebClient implements HttpConnector {
         this.webClient = builder.build();
     }
 
+    /**
+     * Scarica un file da un URL e lo salva nel percorso specificato.
+     *
+     * @param url        l'URL del file da scaricare
+     * @param fileOutput il percorso in cui salvare il file scaricato
+     * @return un Mono che completa il download e il salvataggio del file
+     */
     public Mono<Void> downloadFileAsByteArray(String url, Path fileOutput) {
         log.info("Url to download zip: {}", url);
         return webClient.get()
@@ -59,6 +70,14 @@ public class HttpConnectorWebClient implements HttpConnector {
                 .then();
     }
 
+    /**
+     * Carica il contenuto su Safe Storage remoto.
+     *
+     * @param fileCreationRequest  la richiesta contenente i dati da caricare
+     * @param fileCreationResponse la risposta contenente i dettagli della destinazione del file
+     * @param sha256               l'hash SHA-256 del contenuto da caricare
+     * @return un Mono che completa l'upload del file
+     */
     @Override
     public Mono<Void> uploadContent(FileCreationWithContentRequest fileCreationRequest, FileCreationResponseDto fileCreationResponse, String sha256) {
         final String UPLOAD_FILE_CONTENT = "Safe Storage uploadContent";
