@@ -29,7 +29,7 @@ import static it.pagopa.pn.portfat.utils.Utility.downloadId;
 
 /**
  * Listener per la coda SQS che gestisce i messaggi relativi ai file pronti per il download.
- * Questa classe riceve i messaggi dalla coda, verifica la validità dei dati,
+ * Riceve i messaggi dalla coda, verifica la validità dei dati,
  * e avvia il processo di download e gestione dello stato.
  */
 @Component
