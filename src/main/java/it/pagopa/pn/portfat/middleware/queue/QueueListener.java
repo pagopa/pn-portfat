@@ -17,15 +17,21 @@ import org.springframework.messaging.handler.annotation.Headers;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
+
 import static it.pagopa.pn.portfat.middleware.db.converter.PortFatConverter.completed;
 import static it.pagopa.pn.portfat.middleware.db.converter.PortFatConverter.portFatDownload;
 import static it.pagopa.pn.portfat.utils.Utility.convertToObject;
 import static it.pagopa.pn.portfat.utils.Utility.downloadId;
 
-
+/**
+ * Listener per la coda SQS che gestisce i messaggi relativi ai file pronti per il download.
+ * Questa classe riceve i messaggi dalla coda, verifica la validità dei dati,
+ * e avvia il processo di download e gestione dello stato.
+ */
 @Component
 @CustomLog
 @RequiredArgsConstructor
@@ -36,6 +42,12 @@ public class QueueListener {
     private final PortFatDownloadDAO portFatDownloadDAO;
     private static final String MESSAGE_GROUP_ID = "MessageGroupId";
 
+    /**
+     * Metodo che ascolta i messaggi dalla coda SQS e avvia il processo di download.
+     *
+     * @param payload il contenuto del messaggio ricevuto
+     * @param headers gli header del messaggio SQS
+     */
     @SqsListener(value = "${pn.portfat.sqsQueue}", deletionPolicy = SqsMessageDeletionPolicy.DEFAULT)
     public void pullPortFat(@Payload String payload, @Headers Map<String, Object> headers) {
         log.logStartingProcess("portFat with MessageGroupId=" + headers.get(MESSAGE_GROUP_ID) + ", and Body= " + payload);
@@ -81,7 +93,7 @@ public class QueueListener {
                                 portFatDownload.setUpdatedAt(Instant.now().toString());
                                 portFatDownload.setErrorMessage(e.getMessage());
                                 return portFatDownloadDAO.updatePortFatDownload(portFatDownload)
-                                        .doOnNext(error -> log.logEndingProcess("portFat STATUS= " + error.getStatus() + "DOWNLOAD_ID=" + error.getDownloadId()))
+                                        .doOnNext(error -> log.logEndingProcess("portFat STATUS=" + error.getStatus() + " DOWNLOAD_ID=" + error.getDownloadId()))
                                         .then(Mono.error(e));
                             });
                 });
@@ -89,6 +101,12 @@ public class QueueListener {
                 .block();
     }
 
+    /**
+     * Aggiorna lo stato a COMPLETED una volta terminato il flusso.
+     *
+     * @param portFatDownload il download da aggiornare
+     * @return il download aggiornato
+     */
     private Mono<PortFatDownload> updateStatusToCompleted(PortFatDownload portFatDownload) {
         completed(portFatDownload);
         return portFatDownloadDAO.updatePortFatDownload(portFatDownload)
@@ -96,10 +114,22 @@ public class QueueListener {
                         log.logEndingProcess("portFat updated To " + download.getStatus() + ", DOWNLOAD_ID=" + download.getDownloadId()));
     }
 
+    /**
+     * Crea e salva un nuovo entity relativa al flusso.
+     *
+     * @param fileReadyModel il modello contenente le informazioni del file
+     * @return il nuovo record di download salvato
+     */
     private Mono<PortFatDownload> createAndSaveNewDownload(FileReadyModel fileReadyModel) {
         return portFatDownloadDAO.createPortFatDownload(portFatDownload(fileReadyModel));
     }
 
+    /**
+     * Verifica se il messaggio ricevuto è valido.
+     *
+     * @param fileReadyModel il modello del file ricevuto
+     * @return true se il messaggio è valido, false altrimenti
+     */
     private boolean isFileReadyEvent(FileReadyModel fileReadyModel) {
         String downloadUrl = fileReadyModel.getDownloadUrl();
         String version = fileReadyModel.getFileVersion();
@@ -130,6 +160,11 @@ public class QueueListener {
         return true;
     }
 
+    /**
+     * Imposta il contesto MDC per il tracing dei log.
+     *
+     * @param headers gli header del messaggio SQS
+     */
     private void setMDCContext(Map<String, Object> headers) {
         MDCUtils.clearMDCKeys();
 
