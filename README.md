@@ -29,11 +29,11 @@ sequenceDiagram
     participant Azure Blob
     participant SafeStorage
 
-    Portale Fatturazione->>Lambda: POST /file-ready-event
-    Lambda->>SQS FIFO: Invia messaggio evento file
-    ECS->>SQS FIFO: Polling e ricezione evento
-    ECS->>Azure Blob: Scarica file ZIP
-    ECS->>SafeStorage: Unzip + upload entry
+    Portale Fatturazione->>Lambda (event-file-ready): POST /file-ready-event
+    Lambda (event-file-ready)->>SQS FIFO: Invia messaggio evento file
+    ECS (pn-portfat)->>SQS FIFO: Polling e ricezione evento
+    ECS (pn-portfat)->>Azure Blob: Scarica file ZIP
+    ECS (pn-portfat)->>SafeStorage: Unzip + upload entry
 ```
 
 ## Prerequisiti
