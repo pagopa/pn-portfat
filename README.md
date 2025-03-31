@@ -42,8 +42,11 @@ sequenceDiagram
 - Node.js 20+
 - Docker 27+
 
-## Installazione
+Prima di procedere:
+- Effettuare il build locale dei progetti `pn-parent` e `pn-commons` dai quali `pn-portfat` dipende.
+- Assicurarsi che `Docker` o `Podman` siano attivi per consentire la corretta esecuzione dei test di integrazione.
 
+## Installazione
 ### Ambiente Locale
 ```bash
     git clone https://github.com/pagopa/pn-portfat.git
@@ -183,7 +186,7 @@ flowchart TD
 ```
 
 ### 5. ECS Autoscaling Policy
-Il microservizio pn-portfat è configurato per scalare automaticamente in base alla presenza di messaggi nella coda SQS.
+Il microservizio pn-portfat è configurato per scalare automaticamente in base alla presenza di messaggi in coda SQS.
 
 L’istanza ECS parte da 0 task attivi.
 
