@@ -9,14 +9,14 @@ Microservizio di backend sviluppato in Spring Boot WebFlux per ricevere, elabora
 
 Il progetto realizza un'integrazione asincrona tra il **Portale di Fatturazione** e la piattaforma **SEND**. Si compone di:
 
-- AWS **Lambda** (`event-file-ready`) che riceve gli eventi e li pubblica su una coda FIFO.
-- Coda **SQS FIFO** `pn-portfat_request_actions.fifo` con meccanismi di deduplicazione e retry.
-- Microservizio **ECS** `pn-portfat`, che scarica e processa i file `.zip`, salvando i dati su **SafeStorage**.
+- AWS **Lambda** (`event-file-ready`) che riceve gli eventi e li pubblica su una coda FIFO
+- Coda **SQS FIFO** `pn-portfat_request_actions.fifo` con meccanismi di deduplicazione e retry
+- Microservizio **ECS** `pn-portfat`, che scarica e processa i file `.zip`, salvando i dati su **SafeStorage**
 
 ## Confini e responsabilità
 
-- **Responsabilità:** ricezione eventi, deduplicazione, validazione, estrazione file JSON, archiviazione.
-- **Dipendenze:** AWS Lambda, SQS, DynamoDB, Azure Blob Storage, SafeStorage.
+- **Responsabilità:** ricezione eventi, deduplicazione, validazione, estrazione file JSON, archiviazione
+- **Dipendenze:** AWS Lambda, SQS, DynamoDB, Azure Blob Storage, SafeStorage
 
 ### Architettura
 
@@ -43,8 +43,8 @@ sequenceDiagram
 - Docker 27+
 
 Prima di procedere:
-- Effettuare il build locale dei progetti `pn-parent` e `pn-commons` dai quali `pn-portfat` dipende.
-- Assicurarsi che `Docker` o `Podman` siano attivi per consentire la corretta esecuzione dei test di integrazione.
+- Effettuare il build locale dei progetti `pn-parent` e `pn-commons` dai quali `pn-portfat` dipende
+- Assicurarsi che `Docker` o `Podman` siano attivi per consentire la corretta esecuzione dei test di integrazione
 
 ## Installazione
 ### Ambiente Locale
@@ -105,8 +105,8 @@ aws:
 
 ### Configurazione Base
 
-| Variabile Ambiente          | File Property                  | Default       | Obbligatorio | Descrizione                               |
-|----------------------------|--------------------------------|---------------|--------------|-------------------------------------------|
+| Variabile Ambiente          | File Property                  | Default       | Obbligatorio | Descrizione                            |
+|----------------------------|--------------------------------|---------------|--------------|-----------------------------------------|
 | `SERVER_PORT`              | `server.port`                 | 8080          | No           | Porta del servizio                       |
 | `LOG_LEVEL`                | `logging.level.root`          | INFO          | No           | DEBUG/INFO/WARN/ERROR                    |
 
@@ -144,9 +144,9 @@ Ogni messaggio inviato sulla coda **SQS FIFO** `pn-portfat_request_actions.fifo`
 }
 ```
 
-- `downloadUrl`: URL firmato temporaneo (SAS) per scaricare il file ZIP da Azure Blob.
-- `fileVersion`: identificatore di versione usato per la deduplicazione.
-- `filePath`: path logico utile per validazioni e ordinamento.
+- `downloadUrl`: URL firmato temporaneo (SAS) per scaricare il file ZIP da Azure Blob
+- `fileVersion`: identificatore di versione usato per la deduplicazione
+- `filePath`: path logico utile per validazioni e ordinamento
 
 ### 3. Microservizio ECS `pn-portfat`
 
@@ -172,7 +172,7 @@ Ogni file `.json` estratto viene:
 
 ### 4. Deduplicazione & Sicurezza
 
-- La deduplicazione persistente è garantita tramite la tabella DynamoDB.
+- La deduplicazione persistente è garantita tramite la tabella DynamoDB
 
 ```mermaid
 flowchart TD
@@ -186,13 +186,11 @@ flowchart TD
 ```
 
 ### 5. ECS Autoscaling Policy
-Il microservizio pn-portfat è configurato per scalare automaticamente in base alla quantità di messaggi presenti nella coda **SQS FIFO** `pn-portfat_request_actions.fifo`.
+Il microservizio pn-portfat è configurato per scalare automaticamente in base alla quantità di messaggi presenti nella coda **SQS FIFO** `pn-portfat_request_actions.fifo`
 
-L’istanza ECS parte da 0 task attivi.
+L’istanza ECS parte con 0 task attivi e ne avvia 1 automaticamente quando la coda **SQS FIFO** `pn-portfat_request_actions.fifo` contiene almeno 1 messaggio, controllata ogni 300 secondi (5 minuti)
 
-Viene attivato un task quando è presente almeno 1 messaggio nella coda **SQS FIFO** `pn-portfat_request_actions.fifo`, inoltre il controllo su essa avviene ogni 300 secondi (5 minuti).
-
-Il numero massimo di task contemporanei è 6, mentre il minimo garantito è 1.
+Il numero massimo di task contemporanei è 6, mentre il minimo garantito è 1
 
 ```mermaid
 flowchart TD
@@ -209,12 +207,12 @@ flowchart TD
 
 ### 6. Scenari di errore gestiti
 
-| Caso                        | Effetto                                        |
-|-----------------------------|------------------------------------------------|
-| Azure irraggiungibile       | Stato = `ERROR` in DB                          |
-| File ZIP corrotto           | Stato = `ERROR` in DB                          |
-| File non JSON nel .zip      | Stato = `ERROR` in DB                          |
-| SafeStorage irraggiungibile| Stato = `ERROR` in DB                          |
+| Caso                        | Effetto                                       |
+|-----------------------------|-----------------------------------------------|
+| Azure irraggiungibile       | Stato = `ERROR` in DB                         |
+| File ZIP corrotto           | Stato = `ERROR` in DB                         |
+| File non JSON nel .zip      | Stato = `ERROR` in DB                         |
+| SafeStorage irraggiungibile| Stato = `ERROR` in DB                         |
 
 ### 7. Mappa delle responsabilità
 
