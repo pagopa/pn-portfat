@@ -9,9 +9,9 @@ Microservizio di backend sviluppato in Spring Boot WebFlux per ricevere, elabora
 
 Il progetto realizza un'integrazione asincrona tra il **Portale di Fatturazione** e la piattaforma **SEND**. Si compone di:
 
-- Lambda AWS (`event-file-ready`) che riceve gli eventi e li pubblica su una coda FIFO;
+- AWS **Lambda** (`event-file-ready`) che riceve gli eventi e li pubblica su una coda FIFO;
 - Coda **SQS FIFO** con meccanismi di deduplicazione e retry;
-- Microservizio ECS `pn-portfat`, che scarica e processa i file `.zip`, salvando i dati su **SafeStorage**.
+- Microservizio **ECS** `pn-portfat`, che scarica e processa i file `.zip`, salvando i dati su **SafeStorage**.
 
 ## Confini e responsabilità
 
@@ -115,7 +115,7 @@ L'interfaccia principale è rappresentata dalla Lambda `event-file-ready` che es
 - `filePath` è utilizzato come `MessageGroupId` per garantire l'elaborazione sequenziale per singolo file
 
 ### 2. Coda SQS FIFO
-
+- Nome: `pn-portfat_request_actions.fifo`
 - Deduplicazione temporale abilitata, valida fino a 5 minuti se il contenuto del messaggio è identico
 - Il `VisibilityTimeout` è impostato a **1200 secondi (20 minuti)**: se un messaggio non viene completato entro questo tempo, viene riproposto
 - Dopo **5 tentativi falliti**, il messaggio passa automaticamente nella **DLQ** (Dead Letter Queue)
@@ -172,7 +172,31 @@ flowchart TD
     B -- Sì, stato COMPLETED --> G[Ignora e termina]
 ```
 
-### 5. Scenari di errore gestiti
+### 5. ECS Autoscaling Policy
+Il microservizio pn-portfat è configurato per scalare automaticamente in base alla presenza di messaggi nella coda SQS.
+
+L’istanza ECS parte da 0 task attivi.
+
+Quando è presente almeno 1 messaggio nella coda viene attivato un task.
+
+Il controllo della coda avviene ogni 300 secondi (5 minuti).
+
+Il numero massimo di task contemporanei è 6, mentre il minimo garantito è 1.
+
+```mermaid
+flowchart TD
+    A[Inizio: Task ECS = 0] --> B{Coda SQS contiene ≥ 1 messaggio?}
+    B -- No --> C[Mantieni Task ECS = 0]
+    B -- Sì --> D[Scala fino a MinTasksNumber]
+    D --> E[Processa messaggi SQS]
+    E --> F{Coda ancora piena e < MaxTasksNumber?}
+    F -- Sì --> G[Scala orizzontalmente]
+    F -- No --> H[Riduci Task se idle per tempo definito]
+    G --> E
+    H --> A
+```
+
+### 6. Scenari di errore gestiti
 
 | Caso                        | Effetto                                        |
 |-----------------------------|------------------------------------------------|
@@ -181,7 +205,7 @@ flowchart TD
 | File non JSON nel .zip      | Stato = `ERROR` in DB                          |
 | SafeStorage irraggiungibile| Stato = `ERROR` in DB                          |
 
-### 6. Mappa delle responsabilità
+### 7. Mappa delle responsabilità
 
 | Componente                  | Responsabilità principali                                                                 |
 |----------------------------|--------------------------------------------------------------------------------------------|
