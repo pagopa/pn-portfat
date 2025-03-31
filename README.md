@@ -9,8 +9,8 @@ Microservizio di backend sviluppato in Spring Boot WebFlux per ricevere, elabora
 
 Il progetto realizza un'integrazione asincrona tra il **Portale di Fatturazione** e la piattaforma **SEND**. Si compone di:
 
-- AWS **Lambda** (`event-file-ready`) che riceve gli eventi e li pubblica su una coda FIFO;
-- Coda **SQS FIFO** `pn-portfat_request_actions.fifo` con meccanismi di deduplicazione e retry;
+- AWS **Lambda** (`event-file-ready`) che riceve gli eventi e li pubblica su una coda FIFO.
+- Coda **SQS FIFO** `pn-portfat_request_actions.fifo` con meccanismi di deduplicazione e retry.
 - Microservizio **ECS** `pn-portfat`, che scarica e processa i file `.zip`, salvando i dati su **SafeStorage**.
 
 ## Confini e responsabilità
@@ -99,7 +99,7 @@ aws:
 {
    "PN_PORTFAT_AWS_REGION": "PN_PORTFAT_AWS_REGION",
    "PN_PORTFAT_SQS_QUEUE_URL": "PN_PORTFAT_SQS_QUEUE_URL",
-   "PN_PORTFAT_SQS_QUEUE_NAME": "PN_PORTFAT_SQS_QUEUE_NAME",
+   "PN_PORTFAT_SQS_QUEUE_NAME": "PN_PORTFAT_SQS_QUEUE_NAME"
 }
 ```
 
