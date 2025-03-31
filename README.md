@@ -1,33 +1,54 @@
-# Nome del Microservizio
+# pn-portfat
 
 [![Build Status](https://api.travis-ci.com/organization/repo.svg)](https://travis-ci.com/organization/repo)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Breve descrizione (1-2 frasi) dello scopo del microservizio.
+Microservizio di backend sviluppato in Spring Boot WebFlux per ricevere, elaborare e archiviare file `.zip` inviati dal Portale di Fatturazione al fine di integrarli con il sistema SEND di pagoPA.
 
 ## Panoramica
 
-Descrizione più dettagliata del microservizio:
-- Scopo e responsabilità
-- Confini del servizio
-- Dipendenze da altri servizi/sistemi
+Il progetto realizza un'integrazione asincrona tra il **Portale di Fatturazione** e la piattaforma **SEND**. Si compone di:
+
+- Lambda AWS (`event-file-ready`) che riceve gli eventi e li pubblica su una coda FIFO;
+- Coda **SQS FIFO** con meccanismi di deduplicazione e retry;
+- Microservizio ECS `pn-portfat`, che scarica e processa i file `.zip`, salvando i dati su **SafeStorage**.
+
+## Confini e responsabilità
+
+- **Responsabilità:** ricezione eventi, deduplicazione, validazione, estrazione file JSON, archiviazione.
+- **Dipendenze:** AWS Lambda, SQS, DynamoDB, Azure Blob Storage, SafeStorage.
+
+### Architettura
+
+```mermaid
+sequenceDiagram
+    participant Portale Fatturazione
+    participant Lambda (event-file-ready)
+    participant SQS FIFO
+    participant ECS (pn-portfat)
+    participant Azure Blob
+    participant SafeStorage
+
+    Portale Fatturazione->>Lambda: POST /file-ready-event
+    Lambda->>SQS FIFO: Invia messaggio evento file
+    ECS->>SQS FIFO: Polling e ricezione evento
+    ECS->>Azure Blob: Scarica file ZIP
+    ECS->>SafeStorage: Unzip + upload entry
+```
 
 ## Prerequisiti
 
-- Elenco di software/tool necessari (con versioni se rilevanti)
-    - Java 11+, Node.js 14+, Docker 20+, ecc.
-- Configurazioni particolari richieste
-- Credenziali o permessi speciali
+- Java 17+
+- Node.js 20+
+- Docker 27+
 
 ## Installazione
 
 ### Ambiente Locale
 ```bash
-    git clone https://github.com/organization/repo.git
-    cd repo
-    npm install
-    # oppure
-    mvn clean install
+    git clone https://github.com/pagopa/pn-portfat.git
+    cd pn-portfat
+    ./mvnw clean install
 ```
 
 ## Configurazione
@@ -35,66 +56,151 @@ Descrizione più dettagliata del microservizio:
 Il microservizio utilizza i seguenti parametri di configurazione, gestibili tramite:
 
 1. **Variabili d'ambiente** (preferite per deployment cloud)
-2. **File di configurazione** (`application.yml`/`application.properties` per Spring Boot, `.env` per Node.js)
-3. **Config Server** (se integrato con Spring Cloud Config)
+
+| Variabile Ambiente          | Descrizione                               | Obbligatorio |
+|----------------------------|-------------------------------------------|--------------|
+| `BLOB_STORAGE_BASE_URL`    | URL base per validazione del download URL | Sì           |
+| `SAFE_STORAGE_URL`         | Endpoint SafeStorage                      | Sì           |
+| `DYNAMO_TABLE_NAME`        | Nome della tabella per la deduplicazione  | Sì           |
+| `SQS_QUEUE_NAME`           | Nome della coda dalla quale leggere       | Sì           |
+
+2. **File di configurazione estratto da `application.yml` (Spring Boot):**
+
+```yaml
+pn:
+  portfat:
+    sqsQueue: ${PN_PORTFAT_AWS_SQS_NAME}
+    blobStorageBaseUrl: ${PN_PORTFAT_BLOB_STORAGE_BASE_URL}
+    filePathWhiteList: temp, portfatt, port-fatt
+    basePathZipFile: port-fat-zips
+    zipExtension: .zip
+    clientSafeStorageBasePath: ${PN_PORTFAT_SAFESTORAGEBASEURL}
+    safeStorageCxId: ${PN_PORTFAT_SAFESTORAGECXID}
+
+aws:
+  dynamodbPortFatTable: ${PN_PORTFAT_PORTFAT_TABLE_NAME}
+```
+
+3. **File di configurazione estratto da `config.json` (Node.js):**
+```json
+{
+   "PN_PORTFAT_AWS_REGION": "PN_PORTFAT_AWS_REGION",
+   "PN_PORTFAT_SQS_QUEUE_URL": "PN_PORTFAT_SQS_QUEUE_URL",
+   "PN_PORTFAT_SQS_QUEUE_NAME": "PN_PORTFAT_SQS_QUEUE_NAME",
+}
+```
 
 ### Configurazione Base
 
 | Variabile Ambiente          | File Property                  | Default       | Obbligatorio | Descrizione                               |
 |----------------------------|--------------------------------|---------------|--------------|-------------------------------------------|
 | `SERVER_PORT`              | `server.port`                 | 8080          | No           | Porta del servizio                       |
-| `DB_URL`                   | `spring.datasource.url`       | -             | Sì           | JDBC URL del database                    |
-| `DB_USERNAME`              | `spring.datasource.username`  | -             | Sì           | Username del database                    |
-| `DB_PASSWORD`              | `spring.datasource.password`  | -             | Sì           | Password del database                    |
 | `LOG_LEVEL`                | `logging.level.root`          | INFO          | No           | DEBUG/INFO/WARN/ERROR                    |
-| `JWT_SECRET`               | `app.jwt.secret`              | -             | Sì           | Secret per JWT encoding                  |
 
-### Configurazione Avanzata
-
-| Variabile Ambiente               | Default                       | Descrizione                               |
-|----------------------------------|-------------------------------|-------------------------------------------|
-| `CACHE_TTL`                      | 300000 (5 min)                | TTL cache in millisecondi                |
-| `RABBITMQ_HOST`                  | localhost                     | Host per RabbitMQ                         |
-| `MAX_API_RETRIES`                | 3                             | Tentativi chiamate HTTP fallite           |
-| `FEATURE_FLAG_X_ENABLED`         | false                         | Abilita feature sperimentale X            |
-
-### Esempi di Configurazione
-
-**application.yml (Spring Boot):**
-```yaml
-server:
-  port: ${SERVER_PORT:8080}
-
-spring:
-  datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-
-app:
-  jwt:
-    secret: ${JWT_SECRET}
-  cache:
-    ttl: ${CACHE_TTL:300000}
-```
 
 ## API Documentation
 
-- **Swagger UI**: http://localhost:8080/swagger-ui.html
-- **OpenAPI Spec**: http://localhost:8080/v3/api-docs
+**OpenAPI Spec**: disponibile nel file [`docs/openapi/pn-external-portfat-v1.yaml`](./docs/openapi/pn-external-portfat-v1.yaml)
 
-Elenco degli endpoint principali:
-- `POST /api/v1/orders` - Crea un nuovo ordine
-- `GET /api/v1/orders/{id}` - Recupera un ordine
+L'interfaccia principale è rappresentata dalla Lambda `event-file-ready` che espone una API REST pubblica:
+
+- `POST /pn-portfat-in/file-ready-event` - Riceve eventi inerenti file prodotti dal Portale Fatturazione
+
+### 1. Lambda `event-file-ready`
+
+- Linguaggio: Node.js
+- Espone l'endpoint `POST /pn-portfat-in/file-ready-event`
+- Riceve un evento contenente `downloadUrl` e `fileVersion`
+- Invia sulla coda SQS messaggi contenenti `downloadUrl`, `fileVersion` e `filePath`
+- `filePath` è utilizzato come `MessageGroupId` per garantire l'elaborazione sequenziale per singolo file
+
+### 2. Coda SQS FIFO
+
+- Deduplicazione temporale abilitata, valida fino a 5 minuti se il contenuto del messaggio è identico
+- Il `VisibilityTimeout` è impostato a **1200 secondi (20 minuti)**: se un messaggio non viene completato entro questo tempo, viene riproposto
+- Dopo **5 tentativi falliti**, il messaggio passa automaticamente nella **DLQ** (Dead Letter Queue)
+
+#### Struttura dei messaggi
+
+Ogni messaggio inviato sulla coda SQS è un oggetto JSON con la seguente struttura:
+
+```json
+{
+  "downloadUrl": "https://...",
+  "fileVersion": "2025-01",
+  "filePath": "/ordinativi/ente1/2025-01.zip"
+}
+```
+
+- `downloadUrl`: URL firmato temporaneo (SAS) per scaricare il file ZIP da Azure Blob.
+- `fileVersion`: identificatore di versione usato per la deduplicazione.
+- `filePath`: path logico utile per validazioni e ordinamento.
+
+### 3. Microservizio ECS `pn-portfat`
+
+#### Funzionalità principali:
+- Consuma i messaggi dalla coda SQS FIFO
+- Valida se `downloadUrl` deve iniziare con `blobStorageBaseUrl`
+- Valida se `filePath` deve essere nella `filePathWhiteList`
+- Deduplica tramite DynamoDB (`pn-PortfatDownload`) usando `downloadId`
+- Scarica file da Azure Blob con SAS
+- Esegue unzip del file
+- Carica le singole entry su SafeStorage, con tagging semantico
+
+#### SafeStorage e Tagging
+
+Ogni file `.json` estratto viene:
+
+- Caricato su SafeStorage tramite API `POST /safe-storage/v1/files`
+- Associato seguenti metadati:
+    - `sender_pa_id`
+    - `reference_period_year_month`
+    - `original_data_update_timestamp`
+
+### 4. Deduplicazione & Sicurezza
+
+- La deduplicazione persistente è garantita tramite la tabella DynamoDB.
+
+```mermaid
+flowchart TD
+    A[Messaggio SQS ricevuto] --> B[Controllo DB: downloadId esiste?]
+    B -- No --> C[Salva record IN_PROGRESS in DynamoDB]
+    C --> D[Processa file: download, unzip, upload]
+    D --> E[Salva stato COMPLETED]
+    B -- Sì, stato ERROR --> F[Retry: aggiorna stato a IN_PROGRESS]
+    F --> D
+    B -- Sì, stato COMPLETED --> G[Ignora e termina]
+```
+
+### 5. Scenari di errore gestiti
+
+| Caso                        | Effetto                                        |
+|-----------------------------|------------------------------------------------|
+| Azure irraggiungibile       | Stato = `ERROR` in DB                          |
+| File ZIP corrotto           | Stato = `ERROR` in DB                          |
+| File non JSON nel .zip      | Stato = `ERROR` in DB                          |
+| SafeStorage irraggiungibile| Stato = `ERROR` in DB                          |
+
+### 6. Mappa delle responsabilità
+
+| Componente                  | Responsabilità principali                                                                 |
+|----------------------------|--------------------------------------------------------------------------------------------|
+| Portale Fatturazione       | Invio evento HTTP con `downloadUrl` e `fileVersion`                                        |
+| Lambda `event-file-ready`  | Valida input, pubblica su SQS FIFO                                                        |
+| Coda SQS FIFO              | Deduplica temporale, garantisce ordine e retry                                            |
+| ECS `pn-portfat`           | Scarica file, unzip, carica entry su SafeStorage, aggiorna stato                         |
+| SafeStorage                | Archivia file JSON, supporta tagging semantico                                            |
+| DynamoDB                   | Memorizza stato `IN_PROGRESS`, `COMPLETED`, `ERROR`                                       |
 
 ## Test
 
 ### Esecuzione Test
 ```bash
-    npm test
-    # oppure
-    mvn test
+    ./mvnw verify
 ```
 
-## Esecuzione in locale
-### comandi per avviare applicazione in locale
+## Locale
+### Esecuzione in locale
+```bash
+    ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+```
