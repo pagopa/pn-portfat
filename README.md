@@ -55,16 +55,26 @@ sequenceDiagram
 
 Il microservizio utilizza i seguenti parametri di configurazione, gestibili tramite:
 
-1. **Variabili d'ambiente** (preferite per deployment cloud)
+1. **Variabili d'ambiente:**
+- **ECS `pn-portfat`**
 
 | Variabile Ambiente          | Descrizione                               | Obbligatorio |
 |----------------------------|-------------------------------------------|--------------|
-| `BLOB_STORAGE_BASE_URL`    | URL base per validazione del download URL | Sì           |
-| `SAFE_STORAGE_URL`         | Endpoint SafeStorage                      | Sì           |
+| `BLOB_STORAGE_BASE_URL`    | Url base per validazione del download URL | Sì           |
+| `SAFE_STORAGE_URL`         | Endpoint del servizio SafeStorage         | Sì           |
 | `DYNAMO_TABLE_NAME`        | Nome della tabella per la deduplicazione  | Sì           |
 | `SQS_QUEUE_NAME`           | Nome della coda dalla quale leggere       | Sì           |
 
-2. **File di configurazione estratto da `application.yml` (Spring Boot):**
+- **Lambda `event-file-ready`**
+
+| Variabile Ambiente          | Descrizione                                | Obbligatorio |
+|-----------------------------|--------------------------------------------|--------------|
+| `PN_PORTFAT_AWS_REGION`     | Regione dove è deployato il microservizio  | Sì           |
+| `PN_PORTFAT_SQS_QUEUE_NAME` | Nome logico della coda dalla quale leggere | Sì           |
+| `PN_PORTFAT_SQS_QUEUE_URL`  | Url della coda dalla quale leggere         | Sì           |
+
+2. **File di configurazione:**
+- Estratto da `application.yml` (Spring Boot):
 
 ```yaml
 pn:
@@ -81,7 +91,7 @@ aws:
   dynamodbPortFatTable: ${PN_PORTFAT_PORTFAT_TABLE_NAME}
 ```
 
-3. **File di configurazione estratto da `config.json` (Node.js):**
+- Estratto da `config.json` (Node.js):
 ```json
 {
    "PN_PORTFAT_AWS_REGION": "PN_PORTFAT_AWS_REGION",
