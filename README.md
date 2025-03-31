@@ -10,7 +10,7 @@ Microservizio di backend sviluppato in Spring Boot WebFlux per ricevere, elabora
 Il progetto realizza un'integrazione asincrona tra il **Portale di Fatturazione** e la piattaforma **SEND**. Si compone di:
 
 - AWS **Lambda** (`event-file-ready`) che riceve gli eventi e li pubblica su una coda FIFO;
-- Coda **SQS FIFO** con meccanismi di deduplicazione e retry;
+- Coda **SQS FIFO** `pn-portfat_request_actions.fifo` con meccanismi di deduplicazione e retry;
 - Microservizio **ECS** `pn-portfat`, che scarica e processa i file `.zip`, salvando i dati su **SafeStorage**.
 
 ## Confini e responsabilità
@@ -124,18 +124,17 @@ L'interfaccia principale è rappresentata dalla Lambda `event-file-ready` che es
 - Linguaggio: Node.js
 - Espone l'endpoint `POST /pn-portfat-in/file-ready-event`
 - Riceve un evento contenente `downloadUrl` e `fileVersion`
-- Invia sulla coda SQS messaggi contenenti `downloadUrl`, `fileVersion` e `filePath`
+- Invia sulla coda **SQS FIFO** `pn-portfat_request_actions.fifo` messaggi contenenti `downloadUrl`, `fileVersion` e `filePath`
 - `filePath` è utilizzato come `MessageGroupId` per garantire l'elaborazione sequenziale per singolo file
 
-### 2. Coda SQS FIFO
-- Nome: `pn-portfat_request_actions.fifo`
+### 2. Coda SQS FIFO `pn-portfat_request_actions.fifo`
 - Deduplicazione temporale abilitata, valida fino a 5 minuti se il contenuto del messaggio è identico
 - Il `VisibilityTimeout` è impostato a **1200 secondi (20 minuti)**: se un messaggio non viene completato entro questo tempo, viene riproposto
 - Dopo **5 tentativi falliti**, il messaggio passa automaticamente nella **DLQ** (Dead Letter Queue)
 
 #### Struttura dei messaggi
 
-Ogni messaggio inviato sulla coda SQS è un oggetto JSON con la seguente struttura:
+Ogni messaggio inviato sulla coda **SQS FIFO** `pn-portfat_request_actions.fifo` è un oggetto JSON con la seguente struttura:
 
 ```json
 {
@@ -152,7 +151,8 @@ Ogni messaggio inviato sulla coda SQS è un oggetto JSON con la seguente struttu
 ### 3. Microservizio ECS `pn-portfat`
 
 #### Funzionalità principali:
-- Consuma i messaggi dalla coda SQS FIFO
+- Linguaggio e Framework: Java + Spring Boot WebFlux
+- Consuma i messaggi dalla coda **SQS FIFO** `pn-portfat_request_actions.fifo`
 - Valida se `downloadUrl` deve iniziare con `blobStorageBaseUrl`
 - Valida se `filePath` deve essere nella `filePathWhiteList`
 - Deduplica tramite DynamoDB (`pn-PortfatDownload`) usando `downloadId`
@@ -186,13 +186,11 @@ flowchart TD
 ```
 
 ### 5. ECS Autoscaling Policy
-Il microservizio pn-portfat è configurato per scalare automaticamente in base alla presenza di messaggi in coda SQS.
+Il microservizio pn-portfat è configurato per scalare automaticamente in base alla quantità di messaggi presenti nella coda **SQS FIFO** `pn-portfat_request_actions.fifo`.
 
 L’istanza ECS parte da 0 task attivi.
 
-Quando è presente almeno 1 messaggio nella coda viene attivato un task.
-
-Il controllo della coda avviene ogni 300 secondi (5 minuti).
+Viene attivato un task quando è presente almeno 1 messaggio nella coda **SQS FIFO** `pn-portfat_request_actions.fifo`, inoltre il controllo su essa avviene ogni 300 secondi (5 minuti).
 
 Il numero massimo di task contemporanei è 6, mentre il minimo garantito è 1.
 
@@ -220,14 +218,14 @@ flowchart TD
 
 ### 7. Mappa delle responsabilità
 
-| Componente                  | Responsabilità principali                                                                 |
-|----------------------------|--------------------------------------------------------------------------------------------|
-| Portale Fatturazione       | Invio evento HTTP con `downloadUrl` e `fileVersion`                                        |
-| Lambda `event-file-ready`  | Valida input, pubblica su SQS FIFO                                                        |
-| Coda SQS FIFO              | Deduplica temporale, garantisce ordine e retry                                            |
-| ECS `pn-portfat`           | Scarica file, unzip, carica entry su SafeStorage, aggiorna stato                         |
-| SafeStorage                | Archivia file JSON, supporta tagging semantico                                            |
-| DynamoDB                   | Memorizza stato `IN_PROGRESS`, `COMPLETED`, `ERROR`                                       |
+| Componente                                      | Responsabilità principali                                                       |
+|-------------------------------------------------|---------------------------------------------------------------------------------|
+| Portale Fatturazione                            | Invio evento HTTP con `downloadUrl` e `fileVersion`                             |
+| Lambda `event-file-ready`                       | Valida input, pubblica su SQS FIFO                                              |
+| Coda SQS FIFO `pn-portfat_request_actions.fifo` | Deduplica temporale, garantisce ordine e retry                                  |
+| ECS `pn-portfat`                                | Scarica file, unzip, carica entry su SafeStorage, aggiorna stato                |
+| SafeStorage                                     | Archivia file JSON, supporta tagging semantico                                  |
+| DynamoDB                                        | Memorizza stato `IN_PROGRESS`, `COMPLETED`, `ERROR`                             |
 
 ## Test
 
