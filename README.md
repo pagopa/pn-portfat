@@ -1,8 +1,5 @@
 # pn-portfat
 
-[![Build Status](https://api.travis-ci.com/organization/repo.svg)](https://travis-ci.com/organization/repo)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-
 Microservizio di backend sviluppato in Spring Boot WebFlux per ricevere, elaborare e archiviare file `.zip` inviati dal Portale di Fatturazione al fine di integrarli con il sistema SEND di pagoPA.
 
 ## Panoramica
@@ -207,12 +204,12 @@ flowchart TD
 
 ### 6. Scenari di errore gestiti
 
-| Caso                        | Effetto                                       |
-|-----------------------------|-----------------------------------------------|
-| Azure irraggiungibile       | Stato = `ERROR` in DB                         |
-| File ZIP corrotto           | Stato = `ERROR` in DB                         |
-| File non JSON nel .zip      | Stato = `ERROR` in DB                         |
-| SafeStorage irraggiungibile| Stato = `ERROR` in DB                         |
+| Caso                         | Effetto                                       |
+|------------------------------|-----------------------------------------------|
+| Azure irraggiungibile        | Stato = `ERROR` in DB                         |
+| File ZIP corrotto            | Stato = `ERROR` in DB                         |
+| File non JSON nel .zip       | Stato = `ERROR` in DB                         |
+| SafeStorage irraggiungibile  | Stato = `ERROR` in DB                         |
 
 ### 7. Mappa delle responsabilità
 
