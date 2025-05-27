@@ -6,7 +6,7 @@
     "SafeStorageCxId": "pn-portfat-in",
     "SafeStorageFileNotFoundRetry": "false",
     "MinTasksNumber": "1",
-    "MaxTasksNumber": "10",
+    "MaxTasksNumber": "2",
     "InvoicingServiceIPCidrs": "",
     "BlobStorageBaseUrl": "https://storage.portalefatturazione.pagopa.it"
   }
