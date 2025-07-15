@@ -7,7 +7,7 @@
     "SafeStorageFileNotFoundRetry": "false",
     "AutoscalingThreshold": "100",
     "MinTasksNumber": "1",
-    "MaxTasksNumber": "2",
+    "MaxTasksNumber": "4",
     "InvoicingServiceIPCidrs": "",
     "BlobStorageBaseUrl": "https://storage.portalefatturazione.pagopa.it"
   }
