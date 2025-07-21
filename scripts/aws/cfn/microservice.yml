@@ -80,7 +80,7 @@ Parameters:
     Description: 'activate when N datapoint on M'
 
   AutoscalingThreshold:
-    Default: 1
+    Default: 1000
     Type: String
     Description: 'activate when default is reached'
 

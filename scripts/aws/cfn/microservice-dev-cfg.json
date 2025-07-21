@@ -5,7 +5,7 @@
     "WireTapLogActivation": "false",
     "SafeStorageCxId": "pn-portfat-in",
     "SafeStorageFileNotFoundRetry": "false",
-    "AutoscalingThreshold": "100",
+    "AutoscalingThreshold": "1000",
     "MinTasksNumber": "1",
     "MaxTasksNumber": "4",
     "InvoicingServiceIPCidrs": "",
