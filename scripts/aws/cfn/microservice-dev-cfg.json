@@ -5,9 +5,8 @@
     "WireTapLogActivation": "false",
     "SafeStorageCxId": "pn-portfat-in",
     "SafeStorageFileNotFoundRetry": "false",
-    "AutoscalingThreshold": "1000",
     "MinTasksNumber": "1",
-    "MaxTasksNumber": "4",
+    "MaxTasksNumber": "1",
     "InvoicingServiceIPCidrs": "",
     "BlobStorageBaseUrl": "https://storage.portalefatturazione.pagopa.it"
   }
