@@ -63,8 +63,34 @@ Parameters:
     Type: String
     Description: 'keep track of used projects commitIds'
 
+  # Autoscaling parameters
+  AutoscalingCheckPeriod:
+    Default: 300
+    Type: Number
+    Description: 'minimum autoscaling number of tasks'
+
+  AutoscalingDataPointN:
+    Default: 1
+    Type: Number
+    Description: 'activate when N datapoint on M'
+
+  AutoscalingDataPointM:
+    Default: 1
+    Type: Number
+    Description: 'activate when N datapoint on M'
+
+  AutoscalingThreshold:
+    Default: 1000
+    Type: String
+    Description: 'activate when default is reached'
+
+  MinTasksNumber:
+    Default: 1
+    Type: Number
+    Description: 'minimum autoscaling number of tasks'
+
   MaxTasksNumber:
-    Default: 2
+    Default: 6
     Type: Number
     Description: 'maximum autoscaling number of tasks'
 
@@ -239,6 +265,12 @@ Resources:
 
         MinTasksNumber: !Ref MinTasksNumber
         MaxTasksNumber: !Ref MaxTasksNumber
+        AutoscalingStrategy: SQS
+        AutoscalingQueueName: !Ref PortFatRequestActionsQueueName
+        AutoscalingThreshold: !Ref AutoscalingThreshold
+        AutoscalingCheckPeriod: !Ref AutoscalingCheckPeriod
+        AutoscalingDataPointN: !Ref AutoscalingDataPointN
+        AutoscalingDataPointM: !Ref AutoscalingDataPointM
 
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
         ContainerImageURI: !Ref ContainerImageUri
