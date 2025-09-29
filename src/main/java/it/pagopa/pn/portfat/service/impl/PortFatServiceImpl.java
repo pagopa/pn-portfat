@@ -11,10 +11,12 @@ import it.pagopa.pn.portfat.service.PortFatService;
 import it.pagopa.pn.portfat.service.SafeStorageService;
 import lombok.AllArgsConstructor;
 import lombok.CustomLog;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -64,7 +66,7 @@ public class PortFatServiceImpl implements PortFatService {
         Path outputPath = Path.of(portFatConfig.getBasePathZipFile(), timestamp);
         Path outputFilesPath = Path.of(outputPath.toString(), PATH_FIELS);
         String fileName = UUID.randomUUID().toString();
-        Path zipFilePath = outputPath.resolve(fileName + portFatConfig.getZipExtension());
+        Path zipFilePath = createTmpFile(fileName, portFatConfig.getZipExtension());
         return Mono.defer(() -> createDirectories(outputPath)
                         .then(createDirectories(outputFilesPath))
                         .then(webClient.downloadFileAsByteArray(portFatDownload.getDownloadUrl(), zipFilePath))
@@ -86,6 +88,15 @@ public class PortFatServiceImpl implements PortFatService {
                 .thenMany(processDirectory(outputFilesPath))
                 .then()
                 .doFinally(signal -> deleteFileOrDirectory(outputPath.toFile()));
+    }
+
+    public Path createTmpFile(String prefix, String suffix) {
+        try {
+            ClassPathResource classPathResource = new ClassPathResource("/");
+            return File.createTempFile("tmp_" + prefix, suffix, classPathResource.getFile()).toPath();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**

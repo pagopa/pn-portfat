@@ -1,21 +1,5 @@
 {
-    "FKIdEnte": "038b356f-eb4f-421b-9aa7-ae5b1cc261a4",
-    "AnnoValidita": 2025,
-    "MeseValidita": 2,
-    "TotaleAnalogico": 20.05,
-    "TotaleDigitale": 23.50,
-    "TotaleNotificheAnalogico": 10,
-    "TotaleNotificheDigitale": 37,
-    "Totale": 43.55,
-    "TotaleNotifiche": 47,
-    "IdTipoContratto": 1,
-    "PercentualeCategoriaA": 50,
-    "PercentualeCategoriaD": 50,
-    "FkIdStato": "Chiusa\/Caricato",
-    "Fatturabile": true,
-    "RagioneSociale": "Comune di Otranto",
-    "CodiceFiscale": "01148430752",
-    "TipoContratto": "PAL",
-    "Asseverazione": false,
-    "DataUscitaAsseverazione": "2025-01-07"
+  "idEnte": "038b356f-eb4f-421b-9aa7-ae5b1cc261a4",
+  "contractId": "a7b861f4-8b0b-40f9-b9a1-536a11fb3cf0",
+  "periodo_riferimento": "01-2025"
 }
