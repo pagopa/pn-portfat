@@ -16,10 +16,16 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
 import java.net.URI;
+import java.nio.channels.FileChannel;
+import java.nio.channels.WritableByteChannel;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.Objects;
 
 import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.DOWNLOAD_ZIP_ERROR;
 
@@ -45,7 +51,7 @@ public class HttpConnectorWebClient implements HttpConnector {
      * @param fileOutput il percorso in cui salvare il file scaricato
      * @return un Mono che completa il download e il salvataggio del file
      */
-    public Mono<Void> downloadFileAsByteArray(String url, Path fileOutput) {
+    public Mono<Void> downloadFileAsByteArrayOld(String url, Path fileOutput) {
         log.info("Url to download zip: {}", url);
         return webClient.get()
                 .uri(URI.create(url))
@@ -67,6 +73,49 @@ public class HttpConnectorWebClient implements HttpConnector {
                 .doOnError(ex -> log.error("Error during file download or writing: {}", ex.getMessage()))
                 .onErrorMap(ex -> new PnGenericException(DOWNLOAD_ZIP_ERROR, DOWNLOAD_ZIP_ERROR.getMessage() + ex.getMessage()))
                 .then();
+    }
+
+    public Mono<Void> downloadFileAsByteArray(String downloadUrl, Path path) {
+        log.info("start to download file from: {}", downloadUrl);
+        WritableByteChannel channel = null;
+        try {
+            channel = FileChannel.open(path, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+            WritableByteChannel finalChannel = channel;
+            return webClient
+                    .get()
+                    .uri(new URI(downloadUrl))
+                    .retrieve()
+                    .onStatus(HttpStatus::isError, response ->
+                            response.bodyToMono(String.class)
+                                    .flatMap(errorBody -> {
+                                        log.error("Error in WebClient during download: HTTP {} - {}", response.statusCode(), errorBody);
+                                        return Mono.error(new PnGenericException(DOWNLOAD_ZIP_ERROR, "Error HTTP " + response.statusCode()));
+                                    })
+                    )
+                    .bodyToFlux(DataBuffer.class)
+                    .flatMap(dataBuffer -> DataBufferUtils.write(Flux.just(dataBuffer), finalChannel)
+                            .doOnError(e -> log.error("Error during file writing"))
+                            .doFinally(signalType -> DataBufferUtils.release(dataBuffer)))
+                    .doOnComplete(() -> closeWritableByteChannel(finalChannel))
+                    .doOnError(throwable -> closeWritableByteChannel(finalChannel))
+                    .then();
+
+        } catch (Exception ex) {
+            log.error("error in URI ", ex);
+            closeWritableByteChannel(channel);
+//            return Mono.error(new PaperEventEnricherException(ex.getMessage(), 500, "DOWNLOAD_ERROR"));
+            return Mono.error(new PnGenericException(DOWNLOAD_ZIP_ERROR, DOWNLOAD_ZIP_ERROR.getMessage() + ex.getMessage()));
+        }
+    }
+
+    public void closeWritableByteChannel(WritableByteChannel channel) {
+        try {
+            if(Objects.nonNull(channel) && channel.isOpen())
+                channel.close();
+            log.info("Download and file writing completed successfully");
+        } catch (IOException e) {
+            log.error("Error closing channel", e);
+        }
     }
 
     /**
