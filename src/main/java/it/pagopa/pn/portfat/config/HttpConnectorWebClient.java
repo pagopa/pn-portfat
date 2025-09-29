@@ -62,7 +62,6 @@ public class HttpConnectorWebClient implements HttpConnector {
                 .doOnNext(buffer -> log.info("Received buffer with {} bytes", buffer.readableByteCount()))
                 .flatMap(buffer ->
                         DataBufferUtils.write(Mono.just(buffer), fileOutput)
-                                .doFinally(signalType -> DataBufferUtils.release(buffer))
                                 .then()
                 )
                 .doOnError(ex -> log.error("Error during file download or writing: {}", ex.getMessage()))
