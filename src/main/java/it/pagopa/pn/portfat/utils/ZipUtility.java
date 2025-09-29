@@ -68,6 +68,7 @@ public class ZipUtility {
      * @throws PnGenericException se si verifica un errore durante il processo del file ZIP
      */
     private static Void processZipFile(String zipFilePath, String destDirectory) {
+        new File(zipFilePath)
         try (ZipFile zipFile = new ZipFile(new File(zipFilePath))) {
             boolean foundJson = extractJsonFiles(zipFile, destDirectory);
             if (!foundJson) {

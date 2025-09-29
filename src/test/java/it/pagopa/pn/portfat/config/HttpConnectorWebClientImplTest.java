@@ -11,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.HttpRequest;
 import org.mockserver.model.HttpResponse;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import java.nio.charset.StandardCharsets;
@@ -50,8 +51,8 @@ class HttpConnectorWebClientImplTest {
     @Test
     void testDownloadFileAsByteArray() throws Exception {
         String fakeContent = "Fake file content";
+        //byte[] fakeBytes = new ClassPathResource("portfatt_modulo_commessa_2025_10.zip").getInputStream().readAllBytes();
         byte[] fakeBytes = fakeContent.getBytes(StandardCharsets.UTF_8);
-
         mockServer
                 .when(request()
                         .withMethod("GET")
@@ -61,19 +62,19 @@ class HttpConnectorWebClientImplTest {
                         .withBody(fakeBytes)
                         .withHeader("Content-Type", "application/octet-stream"));
 
-        Path tempFile = Files.createTempFile("test", ".zip");
+        Path outputFile = Paths.get("test_downloaded.zip"); // file nella root del progetto
 
         try {
             Mono<Void> result = httpConnectorWebClient.downloadFileAsByteArray(
                     "http://localhost:1585/test.zip",
-                    tempFile
+                    outputFile
             );
             result.block();
 
-            assertTrue(Files.exists(tempFile), "Il file non è stato creato");
-            assertTrue(Files.size(tempFile) > 0, "Il file è vuoto");
+            assertTrue(Files.exists(outputFile), "Il file non è stato creato");
+            assertTrue(Files.size(outputFile) > 0, "Il file è vuoto");
         } finally {
-            Files.deleteIfExists(tempFile);
+            //Files.deleteIfExists(tempFile);
         }
     }
 
