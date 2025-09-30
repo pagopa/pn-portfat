@@ -7,35 +7,64 @@
     {
       "id": "AR",
       "nome": "AR",
-      "valore_totale": 0,
+      "valore_totale": 2500,
       "varianti": [
         {
           "codice": "NZ",
           "nome": "NZ",
-          "valore_totale": 0,
+          "valore_totale": 1800,
           "distribuzione": {
-            "regionale": []
+            "regionale": [
+              {
+                "regione": "Lombardia",
+                "valore": 1000,
+                "province": [
+                  {"nome": "Milano", "valore": 600},
+                  {"nome": "Brescia", "valore": 400}
+                ]
+              },
+              {
+                "regione": "Veneto",
+                "valore": 800,
+                "province": [
+                  {"nome": "Venezia", "valore": 300},
+                  {"nome": "Verona", "valore": 500}
+                ]
+              }
+            ]
           }
         },
         {
           "codice": "INT",
           "nome": "INT",
-          "valore_totale": 0,
-          "distribuzione": null
+          "valore_totale": 700,
+          "distribuzione": {
+            "regionale": [
+            ]
+          }
         }
       ]
     },
     {
       "id": "890",
       "nome": "890",
-      "valore_totale": 0,
+      "valore_totale": 500,
       "varianti": [
         {
           "codice": "NZ",
           "nome": "NZ",
-          "valore_totale": 0,
+          "valore_totale": 500,
           "distribuzione": {
-            "regionale": []
+            "regionale": [
+              {
+                "regione": "Piemonte",
+                "valore": 500,
+                "province": [
+                  {"nome": "Torino", "valore": 300},
+                  {"nome": "Alessandria", "valore": 200}
+                ]
+              }
+            ]
           }
         }
       ]
@@ -43,12 +72,12 @@
     {
       "id": "digitale",
       "nome": "digitale",
-      "valore_totale": 0,
+      "valore_totale": 1200,
       "varianti": [
         {
           "codice": "PEC",
           "nome": "PEC",
-          "valore_totale": 0,
+          "valore_totale": 1200,
           "distribuzione": null
         }
       ]

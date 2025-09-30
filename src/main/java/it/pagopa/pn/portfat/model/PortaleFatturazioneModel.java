@@ -40,7 +40,7 @@ public class PortaleFatturazioneModel {
         private String nome;
 
         @JsonProperty("valore_totale")
-        private double valoreTotale;
+        private Long valoreTotale;
 
         @JsonProperty("varianti")
         private List<Variante> varianti;
@@ -58,7 +58,7 @@ public class PortaleFatturazioneModel {
             private String nome;
 
             @JsonProperty("valore_totale")
-            private double valoreTotale;
+            private Long valoreTotale;
 
             @JsonProperty("distribuzione")
             private Distribuzione distribuzione;
@@ -71,9 +71,37 @@ public class PortaleFatturazioneModel {
         public static class Distribuzione {
 
             @JsonProperty("regionale")
-            private List<Object> regionale;
+            private List<Regione> regionale;
 
         }
+
+        @Data
+        @AllArgsConstructor
+        @NoArgsConstructor
+        public static class Regione {
+            @JsonProperty("regione")
+            private String regione;
+
+            @JsonProperty("valore")
+            private Long valore;
+
+            @JsonProperty("province")
+            private List<Provincia> province;
+
+        }
+
+        @Data
+        @AllArgsConstructor
+        @NoArgsConstructor
+        public static class Provincia {
+            @JsonProperty("nome")
+            private String nome;
+
+            @JsonProperty("valore")
+            private Long valore;
+
+        }
+
     }
 }
 
