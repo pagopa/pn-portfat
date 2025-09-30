@@ -51,30 +51,6 @@ public class HttpConnectorWebClient implements HttpConnector {
      * @param fileOutput il percorso in cui salvare il file scaricato
      * @return un Mono che completa il download e il salvataggio del file
      */
-    public Mono<Void> downloadFileAsByteArrayOld(String url, Path fileOutput) {
-        log.info("Url to download zip: {}", url);
-        return webClient.get()
-                .uri(URI.create(url))
-                .accept(MediaType.APPLICATION_OCTET_STREAM)
-                .retrieve()
-                .onStatus(HttpStatus::isError, response ->
-                        response.bodyToMono(String.class)
-                                .flatMap(errorBody -> {
-                                    log.error("Error in WebClient during download: HTTP {} - {}", response.statusCode(), errorBody);
-                                    return Mono.error(new PnGenericException(DOWNLOAD_ZIP_ERROR, "Error HTTP " + response.statusCode()));
-                                })
-                )
-                .bodyToFlux(DataBuffer.class)
-                .doOnNext(buffer -> log.info("Received buffer with {} bytes", buffer.readableByteCount()))
-                .flatMap(buffer ->
-                        DataBufferUtils.write(Mono.just(buffer), fileOutput)
-                                .then()
-                )
-                .doOnError(ex -> log.error("Error during file download or writing: {}", ex.getMessage()))
-                .onErrorMap(ex -> new PnGenericException(DOWNLOAD_ZIP_ERROR, DOWNLOAD_ZIP_ERROR.getMessage() + ex.getMessage()))
-                .then();
-    }
-
     public Mono<Void> downloadFileAsByteArray(String downloadUrl, Path path) {
         log.info("start to download file from: {}", downloadUrl);
         WritableByteChannel channel = null;
@@ -104,7 +80,6 @@ public class HttpConnectorWebClient implements HttpConnector {
         } catch (Exception ex) {
             log.error("error in URI ", ex);
             closeWritableByteChannel(channel);
-//            return Mono.error(new PaperEventEnricherException(ex.getMessage(), 500, "DOWNLOAD_ERROR"));
             return Mono.error(new PnGenericException(DOWNLOAD_ZIP_ERROR, DOWNLOAD_ZIP_ERROR.getMessage() + ex.getMessage()));
         }
     }
