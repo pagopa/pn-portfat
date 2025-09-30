@@ -83,7 +83,8 @@ public class HttpConnectorWebClient implements HttpConnector {
             WritableByteChannel finalChannel = channel;
             return webClient
                     .get()
-                    .uri(new URI(downloadUrl))
+                    .uri(URI.create(downloadUrl))
+                    .accept(MediaType.APPLICATION_OCTET_STREAM)
                     .retrieve()
                     .onStatus(HttpStatus::isError, response ->
                             response.bodyToMono(String.class)
