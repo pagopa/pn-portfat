@@ -24,7 +24,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
-import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.CONVERT_TO_JSON_ERROR;
 import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.LIST_FILES_ERROR;
 import static it.pagopa.pn.portfat.mapper.FileCreationWithContentRequestMapper.mapper;
 import static it.pagopa.pn.portfat.utils.Utility.*;
@@ -134,7 +133,7 @@ public class PortFatServiceImpl implements PortFatService {
         log.info("Processing file: {} in folder: {}", file.getFileName(), parentDirectoryName);
         return Mono.fromCallable(() -> convertToObject(file.toFile(), PortaleFatturazioneModel.class))
                 .flatMap(portaleFatturazioneModel ->
-                        Mono.just(convertToArrayByte(file))
+                        Mono.just(jsonToByteArray(portaleFatturazioneModel))
                                 .flatMap(jsonToByteArray -> {
                                     FileCreationWithContentRequest fileCreationRequest = mapper(jsonToByteArray, portaleFatturazioneModel);
                                     return safeStorageService.createAndUploadContent(fileCreationRequest);
@@ -146,12 +145,4 @@ public class PortFatServiceImpl implements PortFatService {
                 }).then();
     }
 
-    private byte[] convertToArrayByte(Path file) {
-        try {
-            return Files.readAllBytes(file);
-        }
-        catch (IOException e) {
-            throw new PnGenericException(CONVERT_TO_JSON_ERROR, CONVERT_TO_JSON_ERROR.getMessage() + e.getMessage());
-        }
-    }
 }

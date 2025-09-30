@@ -32,11 +32,9 @@ public class Utility {
         throw new IllegalCallerException();
     }
 
-    private static final ObjectMapper objectMapper;
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    static {
-        objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    }
+
 
     /**
      * Converte un oggetto in un array di byte JSON.

@@ -30,7 +30,7 @@ public class FileCreationWithContentRequestMapper {
         request.setStatus(SAVED_STATUS);
         request.setContent(bytesPdf);
         Map<String, List<String>> tags = new HashMap<>();
-        tags.put(SENDER_PA_ID, List.of(model.getFkIdEnte()));
+        tags.put(SENDER_PA_ID, List.of(model.getIdEnte()));
         tags.put(REFERENCE_PERIOD, List.of(model.getPeriodoRiferimento()));
 
         // TODO ORIGINAL_DATA_UPDATE
