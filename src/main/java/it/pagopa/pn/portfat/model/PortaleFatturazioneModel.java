@@ -5,50 +5,103 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class PortaleFatturazioneModel {
 
-    @JsonProperty("FKIdEnte")
-    private String fkIdEnte;
-    @JsonProperty("AnnoValidita")
-    private Integer annoValidita;
-    @JsonProperty("MeseValidita")
-    private Integer meseValidita;
-    @JsonProperty("TotaleAnalogico")
-    private BigDecimal totaleAnalogico;
-    @JsonProperty("TotaleDigitale")
-    private BigDecimal totaleDigitale;
-    @JsonProperty("TotaleNotificheAnalogico")
-    private Integer totaleNotificheAnalogico;
-    @JsonProperty("TotaleNotificheDigitale")
-    private Integer totaleNotificheDigitale;
-    @JsonProperty("Totale")
-    private BigDecimal totale;
-    @JsonProperty("TotaleNotifiche")
-    private Integer totaleNotifiche;
-    @JsonProperty("IdTipoContratto")
-    private Integer idTipoContratto;
-    @JsonProperty("PercentualeCategoriaA")
-    private Integer percentualeCategoriaA;
-    @JsonProperty("PercentualeCategoriaD")
-    private Integer percentualeCategoriaD;
-    @JsonProperty("FkIdStato")
-    private String fkIdStato;
-    @JsonProperty("Fatturabile")
-    private Boolean fatturabile;
-    @JsonProperty("RagioneSociale")
-    private String ragioneSociale;
-    @JsonProperty("CodiceFiscale")
-    private String codiceFiscale;
-    @JsonProperty("TipoContratto")
-    private String tipoContratto;
-    @JsonProperty("Asseverazione")
-    private Boolean asseverazione;
-    @JsonProperty("DataUscitaAsseverazione")
-    private String dataUscitaAsseverazione;
+    @JsonProperty("idEnte")
+    private String idEnte;
 
+    @JsonProperty("contractId")
+    private String contractId;
+
+    @JsonProperty("periodo_riferimento")
+    private String periodoRiferimento;
+
+    @JsonProperty("last_update")
+    private String lastUpdate;
+
+    @JsonProperty("prodotti")
+    private List<Prodotto> prodotti;
+
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Prodotto {
+
+        @JsonProperty("id")
+        private String id;
+
+        @JsonProperty("nome")
+        private String nome;
+
+        @JsonProperty("valore_totale")
+        private Long valoreTotale;
+
+        @JsonProperty("varianti")
+        private List<Variante> varianti;
+
+
+        @Data
+        @AllArgsConstructor
+        @NoArgsConstructor
+        public static class Variante {
+
+            @JsonProperty("codice")
+            private String codice;
+
+            @JsonProperty("nome")
+            private String nome;
+
+            @JsonProperty("valore_totale")
+            private Long valoreTotale;
+
+            @JsonProperty("distribuzione")
+            private Distribuzione distribuzione;
+
+        }
+
+        @Data
+        @AllArgsConstructor
+        @NoArgsConstructor
+        public static class Distribuzione {
+
+            @JsonProperty("regionale")
+            private List<Regione> regionale;
+
+        }
+
+        @Data
+        @AllArgsConstructor
+        @NoArgsConstructor
+        public static class Regione {
+            @JsonProperty("regione")
+            private String regione;
+
+            @JsonProperty("valore")
+            private Long valore;
+
+            @JsonProperty("province")
+            private List<Provincia> province;
+
+        }
+
+        @Data
+        @AllArgsConstructor
+        @NoArgsConstructor
+        public static class Provincia {
+            @JsonProperty("nome")
+            private String nome;
+
+            @JsonProperty("valore")
+            private Long valore;
+
+        }
+
+    }
 }
+

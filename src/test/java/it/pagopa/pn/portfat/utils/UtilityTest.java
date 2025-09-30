@@ -76,19 +76,10 @@ class UtilityTest {
         PortaleFatturazioneModel result = Utility.convertToObject(existingFile, PortaleFatturazioneModel.class);
 
         assertNotNull(result);
-        assertEquals("038b356f-eb4f-421b-9aa7-ae5b1cc261a4", result.getFkIdEnte());
-        assertEquals(2, result.getMeseValidita());
+        assertEquals("038b356f-eb4f-421b-9aa7-ae5b1cc261a4", result.getIdEnte());
+        assertEquals("01-2025", result.getPeriodoRiferimento());
     }
 
-    @Test
-    void testConvertToObjectNotValidWithValidFile() throws URISyntaxException {
-        File existingFile = new File(Objects.requireNonNull(getClass()
-                        .getClassLoader().getResource("9d67aac31bc0.json"))
-                .toURI());
-        PnGenericException exception = Assertions.assertThrows(PnGenericException.class,
-                () -> Utility.convertToObject(existingFile, PortaleFatturazioneModel.class));
-        assertNotNull(exception);
-    }
 
     @Test
     void testConvertToObjectWithInvalidJson() {

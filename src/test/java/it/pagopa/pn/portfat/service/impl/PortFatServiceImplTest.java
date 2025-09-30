@@ -71,9 +71,8 @@ class PortFatServiceImplTest {
         // Arrange
         ClassLoader classLoader = getClass().getClassLoader();
         PortaleFatturazioneModel portaleFatturazioneModel = new PortaleFatturazioneModel();
-        portaleFatturazioneModel.setFkIdEnte("45GRTF");
-        portaleFatturazioneModel.setAnnoValidita(2025);
-        portaleFatturazioneModel.setMeseValidita(3);
+        portaleFatturazioneModel.setIdEnte("45GRTF");
+        portaleFatturazioneModel.setPeriodoRiferimento("10-2025");
 
         mockedUtility.when(() -> Utility.createDirectories(any(Path.class)))
                 .thenReturn(Mono.just(true).then());
