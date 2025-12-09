@@ -1,7 +1,7 @@
 package it.pagopa.pn.portfat.middleware.queue;
 
-import io.awspring.cloud.messaging.listener.SqsMessageDeletionPolicy;
-import io.awspring.cloud.messaging.listener.annotation.SqsListener;
+import io.awspring.cloud.sqs.annotation.SqsListener;
+import io.awspring.cloud.sqs.annotation.SqsListenerAcknowledgementMode;
 import it.pagopa.pn.commons.utils.MDCUtils;
 import it.pagopa.pn.portfat.config.PortFatPropertiesConfig;
 import it.pagopa.pn.portfat.middleware.db.dao.PortFatDownloadDAO;
@@ -48,7 +48,7 @@ public class QueueListener {
      * @param payload il contenuto del messaggio ricevuto
      * @param headers gli header del messaggio SQS
      */
-    @SqsListener(value = "${pn.portfat.sqsQueue}", deletionPolicy = SqsMessageDeletionPolicy.DEFAULT)
+    @SqsListener(value = "${pn.portfat.sqsQueue}", acknowledgementMode = SqsListenerAcknowledgementMode.ALWAYS)
     public void pullPortFat(@Payload String payload, @Headers Map<String, Object> headers) {
         log.logStartingProcess("portFat with MessageGroupId=" + headers.get(MESSAGE_GROUP_ID) + ", and Body= " + payload);
         FileReadyModel fileReady = convertToObject(payload, FileReadyModel.class);
