@@ -1,3 +1,4 @@
+#!/bin/bash
 echo "### CREATE QUEUES FIFO ###"
 
 queues_fifo="local-pn-portfat-inputs-requests.fifo"

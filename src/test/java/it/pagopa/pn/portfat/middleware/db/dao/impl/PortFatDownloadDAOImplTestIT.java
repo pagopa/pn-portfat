@@ -5,17 +5,21 @@ import it.pagopa.pn.portfat.middleware.db.dao.PortFatDownloadDAO;
 import it.pagopa.pn.portfat.middleware.db.entities.PortFatDownload;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import reactor.test.StepVerifier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@SpringBootTest
+@SpringBootTest(
+        properties = {
+                "spring.cloud.aws.sqs.enabled=false"
+        }
+)
 @ActiveProfiles("test")
 class PortFatDownloadDAOImplTestIT extends BaseTest.WithLocalStack {
 
-    @SpyBean
+    @MockitoSpyBean
     private PortFatDownloadDAO portFatDownloadDAO;
 
     @Test
