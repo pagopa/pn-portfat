@@ -35,5 +35,3 @@ spring:
       credentials.profile.name: ${PN_AWS_PROFILE_NAME:default}
       region.static: us-east-1
       sqs.endpoint: ${aws.endpoint-url}
-
-

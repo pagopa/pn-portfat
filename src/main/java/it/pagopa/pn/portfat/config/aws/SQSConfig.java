@@ -7,9 +7,9 @@ import com.amazonaws.services.sqs.AmazonSQSAsync;
 import com.amazonaws.services.sqs.AmazonSQSAsyncClientBuilder;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import software.amazon.awssdk.regions.providers.AwsRegionProvider;
 
 @Configuration
 @Slf4j
@@ -17,12 +17,17 @@ import software.amazon.awssdk.regions.providers.AwsRegionProvider;
 public class SQSConfig {
 
     private final AWSCredentialsProvider credentialsProvider = new DefaultAWSCredentialsProviderChain();
-    private final AwsRegionProvider regionProvider;
+    private final AwsPropertiesConfig awsConfigs;
 
     @Bean
     AmazonSQSAsync amazonSQS() {
-        return AmazonSQSAsyncClientBuilder.standard().withCredentials(credentialsProvider)
-                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration("http://localhost:4566","us-east-1"))
-                .withRegion(regionProvider.getRegion().id()).build();
+        if (StringUtils.hasText(awsConfigs.getEndpointUrl()))
+            return AmazonSQSAsyncClientBuilder.standard().withCredentials(credentialsProvider)
+                    .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(awsConfigs.getEndpointUrl(), awsConfigs.getRegionCode()))
+                    .build();
+        else {
+            return AmazonSQSAsyncClientBuilder.standard().withCredentials(credentialsProvider)
+                    .build();
+        }
     }
 }
