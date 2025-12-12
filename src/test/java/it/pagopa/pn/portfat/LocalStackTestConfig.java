@@ -35,7 +35,6 @@ public class LocalStackTestConfig {
                     .withNetwork(Network.builder().build())
                     .withStartupTimeout(Duration.ofSeconds(10))
                     .withStartupAttempts(3)
-                    .withEnv("SKIP_SSL_CERT_DOWNLOAD", "1")
                     .waitingFor(Wait.forLogMessage(".*Initialization terminated.*", 1));
 
     static {
