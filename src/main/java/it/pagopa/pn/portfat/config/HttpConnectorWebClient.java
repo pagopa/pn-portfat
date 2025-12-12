@@ -122,7 +122,7 @@ public class HttpConnectorWebClient implements HttpConnector {
                 .retrieve()
                 .toEntity(String.class)
                 .flatMap(stringResponseEntity -> {
-                    if (stringResponseEntity.getStatusCodeValue() != org.springframework.http.HttpStatus.OK.value()) {
+                    if (stringResponseEntity.getStatusCode().value() != org.springframework.http.HttpStatus.OK.value()) {
                         return Mono.error(new RuntimeException());
                     }
                     return Mono.empty();
