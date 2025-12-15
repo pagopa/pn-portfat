@@ -8,8 +8,8 @@ import it.pagopa.pn.portfat.model.FileCreationWithContentRequest;
 import it.pagopa.pn.portfat.service.SafeStorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import java.util.Base64;
 import org.springframework.stereotype.Component;
-import org.springframework.util.Base64Utils;
 import reactor.core.publisher.Mono;
 import java.security.MessageDigest;
 import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.CREATION_FILE_SS_ERROR;
@@ -65,6 +65,6 @@ public class SafeStorageServiceImpl implements SafeStorageService {
     }
 
     private static String bytesToBase64(byte[] hash) {
-        return Base64Utils.encodeToString(hash);
+        return Base64.getEncoder().encodeToString(hash);
     }
 }

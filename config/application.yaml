@@ -29,10 +29,9 @@ aws:
   endpoint-url: http://localhost:4566
   dynamodbPrtFatTable: PortFatDownload
 
-cloud:
-  aws:
-    credentials.profile-name: ${PN_AWS_PROFILE_NAME:default}
-    region.static: us-east-1
-    sqs.endpoint: http://localhost:4566
-
-
+spring:
+  cloud:
+    aws:
+      credentials.profile.name: ${PN_AWS_PROFILE_NAME:default}
+      region.static: us-east-1
+      sqs.endpoint: ${aws.endpoint-url}
