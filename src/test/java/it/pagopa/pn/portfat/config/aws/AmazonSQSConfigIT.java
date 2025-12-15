@@ -7,8 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -27,7 +27,7 @@ class AmazonSQSConfigIT extends LocalStackTestConfig {
     @Value("${pn.portfat.sqsQueue}")
     private String sqsQueue;
 
-    @SpyBean
+    @MockitoSpyBean
     SQSConfig sqsConfig;
 
     @BeforeEach
