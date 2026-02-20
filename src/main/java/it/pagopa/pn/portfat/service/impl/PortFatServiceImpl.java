@@ -61,14 +61,11 @@ public class PortFatServiceImpl implements PortFatService {
     public Mono<Void> processZipFile(PortFatDownload portFatDownload) {
         log.info("processZipFile,  downloadUrl {}, DOWNLOAD_ID={}", portFatDownload.getDownloadUrl(), portFatDownload.getDownloadId());
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern(TIME_FORMAT));
-        Path outputPath = Path.of(portFatConfig.getBasePathZipFile(), timestamp);
-        Path outputFilesPath = Path.of(outputPath.toString(), PATH_FIELS);
+        String outputFilesPathStr = portFatConfig.getBasePathZipFile() + "_" + timestamp + "_" + PATH_FIELS;
         String fileName = UUID.randomUUID().toString();
         Path zipFilePath = createTmpFile(fileName, portFatConfig.getZipExtension());
-        return Mono.defer(() -> createDirectories(outputPath)
-                        .then(createDirectories(outputFilesPath))
-                        .then(webClient.downloadFileAsByteArray(portFatDownload.getDownloadUrl(), zipFilePath))
-                )
+        Path outputFilesPath = createDirectories(outputFilesPathStr);
+        return webClient.downloadFileAsByteArray(portFatDownload.getDownloadUrl(), zipFilePath)
                 .then(Mono.fromCallable(() -> computeSHA256(zipFilePath)))
                 .doOnNext(hash -> {
                     log.info("SHA-256 Hash: {}", hash);
@@ -84,8 +81,7 @@ public class PortFatServiceImpl implements PortFatService {
                     }
                 }))
                 .thenMany(processDirectory(outputFilesPath))
-                .then()
-                .doFinally(signal -> deleteFileOrDirectory(outputPath.toFile()));
+                .then();
     }
 
     public Path createTmpFile(String prefix, String suffix) {

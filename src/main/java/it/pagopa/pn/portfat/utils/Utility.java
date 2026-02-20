@@ -151,13 +151,15 @@ public class Utility {
     /**
      * Create Directory.
      *
-     * @param path path or file to delete
+     * @param prefix prefix or file to delete
      */
-    public static Mono<Void> createDirectories(Path path) {
-        return Mono.fromCallable(() -> {
-            Files.createDirectories(path);
-            log.info("Directory created: {}", path);
+    public static Path createDirectories(String prefix) {
+        try {
+            Path path = Files.createTempDirectory(prefix);
+            log.info("Directory created: {}", prefix);
             return path;
-        }).then();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
