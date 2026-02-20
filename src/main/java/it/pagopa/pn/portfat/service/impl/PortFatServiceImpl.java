@@ -61,7 +61,7 @@ public class PortFatServiceImpl implements PortFatService {
     public Mono<Void> processZipFile(PortFatDownload portFatDownload) {
         log.info("processZipFile,  downloadUrl {}, DOWNLOAD_ID={}", portFatDownload.getDownloadUrl(), portFatDownload.getDownloadId());
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern(TIME_FORMAT));
-        String outputFilesPathStr = portFatConfig.getBasePathZipFile() + "/" + timestamp + "/" + PATH_FIELS;
+        String outputFilesPathStr = portFatConfig.getBasePathZipFile() + "_" + timestamp + "_" + PATH_FIELS;
         String fileName = UUID.randomUUID().toString();
         Path zipFilePath = createTmpFile(fileName, portFatConfig.getZipExtension());
         Path outputFilesPath = createDirectories(outputFilesPathStr);
