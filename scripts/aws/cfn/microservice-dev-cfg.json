@@ -9,6 +9,6 @@
     "MinTasksNumber": "1",
     "MaxTasksNumber": "1",
     "InvoicingServiceIPCidrs": "",
-    "BlobStorageBaseUrl": "https://pn-datamonitoring-eu-south-1-830192246553.s3.eu-south-1.amazonaws.com"
+    "BlobStorageBaseUrl": "https://storage.uat.portalefatturazione.pagopa.it"
   }
 }
