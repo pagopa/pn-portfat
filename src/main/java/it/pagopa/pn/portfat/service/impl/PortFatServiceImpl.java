@@ -11,12 +11,10 @@ import it.pagopa.pn.portfat.service.PortFatService;
 import it.pagopa.pn.portfat.service.SafeStorageService;
 import lombok.AllArgsConstructor;
 import lombok.CustomLog;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -92,8 +90,7 @@ public class PortFatServiceImpl implements PortFatService {
 
     public Path createTmpFile(String prefix, String suffix) {
         try {
-            ClassPathResource classPathResource = new ClassPathResource("/");
-            return File.createTempFile("tmp_" + prefix, suffix, classPathResource.getFile()).toPath();
+            return Files.createTempFile("tmp_" + prefix, suffix);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
