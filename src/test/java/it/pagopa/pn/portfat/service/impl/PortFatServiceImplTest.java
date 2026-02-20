@@ -74,12 +74,10 @@ class PortFatServiceImplTest {
         portaleFatturazioneModel.setIdEnte("45GRTF");
         portaleFatturazioneModel.setPeriodoRiferimento("10-2025");
 
-        mockedUtility.when(() -> Utility.createDirectories(any(Path.class)))
-                .thenReturn(Mono.just(true).then());
+        mockedUtility.when(() -> Utility.createDirectories(anyString()))
+                .thenReturn(Path.of("test"));
         mockedUtility.when(() -> Utility.computeSHA256(any(Path.class)))
                 .thenReturn("98ISBVOIAHDBVIHBSVIHB");
-        mockedUtility.when(() -> Utility.deleteFileOrDirectory(any(File.class)))
-                .thenReturn(Mono.just(true).then());
         mockedUtility.when(() -> Utility.convertToObject(any(File.class), eq(PortaleFatturazioneModel.class)))
                 .thenReturn(portaleFatturazioneModel);
         mockedUtility.when(() -> Utility.jsonToByteArray(any()))
@@ -117,10 +115,8 @@ class PortFatServiceImplTest {
         // Arrange
         when(webClient.downloadFileAsByteArray(anyString(), any(Path.class)))
                 .thenReturn(Mono.error(new RuntimeException("Error downloading file")));
-        mockedUtility.when(() -> Utility.createDirectories(any(Path.class)))
-                .thenReturn(Mono.just(true).then());
-        mockedUtility.when(() -> Utility.deleteFileOrDirectory(any(File.class)))
-                .thenReturn(Mono.just(true).then());
+        mockedUtility.when(() -> Utility.createDirectories(anyString()))
+                .thenReturn(Path.of("test"));
 
         // Act - Assert
         StepVerifier.create(portFatService.processZipFile(portFatDownload))
@@ -133,10 +129,8 @@ class PortFatServiceImplTest {
     @Test
     void testProcessZipFile_Failure_SHA256Calculation() {
 
-        mockedUtility.when(() -> Utility.createDirectories(any(Path.class)))
-                .thenReturn(Mono.just(true).then());
-        mockedUtility.when(() -> Utility.deleteFileOrDirectory(any(File.class)))
-                .thenReturn(Mono.just(true).then());
+        mockedUtility.when(() -> Utility.createDirectories(anyString()))
+                .thenReturn(Path.of("test"));
 
         when(webClient.downloadFileAsByteArray(anyString(), any(Path.class)))
                 .thenReturn(Mono.empty());

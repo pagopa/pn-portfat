@@ -93,11 +93,10 @@ class UtilityTest {
 
     @Test
     void testCreateDirectories() throws IOException {
-        Path tempDir = Files.createTempDirectory("testDir");
-        Mono<Void> result = Utility.createDirectories(tempDir);
-        result.block();
-        assertTrue(Files.exists(tempDir));
-        Files.deleteIfExists(tempDir);
+        String tempDir = "testDir";
+        Path result = Utility.createDirectories(tempDir);
+        assertTrue(Files.exists(result));
+        Files.deleteIfExists(result);
     }
 
     @Test
