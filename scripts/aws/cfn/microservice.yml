@@ -230,6 +230,18 @@ Parameters:
     Default: ""
     Description: 'Safe storage base url'
 
+  SafeStorageToPortfatQueueName:
+    Type: String
+    Description: Name of the queue where safeStorage to portfat are stored
+
+  SafeStorageToPortfatQueueArn:
+    Type: String
+    Description: Arn of the queue where safeStorage to portfat are stored
+
+  SafeStorageToPortfatQueueURL:
+    Type: String
+    Description: safestorage-to-portfat queue URL
+
   SafeStorageCxId:
     Type: String
     Default: "pn-portfat-in"
@@ -297,7 +309,6 @@ Resources:
         ContainerEnvEntry4: !Sub 'PN_PORTFAT_AWS_SQS_NAME=${PortFatRequestActionsQueueName}'
         ContainerEnvEntry5: !Sub 'PN_PORTFAT_BLOB_STORAGE_BASE_URL=${BlobStorageBaseUrl}'
         ContainerEnvEntry6: !Sub 'PN_PORTFAT_PORTFAT_TABLE_NAME=${PortFatDownloadTableName}'
-
 
   PortFatMicroserviceTaskManagedPolicy:
     Type: AWS::IAM::ManagedPolicy
@@ -491,6 +502,81 @@ Resources:
     Properties:
       GroupDescription: !Sub "${EventFileReadyLambdaName}-sec-group"
       VpcId: !Ref VpcId
+
+
+  PnCoreEventBusToSafeStorageToPortfatQueue:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: Route SafeStorage Events to pn-portfat
+      RoleArn: !GetAtt "PnCoreEventBusToSafeStorageToPortfatQueueRole.Arn"
+      EventBusName: !Sub '${ProjectName}-CoreEventBus'
+      EventPattern:
+        detail-type: [ "SafeStorageOutcomeEvent" ]
+        detail:
+          documentType: [ 'PN_SERVICE_ORDER_ARCHIVE' ]
+      Targets:
+        - Arn: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:PnCoreEventBusMatchedEventLogger
+          Id: !Sub ${ProjectName}-Logger-SafeStore2Portfat
+          InputTransformer:
+            InputPathsMap:
+              "timestamp": "$.time"
+            InputTemplate: |
+              {
+                  "timestamp": <timestamp>,
+                  "ruleArn": <aws.events.rule-arn>,
+                  "ruleName": <aws.events.rule-name>,
+                  "ingestionTime": <aws.events.event.ingestion-time>,
+                  "originalEvent": <aws.events.event.json>
+              }
+        - Id: !Sub '${ProjectName}-SafeStore2Portfat'
+          Arn: !Ref SafeStorageToPortfatQueueArn
+          InputPath: $.detail
+          DeadLetterConfig:
+            Arn: !Sub arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:pn-CoreEventBus-DLQ
+
+  PnCoreEventBusToSafeStorageToPortfatQueueRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref "AWS::AccountId"
+        Version: "2012-10-17"
+      Policies:
+        - PolicyName: !Sub ${ProjectName}-safestorage-to-portfat-eventBusRuleQueuePolicy
+          PolicyDocument:
+            Statement:
+              - Sid: putEvents
+                Action:
+                  - sqs:ChangeMessageVisibility
+                  - sqs:GetQueueAttributes
+                  - sqs:GetQueueUrl
+                  - sqs:SendMessage
+                Effect: Allow
+                Resource:
+                  - !Ref SafeStorageToPortfatQueueArn
+
+  SafeStorageToPortfatQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref SafeStorageToPortfatQueueURL
+      PolicyDocument:
+        Statement:
+          - Sid: "SendEventsToDLQ"
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "events.amazonaws.com"
+            Action:
+              - "SQS:SendMessage"
+            Resource:
+              - !Ref SafeStorageToPortfatQueueArn
 
 Outputs:
   Version:
