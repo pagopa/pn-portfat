@@ -234,7 +234,7 @@ Parameters:
     Type: String
     Description: Name of the queue where safeStorage to portfat are stored
 
-  SafeStorageToPortfatQueueArn:
+  SafeStorageToPortfatQueueARN:
     Type: String
     Description: Arn of the queue where safeStorage to portfat are stored
 
@@ -329,7 +329,7 @@ Resources:
             Resource:
               - !Ref PortFatRequestActionsQueueARN
               - !Ref PortFatRequestActionsQueueDLQARN
-              - !Ref SafeStorageToPortfatQueueArn
+              - !Ref SafeStorageToPortfatQueueARN
           - Effect: Allow
             Action:
               - dynamodb:GetItem
