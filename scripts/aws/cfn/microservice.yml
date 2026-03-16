@@ -234,7 +234,7 @@ Parameters:
     Type: String
     Description: Name of the queue where safeStorage to portfat are stored
 
-  SafeStorageToPortfatQueueArn:
+  SafeStorageToPortfatQueueARN:
     Type: String
     Description: Arn of the queue where safeStorage to portfat are stored
 
@@ -529,10 +529,10 @@ Resources:
                   "originalEvent": <aws.events.event.json>
               }
         - Id: !Sub '${ProjectName}-SafeStore2Portfat'
-          Arn: !Ref SafeStorageToPortfatQueueArn
+          Arn: !Ref SafeStorageToPortfatQueueARN
           InputPath: $.detail
           DeadLetterConfig:
-            Arn: !Sub arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:pn-CoreEventBus-DLQ
+            Arn: !Sub arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:${ProjectName}-CoreEventBus-DLQ
 
   PnCoreEventBusToSafeStorageToPortfatQueueRole:
     Type: AWS::IAM::Role
@@ -559,7 +559,7 @@ Resources:
                   - sqs:SendMessage
                 Effect: Allow
                 Resource:
-                  - !Ref SafeStorageToPortfatQueueArn
+                  - !Ref SafeStorageToPortfatQueueARN
 
   SafeStorageToPortfatQueuePolicy:
     Type: AWS::SQS::QueuePolicy
@@ -568,15 +568,15 @@ Resources:
         - !Ref SafeStorageToPortfatQueueURL
       PolicyDocument:
         Statement:
-          - Sid: "SendEventsToDLQ"
+          - Sid: "SendEventsToSafeStorageToPortfatQueue"
             Effect: "Allow"
             Principal:
               Service:
                 - "events.amazonaws.com"
             Action:
-              - "SQS:SendMessage"
+              - sqs:SendMessage
             Resource:
-              - !Ref SafeStorageToPortfatQueueArn
+              - !Ref SafeStorageToPortfatQueueARN
 
 Outputs:
   Version:
