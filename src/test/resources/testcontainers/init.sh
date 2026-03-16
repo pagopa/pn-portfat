@@ -14,7 +14,7 @@ for qn in  $( echo $queues_fifo | tr " " "\n" ) ; do
 done
 
 echo "### CREATE QUEUES ###"
-queues="local-pn-safestorage-to-pn-portfat"
+queues="local-pn-safestorage-to-portfat"
 for qn in $(echo $queues | tr " " "\n"); do
   echo creating queue $qn ...
   aws --profile default --region us-east-1 --endpoint-url http://localstack:4566 \

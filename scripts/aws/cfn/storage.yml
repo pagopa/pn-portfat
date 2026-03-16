@@ -146,10 +146,10 @@ Outputs:
     Description: pn-portfat_request_actions age alarm ARN
     Value: !GetAtt PortFatRequestActionsQueue.Outputs.SqsAgeAlarmArn
 
-  SafeStorageToPortfatName:
+  SafeStorageToPortfatQueueName:
     Value: !GetAtt SafeStorageToPortfatQueue.Outputs.QueueName
 
-  SafeStorageToPortfatArn:
+  SafeStorageToPortfatQueueARN:
     Value: !GetAtt SafeStorageToPortfatQueue.Outputs.QueueARN
 
   SafeStorageToPortfatQueueURL:
