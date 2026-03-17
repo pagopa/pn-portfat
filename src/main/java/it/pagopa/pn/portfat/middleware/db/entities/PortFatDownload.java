@@ -20,6 +20,7 @@ public class PortFatDownload {
     public static final String CREATED_AT = "createdAt";
     public static final String UPDATED_AT = "updatedAt";
     public static final String ERROR_MESSAGE = "errorMessage";
+    public static final String ARCHIVE_FILE_KEY = "archiveFileKey";
 
     @Getter(onMethod=@__({@DynamoDbPartitionKey, @DynamoDbAttribute(DOWNLOAD_ID)}))
     private String downloadId;
@@ -45,4 +46,6 @@ public class PortFatDownload {
     @Getter(onMethod=@__({@DynamoDbAttribute(ERROR_MESSAGE)}))
     private String errorMessage;
 
+    @Getter(onMethod=@__({@DynamoDbAttribute(ARCHIVE_FILE_KEY)}))
+    private String archiveFileKey;
 }
