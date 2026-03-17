@@ -11,6 +11,7 @@ import it.pagopa.pn.portfat.service.PortFatService;
 import it.pagopa.pn.portfat.service.SafeStorageService;
 import lombok.AllArgsConstructor;
 import lombok.CustomLog;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -36,6 +37,8 @@ public class PortFatServiceImpl implements PortFatService {
 
     private static final String TIME_FORMAT = "yyyy-MM-dd_HH-mm-ss-SSS";
     private static final String PATH_FIELS = "port-fat-files";
+    static final String PN_SERVICE_ORDER = "PN_SERVICE_ORDER";
+    static final String PN_SERVICE_ORDER_ARCHIVE = "PN_SERVICE_ORDER_ARCHIVE";
 
     private final PortFatPropertiesConfig portFatConfig;
     private final HttpConnectorWebClient webClient;
@@ -77,7 +80,7 @@ public class PortFatServiceImpl implements PortFatService {
                         Mono.fromCallable(() -> Files.readAllBytes(zipFilePath))
                 )
                 .flatMap(fileBytes -> {
-                    FileCreationWithContentRequest request = mapper(fileBytes);
+                    FileCreationWithContentRequest request = mapper(fileBytes, MediaType.APPLICATION_OCTET_STREAM_VALUE, PN_SERVICE_ORDER_ARCHIVE);
                     return safeStorageService.createAndUploadContent(request);
                 })
                 .flatMap(archiveFileKey -> {
@@ -138,7 +141,7 @@ public class PortFatServiceImpl implements PortFatService {
                 .flatMap(portaleFatturazioneModel ->
                         Mono.just(jsonToByteArray(portaleFatturazioneModel))
                                 .flatMap(jsonToByteArray -> {
-                                    FileCreationWithContentRequest fileCreationRequest = mapper(jsonToByteArray);
+                                    FileCreationWithContentRequest fileCreationRequest = mapper(jsonToByteArray, MediaType.APPLICATION_JSON_VALUE, PN_SERVICE_ORDER);
                                     return safeStorageService.createAndUploadContent(fileCreationRequest);
                                 })
                 )

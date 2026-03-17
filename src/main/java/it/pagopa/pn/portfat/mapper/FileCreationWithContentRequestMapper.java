@@ -1,7 +1,6 @@
 package it.pagopa.pn.portfat.mapper;
 
 import it.pagopa.pn.portfat.model.FileCreationWithContentRequest;
-import org.springframework.http.MediaType;
 
 public class FileCreationWithContentRequestMapper {
 
@@ -9,15 +8,14 @@ public class FileCreationWithContentRequestMapper {
         throw new IllegalCallerException();
     }
 
-    static final String PN_SERVICE_ORDER = "PN_SERVICE_ORDER";
     static final String SAVED_STATUS = "SAVED";
 
-    public static FileCreationWithContentRequest mapper(byte[] bytesPdf) {
+    public static FileCreationWithContentRequest mapper(byte[] byteArray, String contentType, String documentType) {
         FileCreationWithContentRequest request = new FileCreationWithContentRequest();
-        request.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        request.setDocumentType(PN_SERVICE_ORDER);
+        request.setContentType(contentType);
+        request.setDocumentType(documentType);
         request.setStatus(SAVED_STATUS);
-        request.setContent(bytesPdf);
+        request.setContent(byteArray);
         return request;
     }
 
