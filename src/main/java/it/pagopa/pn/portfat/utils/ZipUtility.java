@@ -39,11 +39,11 @@ public class ZipUtility {
      * @return un Mono vuoto che rappresenta l'operazione asincrona di estrazione
      * @throws PnGenericException se si verifica un errore durante l'estrazione
      */
-    public static Mono<Void> unzip(String zipFilePath, String destDirectory) {
+    public static Mono<Boolean> unzip(String zipFilePath, String destDirectory) {
         return Mono.fromCallable(() -> {
             prepareDestinationDirectory(destDirectory);
             return processZipFile(zipFilePath, destDirectory);
-        }).then();
+        });
     }
 
     /**
@@ -67,16 +67,15 @@ public class ZipUtility {
      * @return un valore void dopo aver completato l'estrazione
      * @throws PnGenericException se si verifica un errore durante il processo del file ZIP
      */
-    private static Void processZipFile(String zipFilePath, String destDirectory) {
-        try (ZipFile zipFile = new ZipFile(new File(zipFilePath))) {
-            boolean foundJson = extractJsonFiles(zipFile, destDirectory);
-            if (!foundJson) {
+    private static boolean processZipFile(String zipFilePath, String destDirectory) {
+        try (ZipFile zipFile = new ZipFile(zipFilePath)) {
+            if (!extractJsonFiles(zipFile, destDirectory)) {
                 throw new PnGenericException(JSONS_NOT_FOND_IN_ZIP, JSONS_NOT_FOND_IN_ZIP.getMessage());
             }
+            return true;
         } catch (IOException e) {
             throw new PnGenericException(ZIP_ERROR, "Error processing ZIP file: " + e.getMessage());
         }
-        return null;
     }
 
     /**

@@ -84,7 +84,6 @@ class QueueListenerTest extends BaseTest.WithLocalStack {
         // Mock di createAndSaveNewDownload() per creare un nuovo PortFatDownload
         when(portFatDownloadDAO.createPortFatDownload(any())).thenReturn(Mono.just(portFatDownload));
         when(portFatDownload.getStatus()).thenReturn(DownloadStatus.COMPLETED);
-        when(portFatDownloadDAO.updatePortFatDownload(any())).thenReturn(Mono.just(portFatDownload));
         // Mock di portFatService.processZipFile() per simulare il processo del file
         when(portFatService.processZipFile(any())).thenReturn(Mono.empty());
 
@@ -95,7 +94,7 @@ class QueueListenerTest extends BaseTest.WithLocalStack {
         // Verifica che il metodo processZipFile sia stato chiamato
         verify(portFatService, times(1)).processZipFile(any());
         // Verifica che lo stato sia stato aggiornato a COMPLETED
-        verify(portFatDownloadDAO, times(1)).updatePortFatDownload(portFatDownload);
+        verify(portFatDownloadDAO, times(0)).updatePortFatDownload(portFatDownload);
     }
 
     @Test

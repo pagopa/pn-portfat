@@ -51,6 +51,18 @@ Resources:
         QueueHasAlarm: "true"
         ContentBasedDeduplication: "true"
 
+  SafeStorageToPortfatQueue:
+    Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/sqs-queue.yaml"
+      Parameters:
+        QueueName: !Sub '${ProjectName}-safestorage-to-portfat'
+        AlarmSNSTopicName: !Ref AlarmSNSTopicName
+        VisibilityTimeout: 60
+        DelaySeconds: 1
+
    # Dynamo table
   PortFatDownloadTable:
     Type: AWS::DynamoDB::Table
@@ -61,9 +73,18 @@ Resources:
       AttributeDefinitions:
         - AttributeName: "downloadId"
           AttributeType: "S"
+        - AttributeName: "archiveFileKey"
+          AttributeType: "S"
       KeySchema:
         - AttributeName: "downloadId"
           KeyType: "HASH"
+      GlobalSecondaryIndexes:
+        - IndexName: "archiveFileKey-index"
+          KeySchema:
+            - AttributeName: "archiveFileKey"
+              KeyType: "HASH"
+          Projection:
+            ProjectionType: "ALL"
       BillingMode: "PAY_PER_REQUEST"
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
@@ -133,6 +154,15 @@ Outputs:
   PortFatRequestActionsQueueAgeAlarmARN:
     Description: pn-portfat_request_actions age alarm ARN
     Value: !GetAtt PortFatRequestActionsQueue.Outputs.SqsAgeAlarmArn
+
+  SafeStorageToPortfatQueueName:
+    Value: !GetAtt SafeStorageToPortfatQueue.Outputs.QueueName
+
+  SafeStorageToPortfatQueueARN:
+    Value: !GetAtt SafeStorageToPortfatQueue.Outputs.QueueARN
+
+  SafeStorageToPortfatQueueURL:
+    Value: !GetAtt SafeStorageToPortfatQueue.Outputs.QueueURL
 
   # Queue DLQ
   PortFatRequestActionsQueueDLQName:

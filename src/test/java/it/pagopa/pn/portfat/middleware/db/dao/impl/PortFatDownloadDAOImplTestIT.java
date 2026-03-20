@@ -4,12 +4,13 @@ import it.pagopa.pn.portfat.config.BaseTest;
 import it.pagopa.pn.portfat.middleware.db.dao.PortFatDownloadDAO;
 import it.pagopa.pn.portfat.middleware.db.entities.PortFatDownload;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import reactor.test.StepVerifier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
+@SpringBootTest
 @ActiveProfiles("test")
 class PortFatDownloadDAOImplTestIT extends BaseTest.WithLocalStack {
 
@@ -59,6 +60,28 @@ class PortFatDownloadDAOImplTestIT extends BaseTest.WithLocalStack {
         // Recupera e verifica l'aggiornamento
         StepVerifier.create(portFatDownloadDAO.findByDownloadId("update-test-id"))
                 .assertNext(found -> assertEquals("v2.2", found.getFileVersion()))
+                .verifyComplete();
+    }
+
+    @Test
+    void createAndFindByArchiveFileKey() {
+        // Crea un oggetto PortFatDownload di test
+        PortFatDownload download = new PortFatDownload();
+        download.setDownloadId("test-download-id");
+        download.setFileVersion("v1.1");
+        download.setArchiveFileKey("archiveFileKey");
+
+        // Salva nel database
+        StepVerifier.create(portFatDownloadDAO.createPortFatDownload(download))
+                .expectNext(download)
+                .verifyComplete();
+
+        // Recupera l'elemento e verifica che sia corretto
+        StepVerifier.create(portFatDownloadDAO.findByArchiveFileKey("archiveFileKey"))
+                .assertNext(found -> {
+                    assertEquals("archiveFileKey", found.getArchiveFileKey());
+                    assertEquals("v1.1", found.getFileVersion());
+                })
                 .verifyComplete();
     }
 

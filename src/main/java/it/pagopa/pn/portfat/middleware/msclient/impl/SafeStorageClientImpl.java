@@ -2,13 +2,19 @@ package it.pagopa.pn.portfat.middleware.msclient.impl;
 
 import it.pagopa.pn.commons.log.PnLogger;
 import it.pagopa.pn.portfat.config.PortFatPropertiesConfig;
+import it.pagopa.pn.portfat.exception.ExceptionTypeEnum;
+import it.pagopa.pn.portfat.exception.PnGenericException;
+import it.pagopa.pn.portfat.generated.openapi.msclient.pnsafestorage.v1.api.FileDownloadApi;
 import it.pagopa.pn.portfat.generated.openapi.msclient.pnsafestorage.v1.api.FileUploadApi;
 import it.pagopa.pn.portfat.generated.openapi.msclient.pnsafestorage.v1.dto.FileCreationResponseDto;
+import it.pagopa.pn.portfat.generated.openapi.msclient.pnsafestorage.v1.dto.FileDownloadResponseDto;
 import it.pagopa.pn.portfat.middleware.msclient.SafeStorageClient;
 import it.pagopa.pn.portfat.model.FileCreationWithContentRequest;
 import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
 /**
@@ -21,6 +27,7 @@ import reactor.core.publisher.Mono;
 public class SafeStorageClientImpl implements SafeStorageClient {
 
     private final FileUploadApi fileUploadApi;
+    private final FileDownloadApi fileDownloadApi;
     private final PortFatPropertiesConfig portFatConfig;
 
     /**
@@ -35,6 +42,19 @@ public class SafeStorageClientImpl implements SafeStorageClient {
         final String PN_SAFE_STORAGE_DESCRIPTION = "Safe Storage createFile";
         log.logInvokingExternalService(PnLogger.EXTERNAL_SERVICES.PN_SAFE_STORAGE, PN_SAFE_STORAGE_DESCRIPTION);
         return fileUploadApi.createFile(portFatConfig.getSafeStorageCxId(), sha256, "SHA-256", fileCreationRequest);
+    }
+
+    @Override
+    public Mono<FileDownloadResponseDto> getFile(String fileKey) {
+        log.debug("Req params : {}", fileKey);
+        return fileDownloadApi.getFile(fileKey, this.portFatConfig.getSafeStorageCxId(), false, false)
+                .onErrorResume(WebClientResponseException.class, ex -> {
+                    log.error(ex.getResponseBodyAsString());
+                    if (ex.getStatusCode() == HttpStatus.NOT_FOUND) {
+                        return Mono.error(new PnGenericException(ExceptionTypeEnum.ZIP_ERROR, "failed to get file"));
+                    }
+                    return Mono.error(new PnGenericException(ExceptionTypeEnum.ZIP_ERROR, "failed to get file"));
+                });
     }
 
 }

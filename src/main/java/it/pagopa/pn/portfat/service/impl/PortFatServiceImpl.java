@@ -11,6 +11,7 @@ import it.pagopa.pn.portfat.service.PortFatService;
 import it.pagopa.pn.portfat.service.SafeStorageService;
 import lombok.AllArgsConstructor;
 import lombok.CustomLog;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -18,14 +19,11 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.LIST_FILES_ERROR;
 import static it.pagopa.pn.portfat.mapper.FileCreationWithContentRequestMapper.mapper;
 import static it.pagopa.pn.portfat.utils.Utility.*;
-import static it.pagopa.pn.portfat.utils.ZipUtility.unzip;
 
 /**
  * Implementazione del servizio per la gestione dei file Portale Fatturazione.
@@ -37,8 +35,8 @@ import static it.pagopa.pn.portfat.utils.ZipUtility.unzip;
 @AllArgsConstructor
 public class PortFatServiceImpl implements PortFatService {
 
-    private static final String TIME_FORMAT = "yyyy-MM-dd_HH-mm-ss-SSS";
-    private static final String PATH_FIELS = "port-fat-files";
+    static final String PN_SERVICE_ORDER = "PN_SERVICE_ORDER";
+    static final String PN_SERVICE_ORDER_ARCHIVE = "PN_SERVICE_ORDER_ARCHIVE";
 
     private final PortFatPropertiesConfig portFatConfig;
     private final HttpConnectorWebClient webClient;
@@ -48,31 +46,45 @@ public class PortFatServiceImpl implements PortFatService {
     // TODO ORIGINAL_DATA_UPDATE in FileCreationWithContentRequestMapper
 
     /**
-     * Crea le directory
-     * Scarica il file zip da portale fatturazione
-     * Crea un SHA-256 del file ZIP, aggiorno a db l'entità con lo sha creato
-     * Estrae e processa i file contenuti nello ZIP
-     * La directory viene eliminata indifferentemente se il processo si terminato con successo o sia andato in errore.
+     * Scarica un file ZIP da Portale Fatturazione e lo carica su Safe Storage.
      *
-     * @param portFatDownload l'oggetto contenente le informazioni sul file da scaricare
+     * <p>Flusso operativo:
+     * <ul>
+     *   <li>Scarica il file ZIP in una directory temporanea</li>
+     *   <li>Calcola l'hash SHA-256 del file e lo imposta sull'entità</li>
+     *   <li>Legge il contenuto del file come array di byte</li>
+     *   <li>Crea la richiesta di upload e invia il file al Safe Storage</li>
+     *   <li>Aggiorna l'entità con la chiave del file archiviato</li>
+     *   <li>Elimina il file temporaneo al termine del processo</li>
+     * </ul>
+     *
+     * <p>Il file temporaneo viene eliminato al termine del flusso.
+     *
+     * @param portFatDownload oggetto contenente le informazioni sul file da scaricare
      * @return un Mono che completa l'elaborazione del file ZIP
      */
     @Override
     public Mono<Void> processZipFile(PortFatDownload portFatDownload) {
         log.info("processZipFile,  downloadUrl {}, DOWNLOAD_ID={}", portFatDownload.getDownloadUrl(), portFatDownload.getDownloadId());
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern(TIME_FORMAT));
-        String outputFilesPathStr = portFatConfig.getBasePathZipFile() + "_" + timestamp + "_" + PATH_FIELS;
         String fileName = UUID.randomUUID().toString();
         Path zipFilePath = createTmpFile(fileName, portFatConfig.getZipExtension());
-        Path outputFilesPath = createDirectories(outputFilesPathStr);
         return webClient.downloadFileAsByteArray(portFatDownload.getDownloadUrl(), zipFilePath)
                 .then(Mono.fromCallable(() -> computeSHA256(zipFilePath)))
                 .doOnNext(hash -> {
                     log.info("SHA-256 Hash: {}", hash);
                     portFatDownload.setSha256(hash);
                 })
-                .flatMap(hash -> portFatDownloadDAO.updatePortFatDownload(portFatDownload))
-                .then(unzip(zipFilePath.toString(), outputFilesPath.toString()))
+                .flatMap(ignored ->
+                        Mono.fromCallable(() -> Files.readAllBytes(zipFilePath))
+                )
+                .flatMap(fileBytes -> {
+                    FileCreationWithContentRequest request = mapper(fileBytes, MediaType.APPLICATION_OCTET_STREAM_VALUE, PN_SERVICE_ORDER_ARCHIVE);
+                    return safeStorageService.createAndUploadContent(request);
+                })
+                .flatMap(archiveFileKey -> {
+                    portFatDownload.setArchiveFileKey(archiveFileKey);
+                    return portFatDownloadDAO.updatePortFatDownload(portFatDownload);
+                })
                 .then(Mono.fromRunnable(() -> {
                     try {
                         Files.deleteIfExists(zipFilePath);
@@ -80,7 +92,6 @@ public class PortFatServiceImpl implements PortFatService {
                         log.error("Errore nell'eliminazione dello ZIP: {}", zipFilePath, e);
                     }
                 }))
-                .thenMany(processDirectory(outputFilesPath))
                 .then();
     }
 
@@ -128,7 +139,7 @@ public class PortFatServiceImpl implements PortFatService {
                 .flatMap(portaleFatturazioneModel ->
                         Mono.just(jsonToByteArray(portaleFatturazioneModel))
                                 .flatMap(jsonToByteArray -> {
-                                    FileCreationWithContentRequest fileCreationRequest = mapper(jsonToByteArray, portaleFatturazioneModel);
+                                    FileCreationWithContentRequest fileCreationRequest = mapper(jsonToByteArray, MediaType.APPLICATION_JSON_VALUE, PN_SERVICE_ORDER);
                                     return safeStorageService.createAndUploadContent(fileCreationRequest);
                                 })
                 )

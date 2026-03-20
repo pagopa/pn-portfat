@@ -6,4 +6,5 @@ import reactor.core.publisher.Mono;
 public interface SafeStorageService {
 
     Mono<String> createAndUploadContent(FileCreationWithContentRequest fileCreationRequest);
+    Mono<String> callSafeStorageGetFile(String fileKey);
 }

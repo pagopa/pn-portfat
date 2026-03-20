@@ -4,6 +4,7 @@ import lombok.*;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecondaryPartitionKey;
 
 @Data
 @Builder
@@ -20,6 +21,8 @@ public class PortFatDownload {
     public static final String CREATED_AT = "createdAt";
     public static final String UPDATED_AT = "updatedAt";
     public static final String ERROR_MESSAGE = "errorMessage";
+    public static final String ARCHIVE_FILE_KEY = "archiveFileKey";
+    public static final String ARCHIVE_FILE_INDEX = "archiveFileKey-index";
 
     @Getter(onMethod=@__({@DynamoDbPartitionKey, @DynamoDbAttribute(DOWNLOAD_ID)}))
     private String downloadId;
@@ -45,4 +48,9 @@ public class PortFatDownload {
     @Getter(onMethod=@__({@DynamoDbAttribute(ERROR_MESSAGE)}))
     private String errorMessage;
 
+    @Getter(onMethod=@__({
+            @DynamoDbSecondaryPartitionKey(indexNames = ARCHIVE_FILE_INDEX),
+            @DynamoDbAttribute(ARCHIVE_FILE_KEY)
+    }))
+    private String archiveFileKey;
 }
