@@ -50,10 +50,13 @@ public class SafeStorageClientImpl implements SafeStorageClient {
         return fileDownloadApi.getFile(fileKey, this.portFatConfig.getSafeStorageCxId(), false, false)
                 .onErrorResume(WebClientResponseException.class, ex -> {
                     log.error(ex.getResponseBodyAsString());
+                    String errorMessage;
                     if (ex.getStatusCode() == HttpStatus.NOT_FOUND) {
-                        return Mono.error(new PnGenericException(ExceptionTypeEnum.ZIP_ERROR, "failed to get file"));
+                        errorMessage = String.format("File not found in Safe Storage. fileKey=%s, status=%s", fileKey, ex.getStatusCode());
+                    } else {
+                        errorMessage = String.format("Failed to get file from Safe Storage. fileKey=%s, status=%s", fileKey, ex.getStatusCode());
                     }
-                    return Mono.error(new PnGenericException(ExceptionTypeEnum.ZIP_ERROR, "failed to get file"));
+                    return Mono.error(new PnGenericException(ExceptionTypeEnum.ZIP_ERROR, errorMessage));
                 });
     }
 

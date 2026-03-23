@@ -79,7 +79,9 @@ public class SafeStorageServiceImpl implements SafeStorageService {
                     if(Objects.nonNull(fileCreationResponseDto.getDownload()) && Objects.nonNull(fileCreationResponseDto.getDownload().getUrl())){
                         return Mono.just(fileCreationResponseDto.getDownload().getUrl());
                     }
-                    return Mono.error(new PnGenericException(ExceptionTypeEnum.DOWNLOAD_ZIP_ERROR, ""));
+                    String missingField = Objects.isNull(fileCreationResponseDto.getDownload()) ? "download" : "download.url";
+                    String errorMessage = "Missing " + missingField + " for Safe Storage fileKey=" + finalFileKey;
+                    return Mono.error(new PnGenericException(ExceptionTypeEnum.DOWNLOAD_ZIP_ERROR, errorMessage));
                 });
     }
 }

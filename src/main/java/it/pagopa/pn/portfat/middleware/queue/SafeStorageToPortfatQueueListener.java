@@ -44,7 +44,7 @@ public class SafeStorageToPortfatQueueListener {
     private final HttpConnectorWebClient webClient;
 
     private static final String TIME_FORMAT = "yyyy-MM-dd_HH-mm-ss-SSS";
-    private static final String PATH_FIELS = "port-fat-files";
+    private static final String PATH_FILES = "port-fat-files";
     private static final String MESSAGE_GROUP_ID = "MessageGroupId";
 
     @SqsListener(value = "${pn.portfat.safeStorageQueue}", acknowledgementMode = SqsListenerAcknowledgementMode.ON_SUCCESS)
@@ -54,7 +54,7 @@ public class SafeStorageToPortfatQueueListener {
         setMDCContext(headers);
 
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern(TIME_FORMAT));
-        String outputFilesPathStr = portFatConfig.getBasePathZipFile() + "_" + timestamp + "_" + PATH_FIELS;
+        String outputFilesPathStr = portFatConfig.getBasePathZipFile() + "_" + timestamp + "_" + PATH_FILES;
         Path outputFilesPath = createDirectories(outputFilesPathStr);
         String fileName = UUID.randomUUID().toString();
         Path zipFilePath = portFatService.createTmpFile(fileName, portFatConfig.getZipExtension());
@@ -66,7 +66,9 @@ public class SafeStorageToPortfatQueueListener {
                     return Mono.error(new PnPortfatDownloadNotFoundException(PORTFAT_DOWNLOAD_NOT_FOUND, String.format(PORTFAT_DOWNLOAD_NOT_FOUND.getMessage(), fileKey)));
                 }))
                 .flatMap(portFatDownload -> retrieveAndProcessFile(fileKey, zipFilePath, outputFilesPath)
-                        .then(updateStatusToCompleted(portFatDownload)))
+                        .thenReturn(portFatDownload)
+                )
+                .flatMap(this::updateStatusToCompleted)
                 .onErrorResume(e -> {
                     log.error("Error occurred during processing", e);
                     return handleException(e, fileKey);
@@ -77,7 +79,7 @@ public class SafeStorageToPortfatQueueListener {
     }
 
     private Mono<PortFatDownload> handleException(Throwable e, String fileKey) {
-        if(e instanceof PnPortfatDownloadNotFoundException){
+        if (e instanceof PnPortfatDownloadNotFoundException) {
             return Mono.error(e);
         }
         return portFatDownloadDAO.findByArchiveFileKey(fileKey)

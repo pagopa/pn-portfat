@@ -85,13 +85,14 @@ public class PortFatServiceImpl implements PortFatService {
                     portFatDownload.setArchiveFileKey(archiveFileKey);
                     return portFatDownloadDAO.updatePortFatDownload(portFatDownload);
                 })
-                .then(Mono.fromRunnable(() -> {
+                .doFinally(signalType -> {
                     try {
                         Files.deleteIfExists(zipFilePath);
+                        log.debug("Temp ZIP deleted: {}", zipFilePath);
                     } catch (IOException e) {
                         log.error("Errore nell'eliminazione dello ZIP: {}", zipFilePath, e);
                     }
-                }))
+                })
                 .then();
     }
 
