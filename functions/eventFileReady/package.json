@@ -19,8 +19,8 @@
     "sonar": "node sonarqube-scanner.js -Dsonar.login=${SONAR_TOKEN}"
   },
   "dependencies": {
-    "@aws-sdk/client-sqs": "^3.28.0",
-    "@aws-sdk/credential-providers": "^3.28.0",
+    "@aws-sdk/client-sqs": "3.995.0",
+    "@aws-sdk/credential-providers": "3.995.0",
     "zod": "^3.21.4",
     "config": "^3.3.11",
     "lambda-tester": "^4.0.1",
