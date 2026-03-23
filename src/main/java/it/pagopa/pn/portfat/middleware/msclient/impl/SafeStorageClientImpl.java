@@ -56,7 +56,7 @@ public class SafeStorageClientImpl implements SafeStorageClient {
                     } else {
                         errorMessage = String.format("Failed to get file from Safe Storage. fileKey=%s, status=%s", fileKey, ex.getStatusCode());
                     }
-                    return Mono.error(new PnGenericException(ExceptionTypeEnum.ZIP_ERROR, errorMessage));
+                    return Mono.error(new PnGenericException(ExceptionTypeEnum.SAFESTORAGE_GET_FILE_ERROR, errorMessage));
                 });
     }
 

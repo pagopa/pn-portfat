@@ -20,6 +20,8 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -72,6 +74,16 @@ public class SafeStorageToPortfatQueueListener {
                 .onErrorResume(e -> {
                     log.error("Error occurred during processing", e);
                     return handleException(e, fileKey);
+                })
+                .doFinally(signalType -> {
+                    try {
+                        Files.deleteIfExists(zipFilePath);
+                        log.debug("Temp ZIP deleted: {}", zipFilePath);
+                        Files.deleteIfExists(outputFilesPath);
+                        log.debug("Temp directory deleted: {}", outputFilesPath);
+                    } catch (IOException e) {
+                        log.error("Errore nell'eliminazione dello ZIP: {}", zipFilePath, e);
+                    }
                 })
                 .then();
 

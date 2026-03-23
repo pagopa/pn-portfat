@@ -18,8 +18,6 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient;
 @Repository
 public class PortFatDownloadDAOImpl extends BaseDAO<PortFatDownload> implements PortFatDownloadDAO {
 
-    private static final String ARCHIVE_FILEKEY_INDEX = "archiveFileKey-index";
-
     /**
      * Costruttore che inizializza il DAO con il client DynamoDB e la configurazione AWS.
      *
@@ -46,7 +44,7 @@ public class PortFatDownloadDAOImpl extends BaseDAO<PortFatDownload> implements 
 
     @Override
     public Mono<PortFatDownload> findByArchiveFileKey(String archiveFileKey) {
-        return this.getBySecondaryIndex(ARCHIVE_FILEKEY_INDEX, archiveFileKey, null)
+        return this.getBySecondaryIndex(PortFatDownload.ARCHIVE_FILE_INDEX, archiveFileKey, null)
                 .next();
     }
 

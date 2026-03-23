@@ -4,13 +4,13 @@ import it.pagopa.pn.portfat.config.BaseTest;
 import it.pagopa.pn.portfat.middleware.db.dao.PortFatDownloadDAO;
 import it.pagopa.pn.portfat.middleware.db.entities.PortFatDownload;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import reactor.test.StepVerifier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-@SpringBootTest
+
+
 @ActiveProfiles("test")
 class PortFatDownloadDAOImplTestIT extends BaseTest.WithLocalStack {
 
@@ -67,7 +67,7 @@ class PortFatDownloadDAOImplTestIT extends BaseTest.WithLocalStack {
     void createAndFindByArchiveFileKey() {
         // Crea un oggetto PortFatDownload di test
         PortFatDownload download = new PortFatDownload();
-        download.setDownloadId("test-download-id");
+        download.setDownloadId("archive-test-download-id");
         download.setFileVersion("v1.1");
         download.setArchiveFileKey("archiveFileKey");
 

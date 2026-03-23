@@ -72,6 +72,7 @@ public class SafeStorageServiceImpl implements SafeStorageService {
         return Base64.getEncoder().encodeToString(hash);
     }
 
+    @Override
     public Mono<String> callSafeStorageGetFile(String fileKey) {
         String finalFileKey = fileKey.replace(SAFE_STORAGE_PREFIX, "");
         return safeStorageClient.getFile(finalFileKey)
