@@ -48,6 +48,7 @@ class ZipUtilityTest {
 
         // Act & Assert
         StepVerifier.create(ZipUtility.unzip(zipFile.toString(), tempDir.toString()))
+                .expectNext(true)
                 .verifyComplete();
 
         // Verifica che il file JSON sia stato estratto

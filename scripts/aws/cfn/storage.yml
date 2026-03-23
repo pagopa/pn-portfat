@@ -73,9 +73,18 @@ Resources:
       AttributeDefinitions:
         - AttributeName: "downloadId"
           AttributeType: "S"
+        - AttributeName: "archiveFileKey"
+          AttributeType: "S"
       KeySchema:
         - AttributeName: "downloadId"
           KeyType: "HASH"
+      GlobalSecondaryIndexes:
+        - IndexName: "archiveFileKey-index"
+          KeySchema:
+            - AttributeName: "archiveFileKey"
+              KeyType: "HASH"
+          Projection:
+            ProjectionType: "ALL"
       BillingMode: "PAY_PER_REQUEST"
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true

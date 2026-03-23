@@ -28,9 +28,24 @@ aws --profile default --region us-east-1 --endpoint-url=http://localstack:4566 \
     --table-name PortFatDownload \
     --attribute-definitions \
         AttributeName=downloadId,AttributeType=S \
+        AttributeName=archiveFileKey,AttributeType=S \
     --key-schema \
         AttributeName=downloadId,KeyType=HASH \
+    --global-secondary-indexes '[
+        {
+            "IndexName": "archiveFileKey-index",
+            "KeySchema": [
+                {"AttributeName": "archiveFileKey", "KeyType": "HASH"}
+            ],
+            "Projection": {
+                "ProjectionType": "ALL"
+            },
+            "ProvisionedThroughput": {
+                "ReadCapacityUnits": 10,
+                "WriteCapacityUnits": 5
+            }
+        }
+    ]' \
     --provisioned-throughput \
         ReadCapacityUnits=10,WriteCapacityUnits=5
-
 echo "Initialization terminated"

@@ -42,6 +42,12 @@ public class PortFatDownloadDAOImpl extends BaseDAO<PortFatDownload> implements 
         return Mono.fromFuture(this.get(downloadId, null).toFuture());
     }
 
+    @Override
+    public Mono<PortFatDownload> findByArchiveFileKey(String archiveFileKey) {
+        return this.getBySecondaryIndex(PortFatDownload.ARCHIVE_FILE_INDEX, archiveFileKey, null)
+                .next();
+    }
+
     /**
      * Salva una nuova istanza di PortFatDownload nel database.
      *
