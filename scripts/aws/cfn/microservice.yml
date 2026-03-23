@@ -309,6 +309,7 @@ Resources:
         ContainerEnvEntry4: !Sub 'PN_PORTFAT_AWS_SQS_NAME=${PortFatRequestActionsQueueName}'
         ContainerEnvEntry5: !Sub 'PN_PORTFAT_BLOB_STORAGE_BASE_URL=${BlobStorageBaseUrl}'
         ContainerEnvEntry6: !Sub 'PN_PORTFAT_PORTFAT_TABLE_NAME=${PortFatDownloadTableName}'
+        ContainerEnvEntry7: !Sub 'PN_PORTFAT_SQS_SAFESTORAGETOPORTFATQUEUENAME=${SafeStorageToPortfatQueueName}'
 
   PortFatMicroserviceTaskManagedPolicy:
     Type: AWS::IAM::ManagedPolicy
@@ -327,6 +328,7 @@ Resources:
             Resource:
               - !Ref PortFatRequestActionsQueueARN
               - !Ref PortFatRequestActionsQueueDLQARN
+              - !Ref SafeStorageToPortfatQueueARN
           - Effect: Allow
             Action:
               - dynamodb:GetItem

@@ -35,8 +35,6 @@ import static it.pagopa.pn.portfat.utils.Utility.*;
 @AllArgsConstructor
 public class PortFatServiceImpl implements PortFatService {
 
-    private static final String TIME_FORMAT = "yyyy-MM-dd_HH-mm-ss-SSS";
-    private static final String PATH_FIELS = "port-fat-files";
     static final String PN_SERVICE_ORDER = "PN_SERVICE_ORDER";
     static final String PN_SERVICE_ORDER_ARCHIVE = "PN_SERVICE_ORDER_ARCHIVE";
 
@@ -87,13 +85,14 @@ public class PortFatServiceImpl implements PortFatService {
                     portFatDownload.setArchiveFileKey(archiveFileKey);
                     return portFatDownloadDAO.updatePortFatDownload(portFatDownload);
                 })
-                .then(Mono.fromRunnable(() -> {
+                .doFinally(signalType -> {
                     try {
                         Files.deleteIfExists(zipFilePath);
+                        log.debug("Temp ZIP deleted: {}", zipFilePath);
                     } catch (IOException e) {
                         log.error("Errore nell'eliminazione dello ZIP: {}", zipFilePath, e);
                     }
-                }))
+                })
                 .then();
     }
 

@@ -2,8 +2,10 @@ package it.pagopa.pn.portfat.service.impl;
 
 import it.pagopa.pn.portfat.config.HttpConnectorWebClient;
 import it.pagopa.pn.portfat.config.PortFatPropertiesConfig;
+import it.pagopa.pn.portfat.exception.PnGenericException;
 import it.pagopa.pn.portfat.middleware.db.dao.PortFatDownloadDAO;
 import it.pagopa.pn.portfat.middleware.db.entities.PortFatDownload;
+import it.pagopa.pn.portfat.model.PortaleFatturazioneModel;
 import it.pagopa.pn.portfat.service.SafeStorageService;
 import it.pagopa.pn.portfat.utils.Utility;
 import org.junit.jupiter.api.AfterEach;
@@ -18,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -56,7 +59,6 @@ class PortFatServiceImplTest {
         portFatDownload = new PortFatDownload();
         String downloadUrl = "http://example.com/test.zip";
         portFatDownload.setDownloadUrl(downloadUrl);
-        when(portFatConfig.getZipExtension()).thenReturn(".zip");
         mockedUtility = Mockito.mockStatic(Utility.class);
     }
 
@@ -69,6 +71,7 @@ class PortFatServiceImplTest {
     void testProcessZipFile_Success() {
         // Arrange
         ClassLoader classLoader = getClass().getClassLoader();
+        when(portFatConfig.getZipExtension()).thenReturn(".zip");
         mockedUtility.when(() -> Utility.computeSHA256(any(Path.class)))
                 .thenReturn("98ISBVOIAHDBVIHBSVIHB");
 
@@ -102,6 +105,7 @@ class PortFatServiceImplTest {
     @Test
     void testProcessZipFile_Failure_DownloadFile() {
         // Arrange
+        when(portFatConfig.getZipExtension()).thenReturn(".zip");
         when(webClient.downloadFileAsByteArray(anyString(), any(Path.class)))
                 .thenReturn(Mono.error(new RuntimeException("Error downloading file")));
 
@@ -119,6 +123,7 @@ class PortFatServiceImplTest {
 
     @Test
     void testProcessZipFile_Failure_SHA256Calculation() {
+        when(portFatConfig.getZipExtension()).thenReturn(".zip");
 
         when(webClient.downloadFileAsByteArray(anyString(), any(Path.class)))
                 .thenReturn(Mono.empty());
@@ -137,4 +142,49 @@ class PortFatServiceImplTest {
         verify(portFatDownloadDAO, never()).updatePortFatDownload(any());
     }
 
+
+    @Test
+    void testProcessDirectorySuccess() throws Exception {
+        Path tempDir = Files.createTempDirectory("test-dir");
+        Files.createFile(tempDir.resolve("file.json"));
+
+        mockedUtility.when(() -> Utility.convertToObject(any(File.class), any()))
+                .thenReturn(new PortaleFatturazioneModel());
+
+        mockedUtility.when(() -> Utility.jsonToByteArray(any()))
+                .thenReturn("{}".getBytes());
+
+        when(safeStorageService.createAndUploadContent(any()))
+                .thenReturn(Mono.just("OK"));
+
+        StepVerifier.create(portFatService.processDirectory(tempDir))
+                .verifyComplete();
+
+        verify(safeStorageService, atLeastOnce())
+                .createAndUploadContent(any());
+    }
+
+    @Test
+    void testProcessDirectoryFailure_ProcessFileError() throws Exception {
+        Path tempDir = Files.createTempDirectory("test-dir");
+        Files.createFile(tempDir.resolve("file.json"));
+
+        mockedUtility.when(() -> Utility.convertToObject(any(File.class), any()))
+                .thenThrow(new RuntimeException("parse error"));
+
+        StepVerifier.create(portFatService.processDirectory(tempDir))
+                .expectError(RuntimeException.class)
+                .verify();
+
+        verifyNoInteractions(safeStorageService);
+    }
+
+    @Test
+    void testProcessDirectoryFailure() {
+        Path invalidPath = Path.of("not-existing-dir");
+
+        StepVerifier.create(portFatService.processDirectory(invalidPath))
+                .expectError(PnGenericException.class)
+                .verify();
+    }
 }

@@ -22,7 +22,6 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
-import static it.pagopa.pn.portfat.middleware.db.converter.PortFatConverter.completed;
 import static it.pagopa.pn.portfat.middleware.db.converter.PortFatConverter.portFatDownload;
 import static it.pagopa.pn.portfat.utils.Utility.convertToObject;
 import static it.pagopa.pn.portfat.utils.Utility.downloadId;
@@ -98,18 +97,6 @@ public class QueueListener {
                 .block();
     }
 
-    /**
-     * Aggiorna lo stato a COMPLETED una volta terminato il flusso.
-     *
-     * @param portFatDownload il download da aggiornare
-     * @return il download aggiornato
-     */
-    private Mono<PortFatDownload> updateStatusToCompleted(PortFatDownload portFatDownload) {
-        completed(portFatDownload);
-        return portFatDownloadDAO.updatePortFatDownload(portFatDownload)
-                .doOnNext(download ->
-                        log.logEndingProcess("portFat updated To " + download.getStatus() + ", DOWNLOAD_ID=" + download.getDownloadId()));
-    }
 
     /**
      * Crea e salva un nuovo entity relativa al flusso.
