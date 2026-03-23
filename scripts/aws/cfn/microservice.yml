@@ -311,6 +311,7 @@ Resources:
         ContainerEnvEntry6: !Sub 'PN_PORTFAT_PORTFAT_TABLE_NAME=${PortFatDownloadTableName}'
         ContainerEnvEntry7: !Sub 'PN_PORTFAT_SQS_SAFESTORAGETOPORTFATQUEUENAME=${SafeStorageToPortfatQueueName}'
 
+
   PortFatMicroserviceTaskManagedPolicy:
     Type: AWS::IAM::ManagedPolicy
     Properties:
