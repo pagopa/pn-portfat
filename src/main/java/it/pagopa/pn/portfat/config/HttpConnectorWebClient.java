@@ -47,8 +47,8 @@ public class HttpConnectorWebClient implements HttpConnector {
     /**
      * Scarica un file da un URL e lo salva nel percorso specificato.
      *
-     * @param url        l'URL del file da scaricare
-     * @param fileOutput il percorso in cui salvare il file scaricato
+     * @param downloadUrl        l'URL del file da scaricare
+     * @param path il percorso in cui salvare il file scaricato
      * @return un Mono che completa il download e il salvataggio del file
      */
     public Mono<Void> downloadFileAsByteArray(String downloadUrl, Path path) {

@@ -4,7 +4,6 @@ import it.pagopa.pn.portfat.config.HttpConnectorWebClient;
 import it.pagopa.pn.portfat.config.PortFatPropertiesConfig;
 import it.pagopa.pn.portfat.middleware.db.dao.PortFatDownloadDAO;
 import it.pagopa.pn.portfat.middleware.db.entities.PortFatDownload;
-import it.pagopa.pn.portfat.model.PortaleFatturazioneModel;
 import it.pagopa.pn.portfat.service.SafeStorageService;
 import it.pagopa.pn.portfat.utils.Utility;
 import org.junit.jupiter.api.AfterEach;
@@ -18,12 +17,13 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-import java.io.File;
+
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
@@ -56,7 +56,6 @@ class PortFatServiceImplTest {
         portFatDownload = new PortFatDownload();
         String downloadUrl = "http://example.com/test.zip";
         portFatDownload.setDownloadUrl(downloadUrl);
-        when(portFatConfig.getBasePathZipFile()).thenReturn("target/test-zip");
         when(portFatConfig.getZipExtension()).thenReturn(".zip");
         mockedUtility = Mockito.mockStatic(Utility.class);
     }
@@ -70,18 +69,8 @@ class PortFatServiceImplTest {
     void testProcessZipFile_Success() {
         // Arrange
         ClassLoader classLoader = getClass().getClassLoader();
-        PortaleFatturazioneModel portaleFatturazioneModel = new PortaleFatturazioneModel();
-        portaleFatturazioneModel.setIdEnte("45GRTF");
-        portaleFatturazioneModel.setPeriodoRiferimento("10-2025");
-
-        mockedUtility.when(() -> Utility.createDirectories(anyString()))
-                .thenReturn(Path.of("test"));
         mockedUtility.when(() -> Utility.computeSHA256(any(Path.class)))
                 .thenReturn("98ISBVOIAHDBVIHBSVIHB");
-        mockedUtility.when(() -> Utility.convertToObject(any(File.class), eq(PortaleFatturazioneModel.class)))
-                .thenReturn(portaleFatturazioneModel);
-        mockedUtility.when(() -> Utility.jsonToByteArray(any()))
-                .thenReturn(new byte[]{1, 2, 3});
 
         when(webClient.downloadFileAsByteArray(anyString(), any()))
                 .thenAnswer(invocation -> {
@@ -115,8 +104,6 @@ class PortFatServiceImplTest {
         // Arrange
         when(webClient.downloadFileAsByteArray(anyString(), any(Path.class)))
                 .thenReturn(Mono.error(new RuntimeException("Error downloading file")));
-        mockedUtility.when(() -> Utility.createDirectories(anyString()))
-                .thenReturn(Path.of("test"));
 
         // Act - Assert
         StepVerifier.create(portFatService.processZipFile(portFatDownload))
@@ -124,13 +111,14 @@ class PortFatServiceImplTest {
                         throwable instanceof RuntimeException &&
                                 throwable.getMessage().contains("Error downloading file"))
                 .verify();
+
+        // Verify no interactions
+        verify(safeStorageService, never()).createAndUploadContent(any());
+        verify(portFatDownloadDAO, never()).updatePortFatDownload(any());
     }
 
     @Test
     void testProcessZipFile_Failure_SHA256Calculation() {
-
-        mockedUtility.when(() -> Utility.createDirectories(anyString()))
-                .thenReturn(Path.of("test"));
 
         when(webClient.downloadFileAsByteArray(anyString(), any(Path.class)))
                 .thenReturn(Mono.empty());
@@ -143,6 +131,10 @@ class PortFatServiceImplTest {
                         throwable instanceof RuntimeException &&
                                 throwable.getMessage().contains("Error calculating SHA-256"))
                 .verify();
+
+        // Verify no interactions
+        verify(safeStorageService, never()).createAndUploadContent(any());
+        verify(portFatDownloadDAO, never()).updatePortFatDownload(any());
     }
 
 }
