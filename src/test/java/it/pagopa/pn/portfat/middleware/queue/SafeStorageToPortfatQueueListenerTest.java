@@ -3,6 +3,8 @@ package it.pagopa.pn.portfat.middleware.queue;
 import it.pagopa.pn.portfat.config.BaseTest;
 import it.pagopa.pn.portfat.config.HttpConnectorWebClient;
 import it.pagopa.pn.portfat.config.PortFatPropertiesConfig;
+import it.pagopa.pn.portfat.exception.ExceptionTypeEnum;
+import it.pagopa.pn.portfat.exception.PnGenericException;
 import it.pagopa.pn.portfat.exception.PnPortfatDownloadNotFoundException;
 import it.pagopa.pn.portfat.generated.openapi.msclient.pnsafestorage.v1.dto.FileDownloadResponseDto;
 import it.pagopa.pn.portfat.middleware.db.dao.PortFatDownloadDAO;
@@ -138,13 +140,16 @@ class SafeStorageToPortfatQueueListenerTest extends BaseTest.WithLocalStack {
                 .thenReturn(Mono.just(portFatDownload));
 
         when(safeStorageService.callSafeStorageGetFile(FILE_KEY))
-                .thenReturn(Mono.error(new RuntimeException("Processing failed")));
+                .thenReturn(Mono.error(new PnGenericException(ExceptionTypeEnum.DOWNLOAD_ZIP_ERROR, String.format("Missing downloadId for Safe Storage fileKey= %s",FILE_KEY))));
 
         when(portFatDownloadDAO.updatePortFatDownload(any()))
                 .thenReturn(Mono.just(portFatDownload));
 
-        listener.safeStorageToPortfatConsumer(payload, headers);
+        assertThrows(PnGenericException.class, () ->
+                listener.safeStorageToPortfatConsumer(payload, headers)
+        );
 
         verify(portFatDownloadDAO, times(2)).findByArchiveFileKey(FILE_KEY);
-        verify(portFatDownloadDAO, times(1)).updatePortFatDownload(any());    }
+        verify(portFatDownloadDAO, times(1)).updatePortFatDownload(any());
+    }
 }
