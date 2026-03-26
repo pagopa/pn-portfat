@@ -52,8 +52,8 @@ public class SafeStorageToPortfatQueueListener {
     @SqsListener(value = "${pn.portfat.safeStorageQueue}", acknowledgementMode = SqsListenerAcknowledgementMode.ON_SUCCESS)
     public void safeStorageToPortfatConsumer(@Payload FileDownloadResponseDto payload, @Headers Map<String, Object> headers) {
 
-        log.logStartingProcess("SafeStorageToPortfat with MessageGroupId=" + headers.get(MESSAGE_GROUP_ID) + ", Body=" + payload);
         setMDCContext(headers);
+        log.logStartingProcess("SafeStorageToPortfat with MessageGroupId=" + headers.get(MESSAGE_GROUP_ID) + ", Body=" + payload);
 
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern(TIME_FORMAT));
         String outputFilesPathStr = portFatConfig.getBasePathZipFile() + "_" + timestamp + "_" + PATH_FILES;
@@ -95,7 +95,8 @@ public class SafeStorageToPortfatQueueListener {
             return Mono.error(e);
         }
         return portFatDownloadDAO.findByArchiveFileKey(fileKey)
-                .flatMap(portfatDownload -> updateDownloadToError(e, portfatDownload));
+                .flatMap(portfatDownload -> updateDownloadToError(e, portfatDownload))
+                .then(Mono.error(e));
     }
 
     private Mono<Void> retrieveAndProcessFile(String fileKey, Path zipFilePath, Path outputFilesPath) {
