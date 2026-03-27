@@ -19,6 +19,9 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.LIST_FILES_ERROR;
@@ -37,6 +40,7 @@ public class PortFatServiceImpl implements PortFatService {
 
     static final String PN_SERVICE_ORDER = "PN_SERVICE_ORDER";
     static final String PN_SERVICE_ORDER_ARCHIVE = "PN_SERVICE_ORDER_ARCHIVE";
+    public static final String ARCHIVE_PROCESSED_AT = "archiveProcessedAt";
 
     private final PortFatPropertiesConfig portFatConfig;
     private final HttpConnectorWebClient webClient;
@@ -70,10 +74,7 @@ public class PortFatServiceImpl implements PortFatService {
         Path zipFilePath = createTmpFile(fileName, portFatConfig.getZipExtension());
         return webClient.downloadFileAsByteArray(portFatDownload.getDownloadUrl(), zipFilePath)
                 .then(Mono.fromCallable(() -> computeSHA256(zipFilePath)))
-                .doOnNext(hash -> {
-                    log.info("SHA-256 Hash: {}", hash);
-                    portFatDownload.setSha256(hash);
-                })
+                .doOnNext(portFatDownload::setSha256)
                 .flatMap(ignored ->
                         Mono.fromCallable(() -> Files.readAllBytes(zipFilePath))
                 )
@@ -111,6 +112,7 @@ public class PortFatServiceImpl implements PortFatService {
      * @return un Mono che completa l'elaborazione dei file presenti nella directory
      */
     public Mono<Void> processDirectory(Path directoryPath) {
+        Instant archiveProcessedAt = Instant.now();
         return Flux.fromStream(() -> {
                     try {
                         return Files.walk(directoryPath);
@@ -121,7 +123,7 @@ public class PortFatServiceImpl implements PortFatService {
                 .filter(Files::isRegularFile)
                 .flatMap(file -> {
                     Path parentDirectory = file.getParent();
-                    return processFile(file, parentDirectory.getFileName().toString());
+                    return processFile(file, parentDirectory.getFileName().toString(), archiveProcessedAt);
                 }, 10)
                 .then();
     }
@@ -134,13 +136,14 @@ public class PortFatServiceImpl implements PortFatService {
      * @param parentDirectoryName il nome della directory di appartenenza del file
      * @return un Mono che completa l'elaborazione del file
      */
-    private Mono<Void> processFile(Path file, String parentDirectoryName) {
+    private Mono<Void> processFile(Path file, String parentDirectoryName, Instant archiveProcessedAt) {
         log.info("Processing file: {} in folder: {}", file.getFileName(), parentDirectoryName);
         return Mono.fromCallable(() -> convertToObject(file.toFile(), PortaleFatturazioneModel.class))
                 .flatMap(portaleFatturazioneModel ->
                         Mono.just(jsonToByteArray(portaleFatturazioneModel))
                                 .flatMap(jsonToByteArray -> {
                                     FileCreationWithContentRequest fileCreationRequest = mapper(jsonToByteArray, MediaType.APPLICATION_JSON_VALUE, PN_SERVICE_ORDER);
+                                    fileCreationRequest.setTags(Map.of(ARCHIVE_PROCESSED_AT, List.of(archiveProcessedAt.toString())));
                                     return safeStorageService.createAndUploadContent(fileCreationRequest);
                                 })
                 )
