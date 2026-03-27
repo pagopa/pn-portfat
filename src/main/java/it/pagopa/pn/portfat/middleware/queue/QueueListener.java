@@ -49,9 +49,9 @@ public class QueueListener {
      */
     @SqsListener(value = "${pn.portfat.sqsQueue}", acknowledgementMode = SqsListenerAcknowledgementMode.ON_SUCCESS)
     public void pullPortFat(@Payload String payload, @Headers Map<String, Object> headers) {
+        setMDCContext(headers);
         log.logStartingProcess("portFat with MessageGroupId=" + headers.get(MESSAGE_GROUP_ID) + ", and Body= " + payload);
         FileReadyModel fileReady = convertToObject(payload, FileReadyModel.class);
-        setMDCContext(headers);
         var monoResult = Mono.just(fileReady)
                 .filter(this::isFileReadyEvent)
                 .flatMap(fileReadyEvent -> {
