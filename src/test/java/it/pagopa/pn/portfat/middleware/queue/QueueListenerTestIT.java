@@ -1,10 +1,11 @@
 package it.pagopa.pn.portfat.middleware.queue;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
-import com.amazonaws.services.sqs.model.DeleteMessageRequest;
-import com.amazonaws.services.sqs.model.Message;
-import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
-import com.amazonaws.services.sqs.model.SendMessageRequest;
+import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
+import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
+import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
+import software.amazon.awssdk.services.sqs.model.GetQueueUrlRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pn.portfat.config.BaseTest;
 import it.pagopa.pn.portfat.config.PortFatPropertiesConfig;
@@ -39,7 +40,7 @@ import static org.mockserver.model.HttpResponse.response;
 class QueueListenerTestIT extends BaseTest.WithMockServer {
 
     @Autowired
-    private AmazonSQSAsync amazonSQS;
+    private SqsClient sqsClient;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -94,13 +95,14 @@ class QueueListenerTestIT extends BaseTest.WithMockServer {
         assertThat(download).isPresent();
         assertThat(download.get().getStatus()).isEqualTo(DownloadStatus.COMPLETED);
 
-        String queueUrl = amazonSQS.getQueueUrl(portFatPropertiesConfig.getSqsQueue()).getQueueUrl();
-        ReceiveMessageRequest request = new ReceiveMessageRequest()
-                .withQueueUrl(queueUrl)
-                .withMaxNumberOfMessages(1)
-                .withWaitTimeSeconds(5);
+        String queueUrl = getQueueUrl();
+        ReceiveMessageRequest request = ReceiveMessageRequest.builder()
+                .queueUrl(queueUrl)
+                .maxNumberOfMessages(1)
+                .waitTimeSeconds(5)
+                .build();
 
-        List<Message> messages = amazonSQS.receiveMessage(request).getMessages();
+        List<Message> messages = sqsClient.receiveMessage(request).messages();
         assertTrue(messages.isEmpty());
 
         getMockServerBean().toVerify(request().withMethod("GET").withPath(filePath), VerificationTimes.atLeast(1));
@@ -109,33 +111,42 @@ class QueueListenerTestIT extends BaseTest.WithMockServer {
     }
 
     private void pushOnQueue(String fileVersion, String messageGroupId) throws IOException {
-        String queueUrl = amazonSQS.getQueueUrl(portFatPropertiesConfig.getSqsQueue()).getQueueUrl();
+        String queueUrl = getQueueUrl();
         FileReadyModel event = new FileReadyModel();
         event.setDownloadUrl(fileUrl);
         event.setFileVersion(fileVersion);
         event.setFilePath(filePath);
         String messageBody = objectMapper.writeValueAsString(event);
-        SendMessageRequest sendMessageRequest = new SendMessageRequest()
-                .withQueueUrl(queueUrl)
-                .withMessageBody(messageBody)
-                .withMessageGroupId(messageGroupId);
-        amazonSQS.sendMessage(sendMessageRequest);
+        SendMessageRequest request = SendMessageRequest.builder()
+                .queueUrl(queueUrl)
+                .messageBody(messageBody)
+                .messageGroupId(messageGroupId)
+                .build();
+        sqsClient.sendMessage(request);
     }
 
     void clearSqsQueue() {
-        String queueUrl = amazonSQS.getQueueUrl(portFatPropertiesConfig.getSqsQueue()).getQueueUrl();
-        List<Message> messages = amazonSQS.receiveMessage(
-                new ReceiveMessageRequest()
-                        .withQueueUrl(queueUrl)
-                        .withMaxNumberOfMessages(10)
-                        .withWaitTimeSeconds(1)
-        ).getMessages();
+        String queueUrl = getQueueUrl();
+        ReceiveMessageRequest request = ReceiveMessageRequest.builder()
+                .queueUrl(queueUrl)
+                .maxNumberOfMessages(10)
+                .waitTimeSeconds(1)
+                .build();
+        List<Message> messages = sqsClient.receiveMessage(request).messages();
 
         for (Message message : messages) {
-            amazonSQS.deleteMessage(new DeleteMessageRequest()
-                    .withQueueUrl(queueUrl)
-                    .withReceiptHandle(message.getReceiptHandle()));
+            DeleteMessageRequest deleteRequest = DeleteMessageRequest.builder()
+                    .queueUrl(queueUrl)
+                    .receiptHandle(message.receiptHandle())
+                    .build();
+            sqsClient.deleteMessage(deleteRequest);
         }
+    }
+
+    private String getQueueUrl() {
+        return sqsClient.getQueueUrl(GetQueueUrlRequest.builder()
+                .queueName(portFatPropertiesConfig.getSqsQueue())
+                .build()).queueUrl();
     }
 
     private void configMockServerMessageDequeuedAndProcessing() throws IOException {
