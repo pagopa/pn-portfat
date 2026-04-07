@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.UUID;
@@ -52,10 +53,10 @@ public class SafeStorageToPortfatQueueListener {
     @SqsListener(value = "${pn.portfat.safeStorageQueue}", acknowledgementMode = SqsListenerAcknowledgementMode.ON_SUCCESS)
     public void safeStorageToPortfatConsumer(@Payload FileDownloadResponseDto payload, @Headers Map<String, Object> headers) {
 
-        log.logStartingProcess("SafeStorageToPortfat with MessageGroupId=" + headers.get(MESSAGE_GROUP_ID) + ", Body=" + payload);
         setMDCContext(headers);
+        log.logStartingProcess("SafeStorageToPortfat with MessageGroupId=" + headers.get(MESSAGE_GROUP_ID) + ", Body=" + payload);
 
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern(TIME_FORMAT));
+        String timestamp = LocalDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern(TIME_FORMAT));
         String outputFilesPathStr = portFatConfig.getBasePathZipFile() + "_" + timestamp + "_" + PATH_FILES;
         Path outputFilesPath = createDirectories(outputFilesPathStr);
         String fileName = UUID.randomUUID().toString();
@@ -95,7 +96,8 @@ public class SafeStorageToPortfatQueueListener {
             return Mono.error(e);
         }
         return portFatDownloadDAO.findByArchiveFileKey(fileKey)
-                .flatMap(portfatDownload -> updateDownloadToError(e, portfatDownload));
+                .flatMap(portfatDownload -> updateDownloadToError(e, portfatDownload))
+                .then(Mono.error(e));
     }
 
     private Mono<Void> retrieveAndProcessFile(String fileKey, Path zipFilePath, Path outputFilesPath) {

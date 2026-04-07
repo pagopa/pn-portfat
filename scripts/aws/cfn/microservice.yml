@@ -338,7 +338,8 @@ Resources:
               - dynamodb:DeleteItem
               - dynamodb:Query
             Resource:
-              - !Ref PortFatDownloadTableArn
+              - !Sub "${PortFatDownloadTableArn}"
+              - !Sub "${PortFatDownloadTableArn}/*"
 
   PnPortFatAPI:
     Type: AWS::CloudFormation::Stack
