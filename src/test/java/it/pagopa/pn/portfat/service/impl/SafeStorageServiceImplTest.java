@@ -3,6 +3,8 @@ package it.pagopa.pn.portfat.service.impl;
 import it.pagopa.pn.portfat.config.HttpConnector;
 import it.pagopa.pn.portfat.exception.PnGenericException;
 import it.pagopa.pn.portfat.generated.openapi.msclient.pnsafestorage.v1.dto.FileCreationResponseDto;
+import it.pagopa.pn.portfat.generated.openapi.msclient.pnsafestorage.v1.dto.FileDownloadInfoDto;
+import it.pagopa.pn.portfat.generated.openapi.msclient.pnsafestorage.v1.dto.FileDownloadResponseDto;
 import it.pagopa.pn.portfat.middleware.msclient.SafeStorageClient;
 import it.pagopa.pn.portfat.model.FileCreationWithContentRequest;
 import org.junit.jupiter.api.Test;
@@ -102,5 +104,63 @@ class SafeStorageServiceImplTest {
         verify(safeStorageClient, times(1)).createFile(any(), anyString());
         verifyNoInteractions(httpConnector);
     }
+
+    @Test
+    void testCallSafeStorageGetFileSuccess() {
+        String fileKey = "safestorage://fileKey";
+        String expectedUrl = "http://download.url";
+
+        FileDownloadResponseDto response = new FileDownloadResponseDto();
+        FileDownloadInfoDto download = new FileDownloadInfoDto();
+        download.setUrl(expectedUrl);
+        response.setDownload(download);
+
+        when(safeStorageClient.getFile("fileKey"))
+                .thenReturn(Mono.just(response));
+
+        Mono<String> result = safeStorageService.callSafeStorageGetFile(fileKey);
+
+        StepVerifier.create(result)
+                .expectNext(expectedUrl)
+                .verifyComplete();
+
+        verify(safeStorageClient).getFile("fileKey");
+    }
+
+    @Test
+    void testCallSafeStorageGetFileDownloadNull() {
+        String fileKey = "safestorage://fileKey";
+
+        FileDownloadResponseDto response = new FileDownloadResponseDto();
+        response.setDownload(null);
+
+        when(safeStorageClient.getFile("fileKey"))
+                .thenReturn(Mono.just(response));
+
+        StepVerifier.create(safeStorageService.callSafeStorageGetFile(fileKey))
+                .expectErrorMatches(e -> e instanceof PnGenericException &&
+                        e.getMessage().contains("Missing download"))
+                .verify();
+    }
+
+    @Test
+    void testCallSafeStorageGetFileUrlNull() {
+        String fileKey = "safestorage://fileKey";
+
+        FileDownloadResponseDto response = new FileDownloadResponseDto();
+        FileDownloadInfoDto download = new FileDownloadInfoDto();
+        download.setUrl(null);
+        response.setDownload(download);
+
+        when(safeStorageClient.getFile("fileKey"))
+                .thenReturn(Mono.just(response));
+
+        StepVerifier.create(safeStorageService.callSafeStorageGetFile(fileKey))
+                .expectErrorMatches(e -> e instanceof PnGenericException &&
+                        e.getMessage().contains("download.url"))
+                .verify();
+    }
+
+
 
 }
