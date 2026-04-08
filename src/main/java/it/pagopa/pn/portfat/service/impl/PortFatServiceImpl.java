@@ -150,6 +150,8 @@ public class PortFatServiceImpl implements PortFatService {
                 .onErrorResume(e -> {
                     log.error("Error processing file: {}", file, e);
                     return Mono.error(e);
-                }).then();
+                })
+                .doFinally(signalType -> deleteTmpFiles(file))
+                .then();
     }
 }
