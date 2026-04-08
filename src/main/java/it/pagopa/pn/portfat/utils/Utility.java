@@ -162,4 +162,14 @@ public class Utility {
             throw new RuntimeException(e);
         }
     }
+
+    public static void deleteTmpFiles(Path pathToDelete) {
+        try {
+            Files.deleteIfExists(pathToDelete);
+            log.debug("Temp file deleted: {}", pathToDelete);
+        } catch (IOException e) {
+            log.error("Errore nell'eliminazione del file tmp: {}", pathToDelete, e);
+        }
+    }
+
 }

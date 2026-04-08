@@ -20,8 +20,6 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -33,6 +31,7 @@ import java.util.UUID;
 import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.PORTFAT_DOWNLOAD_NOT_FOUND;
 import static it.pagopa.pn.portfat.middleware.db.converter.PortFatConverter.completed;
 import static it.pagopa.pn.portfat.utils.Utility.createDirectories;
+import static it.pagopa.pn.portfat.utils.Utility.deleteTmpFiles;
 import static it.pagopa.pn.portfat.utils.ZipUtility.unzip;
 
 @Component
@@ -77,14 +76,8 @@ public class SafeStorageToPortfatQueueListener {
                     return handleException(e, fileKey);
                 })
                 .doFinally(signalType -> {
-                    try {
-                        Files.deleteIfExists(zipFilePath);
-                        log.debug("Temp ZIP deleted: {}", zipFilePath);
-                        Files.deleteIfExists(outputFilesPath);
-                        log.debug("Temp directory deleted: {}", outputFilesPath);
-                    } catch (IOException e) {
-                        log.error("Errore nell'eliminazione dello ZIP: {}", zipFilePath, e);
-                    }
+                    deleteTmpFiles(zipFilePath);
+                    deleteTmpFiles(outputFilesPath);
                 })
                 .then();
 
