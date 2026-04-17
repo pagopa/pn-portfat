@@ -368,6 +368,7 @@ Resources:
         APIGatewayARNs: !GetAtt PnPortFatAPI.Outputs.APIGatewayARN
         Limit: !Ref PortFatWafLimit # disable IP limit based rule
         AllowedCidrs: !Ref InvoicingServiceIPCidrs
+        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
 
   PortFatUsagePlan:
     Type: 'AWS::ApiGateway::UsagePlan'
