@@ -1,6 +1,5 @@
 package it.pagopa.pn.portfat.config.aws;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
 import it.pagopa.pn.portfat.LocalStackTestConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,8 +7,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.model.CreateQueueRequest;
+import software.amazon.awssdk.services.sqs.model.GetQueueUrlRequest;
+
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 
@@ -19,27 +21,26 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class AmazonSQSConfigIT extends LocalStackTestConfig {
 
     @Autowired
-    private AmazonSQSAsync amazonSQS;
-
-    @Autowired
-    private AwsPropertiesConfig awsConfigs;
+    private SqsClient sqsClient;
 
     @Value("${pn.portfat.sqsQueue}")
     private String sqsQueue;
 
-    @MockitoSpyBean
-    SQSConfig sqsConfig;
-
     @BeforeEach
     void setup() {
-        amazonSQS.createQueue(sqsQueue);
+        sqsClient.createQueue(CreateQueueRequest.builder()
+                .queueName(sqsQueue)
+                .build());
     }
 
     @Test
     void testAmazonSQSClientCreation_WithCustomEndpoint() {
         // Simula configurazione con endpoint personalizzato
-        AmazonSQSAsync sqsClient = sqsConfig.amazonSQS();
+        String queueUrl = sqsClient.getQueueUrl(GetQueueUrlRequest.builder()
+                        .queueName(sqsQueue)
+                        .build())
+                .queueUrl();
         assertNotNull(sqsClient);
-        assertNotNull(sqsClient.getQueueUrl(sqsQueue));
+        assertNotNull(queueUrl);
     }
 }
