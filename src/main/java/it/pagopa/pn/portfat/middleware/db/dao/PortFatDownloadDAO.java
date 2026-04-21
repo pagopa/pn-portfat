@@ -11,4 +11,5 @@ public interface PortFatDownloadDAO {
 
     Mono<PortFatDownload> updatePortFatDownload(PortFatDownload pnAddress);
 
+    Mono<PortFatDownload> findByArchiveFileKey(String archiveFileKey);
 }

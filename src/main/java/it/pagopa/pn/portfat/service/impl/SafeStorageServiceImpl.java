@@ -1,6 +1,7 @@
 package it.pagopa.pn.portfat.service.impl;
 
 import it.pagopa.pn.portfat.config.HttpConnector;
+import it.pagopa.pn.portfat.exception.ExceptionTypeEnum;
 import it.pagopa.pn.portfat.exception.PnGenericException;
 import it.pagopa.pn.portfat.generated.openapi.msclient.pnsafestorage.v1.dto.FileCreationResponseDto;
 import it.pagopa.pn.portfat.middleware.msclient.SafeStorageClient;
@@ -12,6 +13,8 @@ import java.util.Base64;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import java.security.MessageDigest;
+import java.util.Objects;
+
 import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.CREATION_FILE_SS_ERROR;
 import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.SHA256_ERROR;
 
@@ -26,6 +29,7 @@ public class SafeStorageServiceImpl implements SafeStorageService {
 
     private final SafeStorageClient safeStorageClient;
     private final HttpConnector httpConnector;
+    public static final String SAFE_STORAGE_PREFIX = "safestorage://";
 
     /**
      * Crea un file su Safe Storage e carica il contenuto associato.
@@ -66,5 +70,19 @@ public class SafeStorageServiceImpl implements SafeStorageService {
 
     private static String bytesToBase64(byte[] hash) {
         return Base64.getEncoder().encodeToString(hash);
+    }
+
+    @Override
+    public Mono<String> callSafeStorageGetFile(String fileKey) {
+        String finalFileKey = fileKey.replace(SAFE_STORAGE_PREFIX, "");
+        return safeStorageClient.getFile(finalFileKey)
+                .flatMap(fileCreationResponseDto -> {
+                    if(Objects.nonNull(fileCreationResponseDto.getDownload()) && Objects.nonNull(fileCreationResponseDto.getDownload().getUrl())){
+                        return Mono.just(fileCreationResponseDto.getDownload().getUrl());
+                    }
+                    String missingField = Objects.isNull(fileCreationResponseDto.getDownload()) ? "download" : "download.url";
+                    String errorMessage = "Missing " + missingField + " for Safe Storage fileKey=" + finalFileKey;
+                    return Mono.error(new PnGenericException(ExceptionTypeEnum.DOWNLOAD_ZIP_ERROR, errorMessage));
+                });
     }
 }

@@ -9,6 +9,6 @@
     "MinTasksNumber": "1",
     "MaxTasksNumber": "1",
     "InvoicingServiceIPCidrs": "",
-    "BlobStorageBaseUrl": "https://storage.uat.portalefatturazione.pagopa.it"
+    "BlobStorageBaseUrl": "https://pn-delayer-storage-dev-pn-test-delayer-bucket.s3.eu-south-1.amazonaws.com"
   }
 }

@@ -16,7 +16,9 @@ public enum ExceptionTypeEnum {
     SHA256_ERROR("SHA256_ERROR", "Failed to create SHA-256: "),
     CREATION_FILE_SS_ERROR("CREATION_FILE_SS_ERROR", "Error in file creation flow, save storage: "),
     CONVERT_TO_JSON_ERROR("SHA256_ERROR", "Failed convert to JSON: "),
-    JSONS_NOT_FOND_IN_ZIP("JSONS_NOT_FOND_IN_ZIP", "JSONS not found in the ZIP file: ");
+    JSONS_NOT_FOND_IN_ZIP("JSONS_NOT_FOND_IN_ZIP", "JSONS not found in the ZIP file: "),
+    PORTFAT_DOWNLOAD_NOT_FOUND("PORTFAT_DOWNLOAD_NOT_FOUND", "Portfat download not found for filekey: %s"),
+    SAFESTORAGE_GET_FILE_ERROR("SAFESTORAGE_GET_FILE_ERROR", "SafeStorage get file erro");
 
     private final String title;
     private final String message;
