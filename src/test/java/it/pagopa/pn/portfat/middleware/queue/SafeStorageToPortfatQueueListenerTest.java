@@ -110,12 +110,12 @@ class SafeStorageToPortfatQueueListenerTest extends BaseTest.WithLocalStack {
         when(webClient.downloadFileAsByteArray(anyString(), any()))
                 .thenReturn(Mono.empty());
 
-        when(portFatService.processDirectory(any()))
+        when(portFatService.processDirectory(any(), anyString()))
                 .thenReturn(Mono.empty());
 
         listener.safeStorageToPortfatConsumer(payload, headers);
 
-        verify(portFatService).processDirectory(any());
+        verify(portFatService).processDirectory(any(), anyString());
         verify(portFatDownloadDAO).updatePortFatDownload(any());
     }
 
