@@ -97,7 +97,7 @@ public class SafeStorageToPortfatQueueListener {
         return safeStorageService.callSafeStorageGetFile(fileKey)
                 .flatMap(downloadURL -> webClient.downloadFileAsByteArray(downloadURL, zipFilePath))
                 .then(unzip(zipFilePath.toString(), outputFilesPath.toString()))
-                .flatMap(unused -> portFatService.processDirectory(outputFilesPath));
+                .flatMap(unused -> portFatService.processDirectory(outputFilesPath, fileKey));
     }
 
     private Mono<PortFatDownload> updateDownloadToError(Throwable e, PortFatDownload download) {
