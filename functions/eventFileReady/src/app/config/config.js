@@ -6,6 +6,8 @@ module.exports = {
     region: appConfig.get('PN_PORTFAT_AWS_REGION'),
     queueUrl: appConfig.get('PN_PORTFAT_SQS_QUEUE_URL'),
     queueName: appConfig.get('PN_PORTFAT_SQS_QUEUE_NAME'),
+    mockQueueUrl: appConfig.get('PN_PORTFAT_MOCK_SQS_QUEUE_URL'),
+    mockQueueName: appConfig.get('PN_PORTFAT_MOCK_SQS_QUEUE_NAME'),
     endpoint: isLocal ? appConfig.get('SQS_ENDPOINT') : undefined,
     credentials: isLocal ? {
         accessKeyId: appConfig.get('AWS_ACCESS_KEY_ID'),
