@@ -97,6 +97,24 @@ public class QueueListener {
                 .block();
     }
 
+    /**
+     * Metodo che ascolta i messaggi dalla coda SQS MOCK e avvia il processo di download.
+     *
+     * @param payload il contenuto del messaggio ricevuto
+     * @param headers gli header del messaggio SQS
+     */
+    @SqsListener(value = "${pn.portfat.sqsQueueMock}", acknowledgementMode = SqsListenerAcknowledgementMode.ON_SUCCESS)
+    public void pullPortFatMock(@Payload String payload, @Headers Map<String, Object> headers) {
+        setMDCContext(headers);
+        log.logStartingProcess("portFat with MessageGroupId=" + headers.get(MESSAGE_GROUP_ID) + ", and Body= " + payload);
+        FileReadyModel fileReady = convertToObject(payload, FileReadyModel.class);
+        var monoResult = Mono.just(fileReady)
+                .flatMap(fileReadyEvent -> portfatService.processMockZipFile(fileReady.getDownloadUrl()))
+                .then();
+        MDCUtils.addMDCToContextAndExecute(monoResult)
+                .block();
+    }
+
 
     /**
      * Crea e salva un nuovo entity relativa al flusso.
