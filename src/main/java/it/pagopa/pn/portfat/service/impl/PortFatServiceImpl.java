@@ -39,6 +39,7 @@ import static it.pagopa.pn.portfat.utils.Utility.*;
 public class PortFatServiceImpl implements PortFatService {
 
     static final String PN_SERVICE_ORDER = "PN_SERVICE_ORDER";
+    static final String PN_SERVICE_ORDER_MOCK = "PN_SERVICE_ORDER_MOCK";
     static final String PN_SERVICE_ORDER_ARCHIVE = "PN_SERVICE_ORDER_ARCHIVE";
     static final String PN_SERVICE_ORDER_ARCHIVE_MOCK = "PN_SERVICE_ORDER_ARCHIVE_MOCK";
     public static final String ARCHIVE_PROCESSED_AT = "archiveProcessedAt";
@@ -137,7 +138,7 @@ public class PortFatServiceImpl implements PortFatService {
      * @param directoryPath il percorso della directory contenente i file json
      * @return un Mono che completa l'elaborazione dei file presenti nella directory
      */
-    public Mono<Void> processDirectory(Path directoryPath, String fileKey) {
+    public Mono<Void> processDirectory(Path directoryPath, String fileKey, boolean isMock) {
         Instant archiveProcessedAt = Instant.now();
         return Flux.fromStream(() -> {
                     try {
@@ -149,7 +150,7 @@ public class PortFatServiceImpl implements PortFatService {
                 .filter(Files::isRegularFile)
                 .flatMap(file -> {
                     Path parentDirectory = file.getParent();
-                    return processFile(file, parentDirectory.getFileName().toString(), archiveProcessedAt, fileKey);
+                    return processFile(file, parentDirectory.getFileName().toString(), archiveProcessedAt, fileKey, isMock);
                 }, 10)
                 .then();
     }
@@ -162,13 +163,13 @@ public class PortFatServiceImpl implements PortFatService {
      * @param parentDirectoryName il nome della directory di appartenenza del file
      * @return un Mono che completa l'elaborazione del file
      */
-    private Mono<Void> processFile(Path file, String parentDirectoryName, Instant archiveProcessedAt, String fileKey) {
+    private Mono<Void> processFile(Path file, String parentDirectoryName, Instant archiveProcessedAt, String fileKey, boolean isMock) {
         log.info("Processing file: {} in folder: {}", file.getFileName(), parentDirectoryName);
         return Mono.fromCallable(() -> convertToObject(file.toFile(), PortaleFatturazioneModel.class))
                 .flatMap(portaleFatturazioneModel ->
                         Mono.just(jsonToByteArray(portaleFatturazioneModel))
                                 .flatMap(jsonToByteArray -> {
-                                    FileCreationWithContentRequest fileCreationRequest = mapper(jsonToByteArray, MediaType.APPLICATION_JSON_VALUE, PN_SERVICE_ORDER);
+                                    FileCreationWithContentRequest fileCreationRequest = mapper(jsonToByteArray, MediaType.APPLICATION_JSON_VALUE, isMock ? PN_SERVICE_ORDER_MOCK : PN_SERVICE_ORDER);
                                     fileCreationRequest.setTags(Map.of(ARCHIVE_PROCESSED_AT, List.of(archiveProcessedAt.toString()), ARCHIVE_FILE_KEY, List.of(fileKey)));
                                     return safeStorageService.createAndUploadContent(fileCreationRequest);
                                 })

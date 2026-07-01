@@ -67,7 +67,7 @@ public class SafeStorageToPortfatQueueListener {
                     log.info("No PortFatDownload found");
                     return Mono.error(new PnPortfatDownloadNotFoundException(PORTFAT_DOWNLOAD_NOT_FOUND, String.format(PORTFAT_DOWNLOAD_NOT_FOUND.getMessage(), fileKey)));
                 }))
-                .flatMap(portFatDownload -> retrieveAndProcessFile(fileKey, zipFilePath, outputFilesPath)
+                .flatMap(portFatDownload -> retrieveAndProcessFile(fileKey, zipFilePath, outputFilesPath, false)
                         .thenReturn(portFatDownload)
                 )
                 .flatMap(this::updateStatusToCompleted)
@@ -75,6 +75,29 @@ public class SafeStorageToPortfatQueueListener {
                     log.error("Error occurred during processing", e);
                     return handleException(e, fileKey);
                 })
+                .doFinally(signalType -> {
+                    deleteTmpFiles(zipFilePath);
+                    deleteTmpFiles(outputFilesPath);
+                })
+                .then();
+
+        MDCUtils.addMDCToContextAndExecute(handledMessage).block();
+    }
+
+    @SqsListener(value = "${pn.portfat.safeStorageMockQueue}", acknowledgementMode = SqsListenerAcknowledgementMode.ON_SUCCESS)
+    public void safeStorageToPortfatMockConsumer(@Payload FileDownloadResponseDto payload, @Headers Map<String, Object> headers) {
+
+        setMDCContext(headers);
+        log.logStartingProcess("SafeStorageToPortfatMock with MessageGroupId=" + headers.get(MESSAGE_GROUP_ID) + ", Body=" + payload);
+
+        String timestamp = LocalDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern(TIME_FORMAT));
+        String outputFilesPathStr = portFatConfig.getBasePathZipFile() + "_" + timestamp + "_" + PATH_FILES;
+        Path outputFilesPath = createDirectories(outputFilesPathStr);
+        String fileName = UUID.randomUUID().toString();
+        Path zipFilePath = portFatService.createTmpFile(fileName, portFatConfig.getZipExtension());
+
+        String fileKey = payload.getKey();
+        Mono<Void> handledMessage =  retrieveAndProcessFile(fileKey, zipFilePath, outputFilesPath, true)
                 .doFinally(signalType -> {
                     deleteTmpFiles(zipFilePath);
                     deleteTmpFiles(outputFilesPath);
@@ -93,11 +116,11 @@ public class SafeStorageToPortfatQueueListener {
                 .then(Mono.error(e));
     }
 
-    private Mono<Void> retrieveAndProcessFile(String fileKey, Path zipFilePath, Path outputFilesPath) {
+    private Mono<Void> retrieveAndProcessFile(String fileKey, Path zipFilePath, Path outputFilesPath, boolean isMock) {
         return safeStorageService.callSafeStorageGetFile(fileKey)
                 .flatMap(downloadURL -> webClient.downloadFileAsByteArray(downloadURL, zipFilePath))
                 .then(unzip(zipFilePath.toString(), outputFilesPath.toString()))
-                .flatMap(unused -> portFatService.processDirectory(outputFilesPath, fileKey));
+                .flatMap(unused -> portFatService.processDirectory(outputFilesPath, fileKey, isMock));
     }
 
     private Mono<PortFatDownload> updateDownloadToError(Throwable e, PortFatDownload download) {
