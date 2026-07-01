@@ -213,6 +213,34 @@ Parameters:
     Type: String
     Description: ARN of DLQ for request actions queue
 
+  PortFatRequestActionsMockQueueName:
+    Type: String
+    Description: Name of SQS request actions Mock queue
+
+  PortFatRequestActionsMockQueueURL:
+    Type: String
+    Description: URL of SQS request actions Mock queue
+
+  PortFatRequestActionsMockQueueARN:
+    Type: String
+    Description: ARN of SQS request actions Mock queue
+
+  PortFatRequestActionsMockQueueAlarmARN:
+    Type: String
+    Description: ARN of SQS alarm for request actions Mock queue
+
+  PortFatRequestActionsMockQueueAgeAlarmARN:
+    Type: String
+    Description: ARN of SQS age alarm for request actions Mock queue
+
+  PortFatRequestActionsMockQueueDLQAlarmARN:
+    Type: String
+    Description: ARN of DLQ age alarm for request actions Mock queue
+
+  PortFatRequestActionsMockQueueDLQARN:
+    Type: String
+    Description: ARN of DLQ for request actions Mock queue
+
   LambdaLogGroup:
     Type: String
     Description: Name of Lambda Log Group
@@ -239,6 +267,18 @@ Parameters:
     Description: Arn of the queue where safeStorage to portfat are stored
 
   SafeStorageToPortfatQueueURL:
+    Type: String
+    Description: safestorage-to-portfat queue URL
+
+  SafeStorageToPortfatMockQueueName:
+    Type: String
+    Description: Name of the queue where safeStorage to portfat are stored
+
+  SafeStorageToPortfatMockQueueARN:
+    Type: String
+    Description: Arn of the queue where safeStorage to portfat are stored
+
+  SafeStorageToPortfatMockQueueURL:
     Type: String
     Description: safestorage-to-portfat queue URL
 
@@ -307,10 +347,11 @@ Resources:
         ContainerEnvEntry2: !Sub 'PN_PORTFAT_SAFESTORAGEBASEURL=${SandboxSafeStorageBaseUrl}'
         ContainerEnvEntry3: !Sub 'PN_PORTFAT_SAFESTORAGECXID=${SafeStorageCxId}'
         ContainerEnvEntry4: !Sub 'PN_PORTFAT_AWS_SQS_NAME=${PortFatRequestActionsQueueName}'
-        ContainerEnvEntry5: !Sub 'PN_PORTFAT_BLOB_STORAGE_BASE_URL=${BlobStorageBaseUrl}'
-        ContainerEnvEntry6: !Sub 'PN_PORTFAT_PORTFAT_TABLE_NAME=${PortFatDownloadTableName}'
-        ContainerEnvEntry7: !Sub 'PN_PORTFAT_SQS_SAFESTORAGETOPORTFATQUEUENAME=${SafeStorageToPortfatQueueName}'
-
+        ContainerEnvEntry5: !Sub 'PN_PORTFAT_MOCK_AWS_SQS_NAME=${PortFatRequestActionsMockQueueName}'
+        ContainerEnvEntry6: !Sub 'PN_PORTFAT_BLOB_STORAGE_BASE_URL=${BlobStorageBaseUrl}'
+        ContainerEnvEntry7: !Sub 'PN_PORTFAT_PORTFAT_TABLE_NAME=${PortFatDownloadTableName}'
+        ContainerEnvEntry8: !Sub 'PN_PORTFAT_SQS_SAFESTORAGETOPORTFATQUEUENAME=${SafeStorageToPortfatQueueName}'
+        ContainerEnvEntry9: !Sub 'PN_PORTFAT_SQS_SAFESTORAGETOPORTFATMOCKQUEUENAME=${SafeStorageToPortfatMockQueueName}'
 
   PortFatMicroserviceTaskManagedPolicy:
     Type: AWS::IAM::ManagedPolicy
@@ -329,7 +370,10 @@ Resources:
             Resource:
               - !Ref PortFatRequestActionsQueueARN
               - !Ref PortFatRequestActionsQueueDLQARN
+              - !Ref PortFatRequestActionsMockQueueARN
+              - !Ref PortFatRequestActionsMockQueueDLQARN
               - !Ref SafeStorageToPortfatQueueARN
+              - !Ref SafeStorageToPortfatMockQueueARN
           - Effect: Allow
             Action:
               - dynamodb:GetItem
@@ -399,6 +443,9 @@ Resources:
           - - !Ref PortFatRequestActionsQueueAlarmARN
             - !Ref PortFatRequestActionsQueueAgeAlarmARN
             - !Ref PortFatRequestActionsQueueDLQAlarmARN
+            - !Ref PortFatRequestActionsMockQueueAlarmARN
+            - !Ref PortFatRequestActionsMockQueueAgeAlarmARN
+            - !Ref PortFatRequestActionsMockQueueDLQAlarmARN
             - !GetAtt PortFatLambdaAlarms.Outputs.LambdaInvocationErrorLogsMetricAlarm
         LambdaArns: !Join
           - ','
@@ -407,6 +454,8 @@ Resources:
           - ','
           - - !Ref PortFatRequestActionsQueueARN
             - !Ref PortFatRequestActionsQueueDLQARN
+            - !Ref PortFatRequestActionsMockQueueARN
+            - !Ref PortFatRequestActionsMockQueueDLQARN
         LogGroupsNames: !Join
           - ','
           - - !Ref EcsLogGroup
@@ -437,6 +486,8 @@ Resources:
           PN_PORTFAT_AWS_REGION: !Sub "${AWS::Region}"
           PN_PORTFAT_SQS_QUEUE_NAME: !Ref PortFatRequestActionsQueueName
           PN_PORTFAT_SQS_QUEUE_URL: !Ref PortFatRequestActionsQueueURL
+          PN_PORTFAT_MOCK_SQS_QUEUE_NAME: !Ref PortFatRequestActionsMockQueueName
+          PN_PORTFAT_MOCK_SQS_QUEUE_URL: !Ref PortFatRequestActionsMockQueueURL
 
   PortFatLambdaRole:
     Type: AWS::IAM::Role
@@ -474,6 +525,8 @@ Resources:
             Resource:
               - !Ref PortFatRequestActionsQueueARN
               - !Ref PortFatRequestActionsQueueDLQARN
+              - !Ref PortFatRequestActionsMockQueueARN
+              - !Ref PortFatRequestActionsMockQueueDLQARN
           - Effect: Allow
             Action:
               - dynamodb:GetItem
@@ -582,6 +635,23 @@ Resources:
               - sqs:SendMessage
             Resource:
               - !Ref SafeStorageToPortfatQueueARN
+
+  SafeStorageToPortfatMockQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref SafeStorageToPortfatMockQueueURL
+      PolicyDocument:
+        Statement:
+          - Sid: "SendEventsToSafeStorageToPortfatMockQueue"
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "events.amazonaws.com"
+            Action:
+              - sqs:SendMessage
+            Resource:
+              - !Ref SafeStorageToPortfatMockQueueARN
 
 Outputs:
   Version:
