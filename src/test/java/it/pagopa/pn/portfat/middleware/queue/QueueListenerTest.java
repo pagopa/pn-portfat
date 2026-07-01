@@ -98,6 +98,31 @@ class QueueListenerTest extends BaseTest.WithLocalStack {
     }
 
     @Test
+    void testPullPortFatMock() throws JsonProcessingException {
+        //ARRANGE
+        headers = new HashMap<>();
+        headers.put("id", UUID.randomUUID());
+        FileReadyModel event = new FileReadyModel();
+        event.setFileVersion(FILE_VERSION);
+        event.setDownloadUrl(DOWNLOAD_URL);
+        event.setFilePath(FILE_PATH);
+        payload = new ObjectMapper().writeValueAsString(event);
+
+        // Mock di portFatService.processMockZipFile() per simulare il processo del file
+        when(portFatService.processMockZipFile(any())).thenReturn(Mono.empty());
+
+        // Invoca il metodo pullPortFat
+        queueListener.pullPortFatMock(payload, headers);
+
+        //ASSERT
+        // Verifica che il metodo processZipFile sia stato chiamato
+        verify(portFatService, times(1)).processMockZipFile(any());
+        // Verifica che lo stato sia stato aggiornato a COMPLETED
+        verifyNoInteractions(portFatDownloadDAO);
+    }
+
+
+    @Test
     void testPullPortFatExistingDownloadInErrorState() throws JsonProcessingException {
         //ARRANGE
         headers = new HashMap<>();

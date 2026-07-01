@@ -41,6 +41,7 @@ public class PortFatServiceImpl implements PortFatService {
     static final String PN_SERVICE_ORDER = "PN_SERVICE_ORDER";
     static final String PN_SERVICE_ORDER_MOCK = "PN_SERVICE_ORDER_MOCK";
     static final String PN_SERVICE_ORDER_ARCHIVE = "PN_SERVICE_ORDER_ARCHIVE";
+    static final String PN_SERVICE_ORDER_ARCHIVE_MOCK = "PN_SERVICE_ORDER_ARCHIVE_MOCK";
     public static final String ARCHIVE_PROCESSED_AT = "archiveProcessedAt";
     public static final String ARCHIVE_FILE_KEY = "archiveFileKey";
 
@@ -87,6 +88,30 @@ public class PortFatServiceImpl implements PortFatService {
                 .flatMap(archiveFileKey -> {
                     portFatDownload.setArchiveFileKey(archiveFileKey);
                     return portFatDownloadDAO.updatePortFatDownload(portFatDownload);
+                })
+                .doFinally(signalType -> {
+                    try {
+                        Files.deleteIfExists(zipFilePath);
+                        log.debug("Temp ZIP deleted: {}", zipFilePath);
+                    } catch (IOException e) {
+                        log.error("Errore nell'eliminazione dello ZIP: {}", zipFilePath, e);
+                    }
+                })
+                .then();
+    }
+
+    @Override
+    public Mono<Void> processMockZipFile(String downloadUrl) {
+        log.info("processZipFile,  downloadUrl {}", downloadUrl);
+        String fileName = UUID.randomUUID().toString();
+        Path zipFilePath = createTmpFile(fileName, portFatConfig.getZipExtension());
+        return webClient.downloadFileAsByteArray(downloadUrl, zipFilePath)
+                .flatMap(ignored ->
+                        Mono.fromCallable(() -> Files.readAllBytes(zipFilePath))
+                )
+                .flatMap(fileBytes -> {
+                    FileCreationWithContentRequest request = mapper(fileBytes, MediaType.APPLICATION_OCTET_STREAM_VALUE, PN_SERVICE_ORDER_ARCHIVE_MOCK);
+                    return safeStorageService.createAndUploadContent(request);
                 })
                 .doFinally(signalType -> {
                     try {
