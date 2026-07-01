@@ -51,6 +51,23 @@ Resources:
         QueueHasAlarm: "true"
         ContentBasedDeduplication: "true"
 
+  PortFatRequestActionsMockQueue:
+    Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/sqs-queue.yaml"
+      Parameters:
+        QueueName: !Sub '${ProjectName}-portfat_request_actions_mock'
+        FifoQueue: true
+        DelaySeconds: 1
+        AlarmSNSTopicName: !Ref AlarmSNSTopicName
+        VisibilityTimeout: 1200
+        MaxReceiveCount: 5
+        HasDLQ: "true"
+        QueueHasAlarm: "true"
+        ContentBasedDeduplication: "true"
+
   SafeStorageToPortfatQueue:
     Type: AWS::CloudFormation::Stack
     UpdateReplacePolicy: Retain
@@ -59,6 +76,18 @@ Resources:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/sqs-queue.yaml"
       Parameters:
         QueueName: !Sub '${ProjectName}-safestorage-to-portfat'
+        AlarmSNSTopicName: !Ref AlarmSNSTopicName
+        VisibilityTimeout: 60
+        DelaySeconds: 1
+
+  SafeStorageToPortfatMockQueue:
+    Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/sqs-queue.yaml"
+      Parameters:
+        QueueName: !Sub '${ProjectName}-safestorage-to-portfat-mock'
         AlarmSNSTopicName: !Ref AlarmSNSTopicName
         VisibilityTimeout: 60
         DelaySeconds: 1
@@ -155,6 +184,26 @@ Outputs:
     Description: pn-portfat_request_actions age alarm ARN
     Value: !GetAtt PortFatRequestActionsQueue.Outputs.SqsAgeAlarmArn
 
+  PortFatRequestActionsMockQueueName:
+    Description: pn-portfat_request_actions_Mock queue name
+    Value: !GetAtt PortFatRequestActionsMockQueue.Outputs.QueueName
+
+  PortFatRequestActionsMockQueueURL:
+    Description: pn-portfat_request_actions_Mock queue URL
+    Value: !GetAtt PortFatRequestActionsMockueue.Outputs.QueueURL
+
+  PortFatRequestActionsMockQueueARN:
+    Description: pn-portfat_request_actions_Mock queue ARN
+    Value: !GetAtt PortFatRequestActionsMockQueue.Outputs.QueueARN
+
+  PortFatRequestActionsMockQueueAlarmARN:
+    Description: pn-portfat_request_actions_Mock alarm ARN
+    Value: !GetAtt PortFatRequestActionsQueue.Outputs.SqsDLQAlarmArn
+
+  PortFatRequestActionsMockQueueAgeAlarmARN:
+    Description: pn-portfat_request_actions_Mock age alarm ARN
+    Value: !GetAtt PortFatRequestActionsMockQueue.Outputs.SqsAgeAlarmArn
+
   SafeStorageToPortfatQueueName:
     Value: !GetAtt SafeStorageToPortfatQueue.Outputs.QueueName
 
@@ -163,6 +212,15 @@ Outputs:
 
   SafeStorageToPortfatQueueURL:
     Value: !GetAtt SafeStorageToPortfatQueue.Outputs.QueueURL
+
+  SafeStorageToPortfatMockQueueName:
+    Value: !GetAtt SafeStorageToPortfatMockQueue.Outputs.QueueName
+
+  SafeStorageToPortfatMockQueueARN:
+    Value: !GetAtt SafeStorageToPortfatMockQueue.Outputs.QueueARN
+
+  SafeStorageToPortfatMockQueueURL:
+    Value: !GetAtt SafeStorageToPortfatMockQueue.Outputs.QueueURL
 
   # Queue DLQ
   PortFatRequestActionsQueueDLQName:
@@ -180,6 +238,22 @@ Outputs:
   PortFatRequestActionsQueueDLQAlarmARN:
     Description: pn-portfat_request_actions_DLQ alarm ARN
     Value: !GetAtt PortFatRequestActionsQueue.Outputs.SqsDLQAlarmArn
+
+  PortFatRequestActionsMockQueueDLQName:
+    Description: pn-portfat_request_actions_Mock_DLQ queue name
+    Value: !GetAtt PortFatRequestActionsMockQueue.Outputs.DeadLetterQueueName
+
+  PortFatRequestActionsMockQueueDLQURL:
+    Description: pn-portfat_request_actions_Mock_DLQ queue URL
+    Value: !GetAtt PortFatRequestActionsMockQueue.Outputs.DeadLetterQueueURL
+
+  PortFatRequestActionsMockQueueDLQARN:
+    Description: pn-portfat_request_actions_Mock_DLQ queue ARN
+    Value: !GetAtt PortFatRequestActionsMockQueue.Outputs.DeadLetterQueueARN
+
+  PortFatRequestActionsMockQueueDLQAlarmARN:
+    Description: pn-portfat_request_actions_Mock_DLQ alarm ARN
+    Value: !GetAtt PortFatRequestActionsMockQueue.Outputs.SqsDLQAlarmArn
 
   # Lambda functions
   EventFileReadyLambdaName:
