@@ -190,7 +190,7 @@ Outputs:
 
   PortFatRequestActionsMockQueueURL:
     Description: pn-portfat_request_actions_Mock queue URL
-    Value: !GetAtt PortFatRequestActionsMockueue.Outputs.QueueURL
+    Value: !GetAtt PortFatRequestActionsMockQueue.Outputs.QueueURL
 
   PortFatRequestActionsMockQueueARN:
     Description: pn-portfat_request_actions_Mock queue ARN
