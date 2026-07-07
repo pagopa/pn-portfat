@@ -6,7 +6,8 @@ exports.processFileReadyEvent = async (body) => {
     const messagePayload = {
         downloadUrl: body.downloadUrl,
         fileVersion: body.fileVersion,
-        filePath: filePath
+        filePath: filePath,
+        mock: body.mock || false
     };
 
     console.log('SENDING MESSAGE:', JSON.stringify(messagePayload));

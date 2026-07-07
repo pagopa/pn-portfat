@@ -110,13 +110,31 @@ class SafeStorageToPortfatQueueListenerTest extends BaseTest.WithLocalStack {
         when(webClient.downloadFileAsByteArray(anyString(), any()))
                 .thenReturn(Mono.empty());
 
-        when(portFatService.processDirectory(any(), anyString()))
+        when(portFatService.processDirectory(any(), anyString(), anyBoolean()))
                 .thenReturn(Mono.empty());
 
         listener.safeStorageToPortfatConsumer(payload, headers);
 
-        verify(portFatService).processDirectory(any(), anyString());
+        verify(portFatService).processDirectory(any(), anyString(), anyBoolean());
         verify(portFatDownloadDAO).updatePortFatDownload(any());
+    }
+
+    @Test
+    void testHappyPathListenerMock() {
+
+        when(safeStorageService.callSafeStorageGetFile(FILE_KEY))
+                .thenReturn(Mono.just("url"));
+
+        when(webClient.downloadFileAsByteArray(anyString(), any()))
+                .thenReturn(Mono.empty());
+
+        when(portFatService.processDirectory(any(), anyString(), anyBoolean()))
+                .thenReturn(Mono.empty());
+
+        listener.safeStorageToPortfatMockConsumer(payload, headers);
+
+        verify(portFatService).processDirectory(any(), anyString(), anyBoolean());
+        verifyNoInteractions(portFatDownloadDAO);
     }
 
     @Test

@@ -18,11 +18,17 @@ const sqsClient = new SQSClient({
 exports.sendMessageToQueue = async (message, filePath) => {
     console.log(`SQS Client initialized with ${isLocalStack ? 'fromEnv()' : 'explicit credentials'}`);
 
+    const isMock = message.mock === true || message.mock === 'true';
+
     const params = {
-        QueueUrl: config.queueUrl,
+        QueueUrl: isMock ? config.mockQueueUrl : config.queueUrl,
         MessageBody: JSON.stringify(message),
         MessageGroupId: filePath
     };
+
+    if (isMock) {
+        console.log(`Mock message sent to SQS queue: ${params.MessageBody}`);
+    }
 
     console.log('Sending message to queue:', params);
 

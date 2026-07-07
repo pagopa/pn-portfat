@@ -157,7 +157,7 @@ class PortFatServiceImplTest {
         when(safeStorageService.createAndUploadContent(any()))
                 .thenReturn(Mono.just("OK"));
 
-        StepVerifier.create(portFatService.processDirectory(tempDir, "fileKey"))
+        StepVerifier.create(portFatService.processDirectory(tempDir, "fileKey", false))
                 .verifyComplete();
 
         verify(safeStorageService, atLeastOnce())
@@ -172,7 +172,7 @@ class PortFatServiceImplTest {
         mockedUtility.when(() -> Utility.convertToObject(any(File.class), any()))
                 .thenThrow(new RuntimeException("parse error"));
 
-        StepVerifier.create(portFatService.processDirectory(tempDir, "fileKey"))
+        StepVerifier.create(portFatService.processDirectory(tempDir, "fileKey", false))
                 .expectError(RuntimeException.class)
                 .verify();
 
@@ -183,7 +183,7 @@ class PortFatServiceImplTest {
     void testProcessDirectoryFailure() {
         Path invalidPath = Path.of("not-existing-dir");
 
-        StepVerifier.create(portFatService.processDirectory(invalidPath, "fileKey"))
+        StepVerifier.create(portFatService.processDirectory(invalidPath, "fileKey", false))
                 .expectError(PnGenericException.class)
                 .verify();
     }

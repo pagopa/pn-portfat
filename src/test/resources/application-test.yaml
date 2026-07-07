@@ -9,7 +9,9 @@ spring:
 pn:
   portfat:
     safeStorageQueue: local-pn-safestorage-to-portfat
+    safeStorageMockQueue: local-pn-safestorage-to-portfat-mock
     sqsQueue: local-pn-portfat-inputs-requests.fifo
+    sqsQueueMock: local-pn-portfat-inputs-requests-mock.fifo
     blobStorageBaseUrl: http://localhost:1050
     filePathWhiteList: temp, portfatt, port-fatt
     basePathZipFile: port-fat-zips

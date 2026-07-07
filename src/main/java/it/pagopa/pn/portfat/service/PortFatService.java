@@ -8,6 +8,7 @@ import java.nio.file.Path;
 public interface PortFatService {
 
     Mono<Void> processZipFile(PortFatDownload portFatDownload);
-    Mono<Void> processDirectory(Path directoryPath, String fileKey);
+    Mono<Void> processMockZipFile(String downloadUrl);
+    Mono<Void> processDirectory(Path directoryPath, String fileKey, boolean isMock);
     Path createTmpFile(String prefix, String suffix);
 }

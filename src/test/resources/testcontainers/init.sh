@@ -1,7 +1,7 @@
 #!/bin/bash
 echo "### CREATE QUEUES FIFO ###"
 
-queues_fifo="local-pn-portfat-inputs-requests.fifo"
+queues_fifo="local-pn-portfat-inputs-requests.fifo, local-pn-portfat-inputs-requests-mock.fifo"
 
 for qn in  $( echo $queues_fifo | tr " " "\n" ) ; do
 
@@ -14,7 +14,7 @@ for qn in  $( echo $queues_fifo | tr " " "\n" ) ; do
 done
 
 echo "### CREATE QUEUES ###"
-queues="local-pn-safestorage-to-portfat"
+queues="local-pn-safestorage-to-portfat,local-pn-safestorage-to-portfat-mock"
 for qn in $(echo $queues | tr " " "\n"); do
   echo creating queue $qn ...
   aws --profile default --region us-east-1 --endpoint-url http://localstack:4566 \
