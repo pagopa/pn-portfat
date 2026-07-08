@@ -15,10 +15,10 @@ const sqsClient = new SQSClient({
     credentials: isLocalStack ? fromEnv() : config.credentials
 });
 
-exports.sendMessageToQueue = async (message, filePath) => {
+exports.sendMessageToQueue = async (message, filePath, mock) => {
     console.log(`SQS Client initialized with ${isLocalStack ? 'fromEnv()' : 'explicit credentials'}`);
 
-    const isMock = message.mock === true || message.mock === 'true';
+    const isMock = mock === true || mock === 'true';
 
     const params = {
         QueueUrl: isMock ? config.mockQueueUrl : config.queueUrl,
