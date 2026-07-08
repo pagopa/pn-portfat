@@ -53,7 +53,7 @@ describe('sqsClient - sendMessageToQueue', () => {
 
             const filePath = '/path/to/file';
 
-            await sqsClientModule.sendMessageToQueue(message, filePath);
+            await sqsClientModule.sendMessageToQueue(message, filePath, message.mock);
 
             expect(mockSend.calledOnce).to.be.true;
 

@@ -6,12 +6,11 @@ exports.processFileReadyEvent = async (body) => {
     const messagePayload = {
         downloadUrl: body.downloadUrl,
         fileVersion: body.fileVersion,
-        filePath: filePath,
-        mock: body.mock || false
+        filePath: filePath
     };
 
     console.log('SENDING MESSAGE:', JSON.stringify(messagePayload));
 
-    await sendMessageToQueue(messagePayload, filePath);
+    await sendMessageToQueue(messagePayload, filePath, body.mock || false);
     return { success: true };
 };

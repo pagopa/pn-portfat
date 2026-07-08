@@ -29,13 +29,12 @@ describe('messageService - processFileReadyEvent', () => {
         const expectedMessagePayload = {
             downloadUrl: inputBody.downloadUrl,
             fileVersion: inputBody.fileVersion,
-            filePath: expectedFilePath,
-            mock: false
+            filePath: expectedFilePath
         };
 
         const result = await messageService.processFileReadyEvent(inputBody);
 
-        expect(sendMessageToQueueStub.calledOnceWithExactly(expectedMessagePayload, expectedFilePath)).to.be.true;
+        expect(sendMessageToQueueStub.calledOnceWithExactly(expectedMessagePayload, expectedFilePath, false)).to.be.true;
 
         expect(result).to.deep.equal({ success: true });
     });
@@ -51,13 +50,12 @@ describe('messageService - processFileReadyEvent', () => {
         const expectedMessagePayload = {
             downloadUrl: inputBody.downloadUrl,
             fileVersion: inputBody.fileVersion,
-            filePath: expectedFilePath,
-            mock: false
+            filePath: expectedFilePath
         };
 
         const result = await messageService.processFileReadyEvent(inputBody);
 
-        expect(sendMessageToQueueStub.calledOnceWithExactly(expectedMessagePayload, expectedFilePath)).to.be.true;
+        expect(sendMessageToQueueStub.calledOnceWithExactly(expectedMessagePayload, expectedFilePath, false)).to.be.true;
 
         expect(result).to.deep.equal({ success: true });
     });
@@ -73,13 +71,12 @@ describe('messageService - processFileReadyEvent', () => {
             const expectedMessagePayload = {
                 downloadUrl: inputBody.downloadUrl,
                 fileVersion: inputBody.fileVersion,
-                filePath: expectedFilePath,
-                mock: true
+                filePath: expectedFilePath
             };
 
         const result = await messageService.processFileReadyEvent(inputBody);
 
-        expect(sendMessageToQueueStub.calledOnceWithExactly(expectedMessagePayload, expectedFilePath)).to.be.true;
+        expect(sendMessageToQueueStub.calledOnceWithExactly(expectedMessagePayload, expectedFilePath, true)).to.be.true;
 
         expect(result).to.deep.equal({ success: true });
     });
