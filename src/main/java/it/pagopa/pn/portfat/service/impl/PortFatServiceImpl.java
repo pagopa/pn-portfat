@@ -106,6 +106,7 @@ public class PortFatServiceImpl implements PortFatService {
         String fileName = UUID.randomUUID().toString();
         Path zipFilePath = createTmpFile(fileName, portFatConfig.getZipExtension());
         return webClient.downloadFileAsByteArray(downloadUrl, zipFilePath)
+                .thenReturn(downloadUrl)
                 .flatMap(ignored ->
                         Mono.fromCallable(() -> Files.readAllBytes(zipFilePath))
                 )
