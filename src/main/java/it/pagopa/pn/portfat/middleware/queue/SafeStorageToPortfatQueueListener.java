@@ -98,6 +98,7 @@ public class SafeStorageToPortfatQueueListener {
 
         String fileKey = payload.getKey();
         Mono<Void> handledMessage =  retrieveAndProcessFile(fileKey, zipFilePath, outputFilesPath, true)
+                .thenReturn(fileKey)
                 .doFinally(signalType -> {
                     deleteTmpFiles(zipFilePath);
                     deleteTmpFiles(outputFilesPath);
