@@ -2,6 +2,21 @@
 
 Questo documento descrive i flussi interni del microservizio `pn-portfat` e della Lambda `event-file-ready`, usando come fonti il codice applicativo, le specifiche OpenAPI e i template CloudFormation presenti nel repository.
 
+Il microservizio è configurato per scalare automaticamente in base alla quantità di messaggi presenti nella coda SQS FIFO di ingresso; i parametri CloudFormation indicano `MinTasksNumber` pari a `1`, `MaxTasksNumber` pari a `6` e periodo di controllo pari a `300` secondi.
+
+```mermaid
+flowchart TD
+    A[Inizio: Task ECS = 0] --> B{Coda SQS contiene ≥ 1 messaggio?}
+    B -- No --> C[Mantieni Task ECS = 0]
+    B -- Sì --> D[Scala fino a MinTasksNumber]
+    D --> E[Processa messaggi SQS]
+    E --> F{Coda ancora piena e < MaxTasksNumber?}
+    F -- Sì --> G[Scala orizzontalmente]
+    F -- No --> H[Riduci Task se idle per tempo definito]
+    G --> E
+    H --> A
+```
+
 ## Componenti
 
 | Componente                              | Responsabilità                                                                                                         | Fonte                                                                                                                                                            |

@@ -13,8 +13,7 @@
 
 ## Descrizione
 
-Il servizio `pn-portfat` realizza l'integrazione asincrona tra il Portale di Fatturazione e la piattaforma SEND di pagoPA per 
-ricevere eventi di disponibilità file, scaricare archivi `.zip`, deduplicare le richieste di elaborazione, archiviare lo ZIP originale su SafeStorage, estrarre i file `.json` contenuti nell'archivio e caricare i singoli contenuti elaborati su SafeStorage. 
+Microservizio di backend sviluppato in Spring Boot WebFlux per ricevere, elaborare e archiviare file `.zip` inviati dal Portale di Fatturazione al fine di integrarli con il sistema SEND di pagoPA.
 Il Portale di Fatturazione invoca la Lambda `event-file-ready`, che pubblica gli eventi su code SQS FIFO consumate dal microservizio Java eseguito su ECS; 
 il servizio usa DynamoDB per tracciare lo stato dei download e chiama SafeStorage per archiviazione, recupero e upload dei contenuti.
 
@@ -79,21 +78,6 @@ flowchart TD
     B -- Sì, stato COMPLETED --> G[Ignora e termina]
 ```
 
-Il microservizio è configurato per scalare automaticamente in base alla quantità di messaggi presenti nella coda SQS FIFO di ingresso; i parametri CloudFormation indicano `MinTasksNumber` pari a `1`, `MaxTasksNumber` pari a `6` e periodo di controllo pari a `300` secondi.
-
-```mermaid
-flowchart TD
-    A[Inizio: Task ECS = 0] --> B{Coda SQS contiene ≥ 1 messaggio?}
-    B -- No --> C[Mantieni Task ECS = 0]
-    B -- Sì --> D[Scala fino a MinTasksNumber]
-    D --> E[Processa messaggi SQS]
-    E --> F{Coda ancora piena e < MaxTasksNumber?}
-    F -- Sì --> G[Scala orizzontalmente]
-    F -- No --> H[Riduci Task se idle per tempo definito]
-    G --> E
-    H --> A
-```
-
 ---
 
 ## Interfacce del Servizio
@@ -104,12 +88,12 @@ flowchart TD
 | API   | IN  | HealthCheck                      | REST       | GET     | `/status`                              | Restituisce lo stato applicativo del servizio.                                                                                                              |
 | API   | OUT | SafeStorage upload               | REST       | POST    | `/safe-storage/v1/files`               | Crea file su SafeStorage per ZIP originale e JSON estratti, includendo SHA-256 e metadati applicativi.                                                      |
 | API   | OUT | SafeStorage download             | REST       | GET     | `/safe-storage/v1/files/{fileKey}`     | Recupera tramite client generato `FileDownloadApi.getFile` l'URL temporaneo di download associato alla chiave SafeStorage dello ZIP archiviato.             |
-| EVENT | OUT | `PortFatRequestActionsQueue`     | SQS        | PRODUCE | `pn-portfat_request_actions.fifo`      | La Lambda `event-file-ready` pubblica il messaggio `{downloadUrl, fileVersion, filePath}` con `MessageGroupId` uguale a `filePath`.                         |
-| EVENT | OUT | `PortFatRequestActionsMockQueue` | SQS        | PRODUCE | `pn-portfat_request_actions_mock.fifo` | La Lambda pubblica sulla coda mock quando il payload contiene il flag mock gestito dal codice Lambda.                                                       |
-| EVENT | IN  | `PortFatRequestActionsQueue`     | SQS        | CONSUME | `pn-portfat_request_actions.fifo`      | `QueueListener` consuma gli eventi di file pronto, valida URL/path/versione, crea o aggiorna lo stato DynamoDB e archivia lo ZIP su SafeStorage.            |
-| EVENT | IN  | `PortFatRequestActionsMockQueue` | SQS        | CONSUME | `pn-portfat_request_actions_mock.fifo` | `QueueListener` consuma gli eventi mock e archivia lo ZIP con document type mock.                                                                           |
-| EVENT | IN  | `SafeStorageToPortfatQueue`      | SQS        | CONSUME | `safestorage-to-portfat`               | `SafeStorageToPortfatQueueListener` consuma la callback SafeStorage, scarica lo ZIP archiviato, estrae i JSON e carica i contenuti su SafeStorage.          |
-| EVENT | IN  | `SafeStorageToPortfatMockQueue`  | SQS        | CONSUME | `safestorage-to-portfat-mock`          | `SafeStorageToPortfatQueueListener` consuma la callback mock SafeStorage ed elabora lo ZIP in modalità mock.                                                |
+| EVENT | OUT | `PortFatRequestActionsQueue`     | SQS        | PRODUCE | `pn-portfat_request_actions.fifo`      | Evento SQS FIFO di disponibilità file, con payload `{downloadUrl, fileVersion, filePath}` e `MessageGroupId` uguale a `filePath`.                           |
+| EVENT | OUT | `PortFatRequestActionsMockQueue` | SQS        | PRODUCE | `pn-portfat_request_actions_mock.fifo` | Evento SQS FIFO mock di disponibilità file, con lo stesso payload della coda principale e indirizzato al flusso mock.                                       |
+| EVENT | IN  | `PortFatRequestActionsQueue`     | SQS        | CONSUME | `pn-portfat_request_actions.fifo`      | Messaggio di disponibilità file proveniente dalla coda principale, contenente URL di download, versione e path logico del file.                             |
+| EVENT | IN  | `PortFatRequestActionsMockQueue` | SQS        | CONSUME | `pn-portfat_request_actions_mock.fifo` | Messaggio mock di disponibilità file proveniente dalla coda mock, associato al document type mock.                                                          |
+| EVENT | IN  | `SafeStorageToPortfatQueue`      | SQS        | CONSUME | `safestorage-to-portfat`               | Notifica SafeStorage con la chiave dello ZIP archiviato, usata per recuperare il file originale da elaborare.                                               |
+| EVENT | IN  | `SafeStorageToPortfatMockQueue`  | SQS        | CONSUME | `safestorage-to-portfat-mock`          | Notifica mock SafeStorage con la chiave dello ZIP archiviato nel flusso mock.                                                                               |
 
 OpenAPI:
 
