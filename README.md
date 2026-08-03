@@ -23,7 +23,7 @@ il servizio usa DynamoDB per tracciare lo stato dei download e chiama SafeStorag
 
 ### Stack Tecnologico
 
-* Java 17+
+* Java 21
 * Spring Boot 3 / Spring WebFlux
 * Spring Cloud AWS SQS
 * Node.js 20.x per la Lambda `event-file-ready`
@@ -147,7 +147,7 @@ OpenAPI:
 
 ### Prerequisiti
 
-* Java 17+
+* Java 21
 * Node.js 20+
 * Docker 27+ oppure Podman attivo per i test di integrazione
 * Build locale dei progetti `pn-parent` e `pn-commons` da cui `pn-portfat` dipende
