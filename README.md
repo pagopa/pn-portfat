@@ -1,21 +1,53 @@
 # pn-portfat
 
+## Indice
+- [Descrizione](#descrizione)
+- [Tecnologie Utilizzate](#tecnologie-utilizzate)
+- [Architettura](#architettura)
+- [Interfacce del Servizio](#interfacce-del-servizio)
+- [Configurazioni](#configurazioni)
+- [Allarmi e Monitoraggio](#allarmi-e-monitoraggio)
+- [Esecuzione](#esecuzione)
+
+---
+
+## Descrizione
+
 Microservizio di backend sviluppato in Spring Boot WebFlux per ricevere, elaborare e archiviare file `.zip` inviati dal Portale di Fatturazione al fine di integrarli con il sistema SEND di pagoPA.
+Il Portale di Fatturazione invoca la Lambda `event-file-ready`, che pubblica gli eventi su code SQS FIFO consumate dal microservizio Java eseguito su ECS; 
+il servizio usa DynamoDB per tracciare lo stato dei download e chiama SafeStorage per archiviazione, recupero e upload dei contenuti.
 
-## Panoramica
+---
 
-Il progetto realizza un'integrazione asincrona tra il **Portale di Fatturazione** e la piattaforma **SEND**. Si compone di:
+## Tecnologie Utilizzate
 
-- AWS **Lambda** (`event-file-ready`) che riceve gli eventi e li pubblica su una coda FIFO
-- Coda **SQS FIFO** `pn-portfat_request_actions.fifo` con meccanismi di deduplicazione e retry
-- Microservizio **ECS** `pn-portfat`, che scarica e processa i file `.zip`, salvando i dati su **SafeStorage**
+### Stack Tecnologico
 
-## Confini e responsabilità
+* Java 21
+* Spring Boot 3 / Spring WebFlux
+* Spring Cloud AWS SQS
+* Node.js 20.x per la Lambda `event-file-ready`
+* OpenAPI 3.0.1 con generazione client/server tramite `openapi-generator-maven-plugin`
+* Azure Storage Blob client
+* Apache Commons Compress per gestione archivi ZIP
+* Testcontainers e LocalStack per test con servizi AWS locali
 
-- **Responsabilità:** ricezione eventi, deduplicazione, validazione, estrazione file JSON, archiviazione
-- **Dipendenze:** AWS Lambda, SQS, DynamoDB, Azure Blob Storage, SafeStorage
+### Infrastruttura
 
-### Architettura
+* AWS Lambda
+* AWS API Gateway
+* AWS SQS FIFO con DLQ
+* AWS ECS Fargate
+* AWS DynamoDB
+* AWS CloudWatch Logs, Dashboard e Alarm
+* SafeStorage
+* Azure Blob Storage
+
+---
+
+## Architettura
+
+Il flusso principale parte dalla ricezione dell'evento HTTP di file pronto, prosegue con la pubblicazione su SQS FIFO, la deduplicazione su DynamoDB, l'archiviazione dello ZIP originale su SafeStorage e la successiva elaborazione dei JSON estratti a seguito della callback SafeStorage. La documentazione di dettaglio è disponibile in [**Architettura interna**](docs/ms/architettura_interna.md).
 
 ```mermaid
 sequenceDiagram
@@ -33,143 +65,7 @@ sequenceDiagram
     ECS (pn-portfat)->>SafeStorage: Unzip + upload entry
 ```
 
-## Prerequisiti
-
-- Java 17+
-- Node.js 20+
-- Docker 27+
-
-Prima di procedere:
-- Effettuare il build locale dei progetti `pn-parent` e `pn-commons` dai quali `pn-portfat` dipende
-- Assicurarsi che `Docker` o `Podman` siano attivi per consentire la corretta esecuzione dei test di integrazione
-
-## Installazione
-### Ambiente Locale
-```bash
-    git clone https://github.com/pagopa/pn-portfat.git
-    cd pn-portfat
-    ./mvnw clean install
-```
-
-## Configurazione
-
-Il microservizio utilizza i seguenti parametri di configurazione, gestibili tramite:
-
-1. **Variabili d'ambiente:**
-- **ECS `pn-portfat`**
-
-| Variabile Ambiente          | Descrizione                               | Obbligatorio |
-|----------------------------|-------------------------------------------|--------------|
-| `BLOB_STORAGE_BASE_URL`    | Url base per validazione del download URL | Sì           |
-| `SAFE_STORAGE_URL`         | Endpoint del servizio SafeStorage         | Sì           |
-| `DYNAMO_TABLE_NAME`        | Nome della tabella per la deduplicazione  | Sì           |
-| `SQS_QUEUE_NAME`           | Nome della coda dalla quale leggere       | Sì           |
-
-- **Lambda `event-file-ready`**
-
-| Variabile Ambiente          | Descrizione                                | Obbligatorio |
-|-----------------------------|--------------------------------------------|--------------|
-| `PN_PORTFAT_AWS_REGION`     | Regione dove è deployato il microservizio  | Sì           |
-| `PN_PORTFAT_SQS_QUEUE_NAME` | Nome logico della coda dalla quale leggere | Sì           |
-| `PN_PORTFAT_SQS_QUEUE_URL`  | Url della coda dalla quale leggere         | Sì           |
-
-2. **File di configurazione:**
-- Estratto da `application.yml` (Spring Boot):
-
-```yaml
-pn:
-  portfat:
-    sqsQueue: ${PN_PORTFAT_AWS_SQS_NAME}
-    blobStorageBaseUrl: ${PN_PORTFAT_BLOB_STORAGE_BASE_URL}
-    filePathWhiteList: temp, portfatt, port-fatt
-    basePathZipFile: port-fat-zips
-    zipExtension: .zip
-    clientSafeStorageBasePath: ${PN_PORTFAT_SAFESTORAGEBASEURL}
-    safeStorageCxId: ${PN_PORTFAT_SAFESTORAGECXID}
-
-aws:
-  dynamodbPortFatTable: ${PN_PORTFAT_PORTFAT_TABLE_NAME}
-```
-
-- Estratto da `config.json` (Node.js):
-```json
-{
-   "PN_PORTFAT_AWS_REGION": "PN_PORTFAT_AWS_REGION",
-   "PN_PORTFAT_SQS_QUEUE_URL": "PN_PORTFAT_SQS_QUEUE_URL",
-   "PN_PORTFAT_SQS_QUEUE_NAME": "PN_PORTFAT_SQS_QUEUE_NAME"
-}
-```
-
-### Configurazione Base
-
-| Variabile Ambiente          | File Property                  | Default       | Obbligatorio | Descrizione                            |
-|----------------------------|--------------------------------|---------------|--------------|-----------------------------------------|
-| `SERVER_PORT`              | `server.port`                 | 8080          | No           | Porta del servizio                       |
-| `LOG_LEVEL`                | `logging.level.root`          | INFO          | No           | DEBUG/INFO/WARN/ERROR                    |
-
-
-## API Documentation
-
-**OpenAPI Spec**: disponibile nel file [`docs/openapi/pn-external-portfat-v1.yaml`](./docs/openapi/pn-external-portfat-v1.yaml)
-
-L'interfaccia principale è rappresentata dalla Lambda `event-file-ready` che espone una API REST pubblica:
-
-- `POST /pn-portfat-in/file-ready-event` - Riceve eventi inerenti file prodotti dal Portale Fatturazione
-
-### 1. Lambda `event-file-ready`
-
-- Linguaggio: Node.js
-- Espone l'endpoint `POST /pn-portfat-in/file-ready-event`
-- Riceve un evento contenente `downloadUrl` e `fileVersion`
-- Invia sulla coda **SQS FIFO** `pn-portfat_request_actions.fifo` messaggi contenenti `downloadUrl`, `fileVersion` e `filePath`
-- `filePath` è utilizzato come `MessageGroupId` per garantire l'elaborazione sequenziale per singolo file
-
-### 2. Coda SQS FIFO `pn-portfat_request_actions.fifo`
-- Deduplicazione temporale abilitata, valida fino a 5 minuti se il contenuto del messaggio è identico
-- Il `VisibilityTimeout` è impostato a **1200 secondi (20 minuti)**: se un messaggio non viene completato entro questo tempo, viene riproposto
-- Dopo **5 tentativi falliti**, il messaggio passa automaticamente nella **DLQ** (Dead Letter Queue)
-
-#### Struttura dei messaggi
-
-Ogni messaggio inviato sulla coda **SQS FIFO** `pn-portfat_request_actions.fifo` è un oggetto JSON con la seguente struttura:
-
-```json
-{
-  "downloadUrl": "https://...",
-  "fileVersion": "2025-01",
-  "filePath": "/ordinativi/ente1/2025-01.zip"
-}
-```
-
-- `downloadUrl`: URL firmato temporaneo (SAS) per scaricare il file ZIP da Azure Blob
-- `fileVersion`: identificatore di versione usato per la deduplicazione
-- `filePath`: path logico utile per validazioni e ordinamento
-
-### 3. Microservizio ECS `pn-portfat`
-
-#### Funzionalità principali:
-- Linguaggio e Framework: Java + Spring Boot WebFlux
-- Consuma i messaggi dalla coda **SQS FIFO** `pn-portfat_request_actions.fifo`
-- Valida se `downloadUrl` deve iniziare con `blobStorageBaseUrl`
-- Valida se `filePath` deve essere nella `filePathWhiteList`
-- Deduplica tramite DynamoDB (`pn-PortfatDownload`) usando `downloadId`
-- Scarica file da Azure Blob con SAS
-- Esegue unzip del file
-- Carica le singole entry su SafeStorage, con tagging semantico
-
-#### SafeStorage e Tagging
-
-Ogni file `.json` estratto viene:
-
-- Caricato su SafeStorage tramite API `POST /safe-storage/v1/files`
-- Associato seguenti metadati:
-    - `sender_pa_id`
-    - `reference_period_year_month`
-    - `original_data_update_timestamp`
-
-### 4. Deduplicazione & Sicurezza
-
-- La deduplicazione persistente è garantita tramite la tabella DynamoDB
+La deduplicazione persistente è basata sulla tabella DynamoDB `PortFatDownload`, che mantiene lo stato del download e permette di ignorare elaborazioni già completate o riprovare quelle terminate in errore.
 
 ```mermaid
 flowchart TD
@@ -182,55 +78,96 @@ flowchart TD
     B -- Sì, stato COMPLETED --> G[Ignora e termina]
 ```
 
-### 5. ECS Autoscaling Policy
-Il microservizio pn-portfat è configurato per scalare automaticamente in base alla quantità di messaggi presenti nella coda **SQS FIFO** `pn-portfat_request_actions.fifo`
+---
 
-L’istanza ECS parte con 0 task attivi e ne avvia 1 automaticamente quando la coda **SQS FIFO** `pn-portfat_request_actions.fifo` contiene almeno 1 messaggio, controllata ogni 300 secondi (5 minuti)
+## Interfacce del Servizio
 
-Il numero massimo di task contemporanei è 6, mentre il minimo garantito è 1
+| Tipo  | Dir | Risorsa                          | Protocollo | Metodo  | Route                                  | Descrizione                                                                                                                                                 |
+|-------|-----|----------------------------------|------------|---------|----------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| API   | IN  | Portale Fatturazione             | REST       | POST    | `/pn-portfat-in/file-ready-event`      | Riceve l'evento di disponibilità file con `downloadUrl` e `fileVersion`; la Lambda calcola `filePath` dal pathname dell'URL e pubblica il messaggio su SQS. |
+| API   | IN  | HealthCheck                      | REST       | GET     | `/status`                              | Restituisce lo stato applicativo del servizio.                                                                                                              |
+| API   | OUT | SafeStorage upload               | REST       | POST    | `/safe-storage/v1/files`               | Crea file su SafeStorage per ZIP originale e JSON estratti, includendo SHA-256 e metadati applicativi.                                                      |
+| API   | OUT | SafeStorage download             | REST       | GET     | `/safe-storage/v1/files/{fileKey}`     | Recupera tramite client generato `FileDownloadApi.getFile` l'URL temporaneo di download associato alla chiave SafeStorage dello ZIP archiviato.             |
+| EVENT | OUT | `PortFatRequestActionsQueue`     | SQS        | PRODUCE | `pn-portfat_request_actions.fifo`      | Evento SQS FIFO di disponibilità file, con payload `{downloadUrl, fileVersion, filePath}` e `MessageGroupId` uguale a `filePath`.                           |
+| EVENT | OUT | `PortFatRequestActionsMockQueue` | SQS        | PRODUCE | `pn-portfat_request_actions_mock.fifo` | Evento SQS FIFO mock di disponibilità file, con lo stesso payload della coda principale e indirizzato al flusso mock.                                       |
+| EVENT | IN  | `PortFatRequestActionsQueue`     | SQS        | CONSUME | `pn-portfat_request_actions.fifo`      | Messaggio di disponibilità file proveniente dalla coda principale, contenente URL di download, versione e path logico del file.                             |
+| EVENT | IN  | `PortFatRequestActionsMockQueue` | SQS        | CONSUME | `pn-portfat_request_actions_mock.fifo` | Messaggio mock di disponibilità file proveniente dalla coda mock, associato al document type mock.                                                          |
+| EVENT | IN  | `SafeStorageToPortfatQueue`      | SQS        | CONSUME | `safestorage-to-portfat`               | Notifica SafeStorage con la chiave dello ZIP archiviato, usata per recuperare il file originale da elaborare.                                               |
+| EVENT | IN  | `SafeStorageToPortfatMockQueue`  | SQS        | CONSUME | `safestorage-to-portfat-mock`          | Notifica mock SafeStorage con la chiave dello ZIP archiviato nel flusso mock.                                                                               |
 
-```mermaid
-flowchart TD
-    A[Inizio: Task ECS = 0] --> B{Coda SQS contiene ≥ 1 messaggio?}
-    B -- No --> C[Mantieni Task ECS = 0]
-    B -- Sì --> D[Scala fino a MinTasksNumber]
-    D --> E[Processa messaggi SQS]
-    E --> F{Coda ancora piena e < MaxTasksNumber?}
-    F -- Sì --> G[Scala orizzontalmente]
-    F -- No --> H[Riduci Task se idle per tempo definito]
-    G --> E
-    H --> A
+OpenAPI:
+
+* [docs/openapi/pn-external-portfat-v1.yaml](docs/openapi/pn-external-portfat-v1.yaml)
+* [docs/openapi/pn-internal-portfat-v1.yaml](docs/openapi/pn-internal-portfat-v1.yaml)
+
+---
+
+## Configurazioni
+
+| Nome                                               | Sorgente       | Valori                               | Descrizione                                                                                       |
+|----------------------------------------------------|----------------|--------------------------------------|---------------------------------------------------------------------------------------------------|
+| `PN_PORTFAT_AWS_SQS_NAME`                          | ENV            | Nome coda SQS                        | Coda FIFO da cui il microservizio consuma gli eventi di file pronto.                              |
+| `PN_PORTFAT_MOCK_AWS_SQS_NAME`                     | ENV            | Nome coda SQS mock                   | Coda FIFO mock da cui il microservizio consuma gli eventi di file pronto in modalità mock.        |
+| `PN_PORTFAT_SQS_SAFESTORAGETOPORTFATQUEUENAME`     | ENV            | Nome coda SQS                        | Coda da cui il microservizio consuma le callback SafeStorage relative agli ZIP archiviati.        |
+| `PN_PORTFAT_SQS_SAFESTORAGETOPORTFATMOCKQUEUENAME` | ENV            | Nome coda SQS mock                   | Coda mock da cui il microservizio consuma le callback SafeStorage.                                |
+| `PN_PORTFAT_BLOB_STORAGE_BASE_URL`                 | ENV            | URL base Azure Blob Storage          | Base URL ammesso per validare il `downloadUrl` ricevuto negli eventi del Portale di Fatturazione. |
+| `PN_PORTFAT_SAFESTORAGEBASEURL`                    | ENV            | URL SafeStorage                      | Base URL usata dal client SafeStorage per creazione e recupero file.                              |
+| `PN_PORTFAT_SAFESTORAGECXID`                       | ENV            | `pn-portfat-in` o valore configurato | Identificativo client usato nelle chiamate SafeStorage.                                           |
+| `PN_PORTFAT_PORTFAT_TABLE_NAME`                    | ENV            | Nome tabella DynamoDB                | Tabella `PortFatDownload` usata per deduplicazione e stato del download.                          |
+| `PN_PORTFAT_AWS_REGION`                            | ENV            | Regione AWS                          | Regione usata dalla Lambda `event-file-ready` per inizializzare il client SQS.                    |
+| `PN_PORTFAT_SQS_QUEUE_NAME`                        | ENV            | Nome coda SQS                        | Nome logico della coda di ingresso configurato nella Lambda `event-file-ready`.                   |
+| `PN_PORTFAT_SQS_QUEUE_URL`                         | ENV            | URL coda SQS                         | URL della coda di ingresso usato dalla Lambda per pubblicare messaggi.                            |
+| `PN_PORTFAT_MOCK_SQS_QUEUE_NAME`                   | ENV            | Nome coda SQS mock                   | Nome logico della coda mock configurato nella Lambda `event-file-ready`.                          |
+| `PN_PORTFAT_MOCK_SQS_QUEUE_URL`                    | ENV            | URL coda SQS mock                    | URL della coda mock usato dalla Lambda per pubblicare messaggi mock.                              |
+| `BlobStorageBaseUrl`                               | CloudFormation | URL Azure Blob Storage               | Parametro CloudFormation propagato all'ambiente ECS come `PN_PORTFAT_BLOB_STORAGE_BASE_URL`.      |
+| `SandboxSafeStorageBaseUrl`                        | CloudFormation | URL SafeStorage                      | Parametro CloudFormation propagato all'ambiente ECS come `PN_PORTFAT_SAFESTORAGEBASEURL`.         |
+| `SafeStorageCxId`                                  | CloudFormation | Default `pn-portfat-in`              | Parametro CloudFormation propagato all'ambiente ECS come `PN_PORTFAT_SAFESTORAGECXID`.            |
+| `PortFatWafLimit`                                  | CloudFormation | Numero                               | Limite applicato dalla configurazione WAF associata all'API Gateway del servizio.                 |
+
+---
+
+## Allarmi e Monitoraggio
+
+| Tipo      | Nome                                                               | Descrizione                                                                                                                         |
+|-----------|--------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| ALARM     | `PortFatRequestActionsQueueAlarmARN`                               | Allarme associato alla coda FIFO di ingresso; segnala condizioni operative sulla coda principale da cui il servizio consuma eventi. |
+| ALARM     | `PortFatRequestActionsQueueAgeAlarmARN`                            | Allarme sull'età dei messaggi nella coda FIFO di ingresso; segnala accumulo o ritardi di elaborazione.                              |
+| ALARM     | `PortFatRequestActionsQueueDLQAlarmARN`                            | Allarme sulla DLQ della coda di ingresso; segnala messaggi non elaborati dopo i retry previsti.                                     |
+| ALARM     | `PortFatRequestActionsMockQueueAlarmARN`                           | Allarme associato alla coda FIFO mock.                                                                                              |
+| ALARM     | `PortFatRequestActionsMockQueueAgeAlarmARN`                        | Allarme sull'età dei messaggi nella coda FIFO mock.                                                                                 |
+| ALARM     | `PortFatRequestActionsMockQueueDLQAlarmARN`                        | Allarme sulla DLQ della coda mock.                                                                                                  |
+| ALARM     | `PortFatLambdaAlarms.Outputs.LambdaInvocationErrorLogsMetricAlarm` | Allarme sugli errori di invocazione/log della Lambda `event-file-ready`, incluso nella dashboard CloudWatch del microservizio.      |
+| DASHBOARD | `PortFatCloudWatchDashboard`                                       | Dashboard CloudWatch con riferimenti a API Gateway, Lambda, code SQS, DLQ, tabella DynamoDB e log group del servizio.               |
+| LOG       | `EcsLogGroup`                                                      | Log group ECS del microservizio `pn-portfat`, usato per log applicativi e tracciamento MDC.                                         |
+| LOG       | `LambdaLogGroup`                                                   | Log group della Lambda `event-file-ready`.                                                                                          |
+
+---
+
+## Esecuzione
+
+### Prerequisiti
+
+* Java 21
+* Node.js 20+
+* Docker 27+ oppure Podman attivo per i test di integrazione
+* Build locale dei progetti `pn-parent` e `pn-commons` da cui `pn-portfat` dipende
+
+### Build
+
+```bash
+    git clone https://github.com/pagopa/pn-portfat.git
+    cd pn-portfat
+    ./mvnw clean install
 ```
 
-### 6. Scenari di errore gestiti
+### Test
 
-| Caso                         | Effetto                                       |
-|------------------------------|-----------------------------------------------|
-| Azure irraggiungibile        | Stato = `ERROR` in DB                         |
-| File ZIP corrotto            | Stato = `ERROR` in DB                         |
-| File non JSON nel .zip       | Stato = `ERROR` in DB                         |
-| SafeStorage irraggiungibile  | Stato = `ERROR` in DB                         |
-
-### 7. Mappa delle responsabilità
-
-| Componente                                      | Responsabilità principali                                                       |
-|-------------------------------------------------|---------------------------------------------------------------------------------|
-| Portale Fatturazione                            | Invio evento HTTP con `downloadUrl` e `fileVersion`                             |
-| Lambda `event-file-ready`                       | Valida input, pubblica su SQS FIFO                                              |
-| Coda SQS FIFO `pn-portfat_request_actions.fifo` | Deduplica temporale, garantisce ordine e retry                                  |
-| ECS `pn-portfat`                                | Scarica file, unzip, carica entry su SafeStorage, aggiorna stato                |
-| SafeStorage                                     | Archivia file JSON, supporta tagging semantico                                  |
-| DynamoDB                                        | Memorizza stato `IN_PROGRESS`, `COMPLETED`, `ERROR`                             |
-
-## Test
-
-### Esecuzione Test
 ```bash
     ./mvnw verify
 ```
 
-## Locale
-### Esecuzione in locale
+### Avvio locale
+
 ```bash
     ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
 ```
