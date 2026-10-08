@@ -22,6 +22,8 @@ public class PortFatDownload {
     public static final String UPDATED_AT = "updatedAt";
     public static final String ERROR_MESSAGE = "errorMessage";
     public static final String ARCHIVE_FILE_KEY = "archiveFileKey";
+    public static final String MONTH_SENT = "monthSent";
+    public static final String ORDER_MONTH = "orderMonth";
     public static final String ARCHIVE_FILE_INDEX = "archiveFileKey-index";
 
     @Getter(onMethod=@__({@DynamoDbPartitionKey, @DynamoDbAttribute(DOWNLOAD_ID)}))
@@ -53,4 +55,10 @@ public class PortFatDownload {
             @DynamoDbAttribute(ARCHIVE_FILE_KEY)
     }))
     private String archiveFileKey;
+
+    @Getter(onMethod=@__({@DynamoDbAttribute(MONTH_SENT)}))
+    private String monthSent;
+
+    @Getter(onMethod=@__({@DynamoDbAttribute(ORDER_MONTH)}))
+    private String orderMonth;
 }

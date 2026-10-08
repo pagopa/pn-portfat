@@ -15,6 +15,9 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.*;
 
 /**
@@ -170,6 +173,28 @@ public class Utility {
         } catch (IOException e) {
             log.error("Errore nell'eliminazione del file tmp: {}", pathToDelete, e);
         }
+    }
+
+    /**
+     * Estrae il valore anno_mese (YYYY_MM) dal filePath.
+     * <p>
+     * Cerca il pattern YYYY_MM nel path, ad esempio da:
+     * /modulicommessazip/2026_10/portfatt_modulo_commessa_2026_10_...
+     * estrae: 2026_10
+     *
+     * @param filePath il percorso del file da cui estrarre anno e mese
+     * @return il valore anno_mese nel formato YYYY_MM, o null se non trovato
+     */
+    public static String extractYearMonthFromPath(String filePath) {
+        if (filePath == null || filePath.isEmpty()) {
+            return null;
+        }
+        Pattern pattern = Pattern.compile("(\\d{4}_\\d{1,2})");
+        Matcher matcher = pattern.matcher(filePath);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null;
     }
 
 }
