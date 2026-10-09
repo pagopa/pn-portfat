@@ -1,0 +1,35 @@
+{
+  "name": "senderordercheck-lambda",
+  "version": "1.0.0",
+  "description": "Lambda di controllo per verificare la corretta acquisizione da parte di SEND delle commesse mensili X+1 e X+4 rese disponibili da Portale Fatturazione",  "main": "src/index.js",
+  "main": "index.js",
+  "engines": {
+    "node": "20.x"
+  },
+  "scripts": {
+    "test-build": "npm run-script test && npm run-script coverage && npm run-script build",
+    "build": "npm run-script build:single && npm run-script build:multiLayer",
+    "test": "nyc --reporter=html --reporter=text mocha './src/test/**/*.test.js' --recursive --timeout=6000 --exit -r dotenv/config",
+    "coverage": "nyc report --reporter=lcov"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "3.995.0",
+    "@aws-sdk/lib-dynamodb": "3.995.0",
+    "@js-joda/core": "^5.6.5"
+  },
+  "devDependencies": {
+    "chai": "^4.3.9",
+    "eslint": "^9.22.0",
+    "globals": "^16.0.0",
+    "lambda-tester": "^4.0.1",
+    "mocha": "^10.3.0",
+    "mocha-lcov-reporter": "^1.3.0",
+    "nyc": "^17.1.0",
+    "proxyquire": "^2.1.3",
+    "sinon": "^19.0.2",
+    "dotenv": "^16.4.5"
+  },
+  "author": "",
+  "license": "ISC"
+}
+

@@ -245,9 +245,17 @@ Parameters:
     Type: String
     Description: Name of Lambda Log Group
 
+  LambdaSenderOrderCheckLogGroup:
+    Type: String
+    Description: Name of Lambda Sender Order Check Log Group
+
   EventFileReadyLambdaName:
     Type: String
     Description: Name of the EventFileReady lambda function
+
+  SenderOrderCheckLambdaName:
+    Type: String
+    Description: Name of the SenderOrderCheck lambda function
 
   BlobStorageBaseUrl:
     Type: String
@@ -453,9 +461,11 @@ Resources:
             - !Ref PortFatRequestActionsMockQueueAgeAlarmARN
             - !Ref PortFatRequestActionsMockQueueDLQAlarmARN
             - !GetAtt PortFatLambdaAlarms.Outputs.LambdaInvocationErrorLogsMetricAlarm
+            - !Ref SenderOrderCheckDLQAlarm
         LambdaArns: !Join
           - ','
           - - !GetAtt PortFatLambdaFunction.Arn
+            - !GetAtt SenderOrderCheckLambda.Arn
         QueueArns: !Join
           - ','
           - - !Ref PortFatRequestActionsQueueARN
@@ -466,6 +476,7 @@ Resources:
           - ','
           - - !Ref EcsLogGroup
             - !Ref LambdaLogGroup
+            - !Ref LambdaSenderOrderCheckLogGroup
 
   PortFatLambdaFunction:
     Type: AWS::Lambda::Function
@@ -672,6 +683,139 @@ Resources:
               - sqs:SendMessage
             Resource:
               - !Ref SafeStorageToPortfatQueueARN
+
+  SenderOrderCheckLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref SenderOrderCheckLambdaName
+      Runtime: nodejs22.x
+      Handler: "index.handler"
+      Code:
+        S3Bucket: !Ref MicroserviceBucketName
+        S3Key: !Sub "${MicroserviceBucketBaseKey}/functions_zip/senderOrderCheckLambda.zip"
+      Role: !GetAtt SenderOrderCheckLambdaRole.Arn
+      Timeout: 30
+      MemorySize: 256
+      TracingConfig:
+        Mode: Active
+      Environment:
+        Variables:
+          AWS_REGION: !Sub "${AWS::Region}"
+          PORTFAT_DOWNLOAD_TABLE_NAME: !Ref PortFatDownloadTableName
+
+  SenderOrderCheckLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-sender-order-check-lambda-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
+
+  SenderOrderCheckLambdaPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub "${ProjectName}-sender-order-check-lambda-policy"
+      Roles:
+        - !Ref SenderOrderCheckLambdaRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - dynamodb:Query
+            Resource:
+              - !Sub "${PortFatDownloadTableArn}"
+              - !Sub "${PortFatDownloadTableArn}/*"
+
+  SenderOrderCheckDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "${ProjectName}-sender-order-check-lambda-dlq"
+      MessageRetentionPeriod: 1209600
+
+  EventBridgeSchedulerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-eventbridge-scheduler-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - scheduler.amazonaws.com
+            Action:
+              - sts:AssumeRole
+
+  EventBridgeSchedulerPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub "${ProjectName}-eventbridge-scheduler-policy"
+      Roles:
+        - !Ref EventBridgeSchedulerRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - lambda:InvokeFunction
+            Resource:
+              - !GetAtt SenderOrderCheckLambda.Arn
+          - Effect: Allow
+            Action:
+              - sqs:SendMessage
+            Resource:
+              - !GetAtt SenderOrderCheckDLQ.Arn
+
+  SenderOrderCheckSchedule:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      Name: !Sub "${ProjectName}-sender-order-check-schedule"
+      Description: "Executes sender order check Lambda on the 22nd of every month at 00:00 UTC"
+      ScheduleExpression: "cron(0 0 22 * ? *)"
+      State: ENABLED
+      FlexibleTimeWindow:
+        Mode: OFF
+      Target:
+        Arn: !GetAtt SenderOrderCheckLambda.Arn
+        RoleArn: !GetAtt EventBridgeSchedulerRole.Arn
+        DeadLetterConfig:
+          Arn: !GetAtt SenderOrderCheckDLQ.Arn
+
+  SenderOrderCheckLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref SenderOrderCheckLambda
+      Action: lambda:InvokeFunction
+      Principal: scheduler.amazonaws.com
+      SourceArn: !GetAtt SenderOrderCheckSchedule.Arn
+
+  SenderOrderCheckDLQAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${ProjectName}-sender-order-check-lambda-dlq-alarm"
+      AlarmDescription: "Alert when messages appear in sender order check DLQ"
+      MetricName: ApproximateNumberOfMessagesVisible
+      Namespace: AWS/SQS
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt SenderOrderCheckDLQ.QueueName
+      AlarmActions:
+        - !Ref AlarmSNSTopicArn
 
   SafeStorageToPortfatMockQueuePolicy:
     Type: AWS::SQS::QueuePolicy
