@@ -1,5 +1,5 @@
 const { YearMonth } = require('@js-joda/core');
-const {getCompletedRecordsByMonthSent} = require('./dynamo');
+const {getCompletedRecordsByMonthSent} = require('./lib/dynamo');
 
 exports.handler = async function handler() {
     console.log('Starting monthly records check lambda');

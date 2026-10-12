@@ -4,8 +4,7 @@ const {DynamoDBDocumentClient, QueryCommand} = require('@aws-sdk/lib-dynamodb');
 const client = new DynamoDBClient();
 const docClient = DynamoDBDocumentClient.from(client);
 
-const TABLE_NAME =
-    process.env.PORTFAT_DOWNLOAD_TABLE_NAME || 'pn-PortFatDownload';
+const TABLE_NAME = process.env.PORTFAT_DOWNLOAD_TABLE_NAME || 'pn-PortFatDownload';
 
 const STATUS_MONTH_SENT_INDEX = 'statusMonthSent-index';
 
