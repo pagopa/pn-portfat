@@ -6,6 +6,7 @@ import it.pagopa.pn.portfat.exception.PnGenericException;
 import it.pagopa.pn.portfat.model.FileReadyModel;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 import java.io.File;
 import java.io.IOException;
@@ -15,6 +16,8 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
+import java.util.regex.Pattern;
+
 import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.*;
 
 /**
@@ -24,6 +27,7 @@ import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.*;
 @Slf4j
 public class Utility {
 
+    private static final Pattern YEAR_MONTH_PATTERN = Pattern.compile("\\d{4}_(?:[1-9]|1[0-2])");
     /**
      * Costruttore privato per evitare l'istanza della classe. Lancia un'eccezione se chiamato.
      */
@@ -170,6 +174,31 @@ public class Utility {
         } catch (IOException e) {
             log.error("Errore nell'eliminazione del file tmp: {}", pathToDelete, e);
         }
+    }
+
+    /**
+     * Estrae il valore anno_mese (YYYY_MM) dal filePath.
+     * <p>
+     * Cerca il pattern YYYY_MM nel path, ad esempio da:
+     * /modulicommessazip/2026_10/portfatt_modulo_commessa_2026_10_...
+     * estrae: 2026_10
+     *
+     * @param filePath il percorso del file da cui estrarre anno e mese
+     * @return il valore anno_mese nel formato YYYY_MM, o null se non trovato
+     */
+    public static String extractYearMonthFromPath(String filePath) {
+        if (!StringUtils.hasText(filePath)) {
+            return null;
+        }
+
+        for (Path part : Path.of(filePath)) {
+            String value = part.toString();
+            if (YEAR_MONTH_PATTERN.matcher(value).matches()) {
+                return value;
+            }
+        }
+
+        return null;
     }
 
 }

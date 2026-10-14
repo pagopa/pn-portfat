@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -21,12 +22,16 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -70,31 +75,112 @@ class QueueListenerTest extends BaseTest.WithLocalStack {
 
     @Test
     void testPullPortFatNewDownload() throws JsonProcessingException {
-        //ARRANGE
+        // ARRANGE
         headers = new HashMap<>();
         headers.put("id", UUID.randomUUID());
+
+        String filePath = "/modulicommessazip/2026_10/portfatt_modulo_commessa_2026_10.zip";
+
         FileReadyModel event = new FileReadyModel();
         event.setFileVersion(FILE_VERSION);
         event.setDownloadUrl(DOWNLOAD_URL);
-        event.setFilePath(FILE_PATH);
+        event.setFilePath(filePath);
+
         payload = new ObjectMapper().writeValueAsString(event);
 
-        // Mock di portFatDownloadDAO.findByDownloadId() per restituire un Mono.empty()
-        when(portFatDownloadDAO.findByDownloadId(anyString())).thenReturn(Mono.empty());
-        // Mock di createAndSaveNewDownload() per creare un nuovo PortFatDownload
-        when(portFatDownloadDAO.createPortFatDownload(any())).thenReturn(Mono.just(portFatDownload));
-        when(portFatDownload.getStatus()).thenReturn(DownloadStatus.COMPLETED);
-        // Mock di portFatService.processZipFile() per simulare il processo del file
-        when(portFatService.processZipFile(any())).thenReturn(Mono.empty());
+        when(portFatDownloadDAO.findByDownloadId(anyString()))
+                .thenReturn(Mono.empty());
 
-        // Invoca il metodo pullPortFat
+        when(portFatDownloadDAO.createPortFatDownload(any()))
+                .thenReturn(Mono.just(portFatDownload));
+
+        when(portFatDownload.getStatus())
+                .thenReturn(DownloadStatus.COMPLETED);
+
+        when(portFatService.processZipFile(any()))
+                .thenReturn(Mono.empty());
+
+        // ACT
         queueListener.pullPortFat(payload, headers);
 
-        //ASSERT
-        // Verifica che il metodo processZipFile sia stato chiamato
-        verify(portFatService, times(1)).processZipFile(any());
-        // Verifica che lo stato sia stato aggiornato a COMPLETED
-        verify(portFatDownloadDAO, times(0)).updatePortFatDownload(portFatDownload);
+        // ASSERT
+        ArgumentCaptor<PortFatDownload> captor = ArgumentCaptor.forClass(PortFatDownload.class);
+
+        verify(portFatDownloadDAO, times(1))
+                .createPortFatDownload(captor.capture());
+
+        PortFatDownload created = captor.getValue();
+
+        assertEquals("2026_10", created.getOrderMonth());
+        assertEquals(
+                YearMonth.now().format(DateTimeFormatter.ofPattern("yyyy-MM")),
+                created.getMonthSent()
+        );
+
+        assertEquals(FILE_VERSION, created.getFileVersion());
+        assertEquals(DOWNLOAD_URL, created.getDownloadUrl());
+        assertEquals(DownloadStatus.IN_PROGRESS, created.getStatus());
+
+        verify(portFatService, times(1))
+                .processZipFile(any());
+
+        verify(portFatDownloadDAO, never())
+                .updatePortFatDownload(any());
+    }
+
+    @Test
+    void testPullPortFatNewDownloadWithInvalidPath() throws JsonProcessingException {
+        // ARRANGE
+        headers = new HashMap<>();
+        headers.put("id", UUID.randomUUID());
+
+        String filePath = "/modulicommessazip/portfatt_modulo_commessa_2026_10.zip";
+
+        FileReadyModel event = new FileReadyModel();
+        event.setFileVersion(FILE_VERSION);
+        event.setDownloadUrl(DOWNLOAD_URL);
+        event.setFilePath(filePath);
+
+        payload = new ObjectMapper().writeValueAsString(event);
+
+        when(portFatDownloadDAO.findByDownloadId(anyString()))
+                .thenReturn(Mono.empty());
+
+        when(portFatDownloadDAO.createPortFatDownload(any()))
+                .thenReturn(Mono.just(portFatDownload));
+
+        when(portFatDownload.getStatus())
+                .thenReturn(DownloadStatus.COMPLETED);
+
+        when(portFatService.processZipFile(any()))
+                .thenReturn(Mono.empty());
+
+        // ACT
+        queueListener.pullPortFat(payload, headers);
+
+        // ASSERT
+        ArgumentCaptor<PortFatDownload> captor = ArgumentCaptor.forClass(PortFatDownload.class);
+
+        verify(portFatDownloadDAO, times(1))
+                .createPortFatDownload(captor.capture());
+
+        PortFatDownload created = captor.getValue();
+
+        assertNull(created.getOrderMonth());
+        assertEquals(
+                YearMonth.now().format(DateTimeFormatter.ofPattern("yyyy-MM")),
+                created.getMonthSent()
+        );
+
+        assertEquals(FILE_VERSION, created.getFileVersion());
+        assertEquals(DOWNLOAD_URL, created.getDownloadUrl());
+        assertEquals(DownloadStatus.IN_PROGRESS, created.getStatus());
+
+        verify(portFatService, times(1))
+                .processZipFile(any());
+
+        verify(portFatDownloadDAO, never())
+                .updatePortFatDownload(any());
     }
 
     @Test
