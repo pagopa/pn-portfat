@@ -5,8 +5,11 @@ import it.pagopa.pn.portfat.middleware.db.entities.PortFatDownload;
 import it.pagopa.pn.portfat.model.FileReadyModel;
 
 import java.time.Instant;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 
 import static it.pagopa.pn.portfat.utils.Utility.downloadId;
+import static it.pagopa.pn.portfat.utils.Utility.extractYearMonthFromPath;
 
 /**
  * Classe di utilità per la gestione delle conversioni dei dati relativi a Portale Fatturazione.
@@ -53,6 +56,8 @@ public class PortFatConverter {
      * @return una nuova istanza di PortFatDownload inizializzata con i dati dell'evento
      */
     public static PortFatDownload portFatDownload(FileReadyModel fileReadyEvent) {
+        String yearMonth = YearMonth.now().format(DateTimeFormatter.ofPattern("yyyy-MM"));
+        String orderMonth = extractYearMonthFromPath(fileReadyEvent.getFilePath());
         return PortFatDownload.builder()
                 .downloadId(downloadId(fileReadyEvent))
                 .downloadUrl(fileReadyEvent.getDownloadUrl())
@@ -60,6 +65,8 @@ public class PortFatConverter {
                 .status(DownloadStatus.IN_PROGRESS)
                 .createdAt(Instant.now().toString())
                 .updatedAt(Instant.now().toString())
+                .monthSent(yearMonth)
+                .orderMonth(orderMonth)
                 .build();
     }
 }
