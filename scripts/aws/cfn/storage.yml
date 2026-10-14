@@ -104,6 +104,10 @@ Resources:
           AttributeType: "S"
         - AttributeName: "archiveFileKey"
           AttributeType: "S"
+        - AttributeName: "monthSent"
+          AttributeType: "S"
+        - AttributeName: "status"
+          AttributeType: "S"
       KeySchema:
         - AttributeName: "downloadId"
           KeyType: "HASH"
@@ -112,6 +116,14 @@ Resources:
           KeySchema:
             - AttributeName: "archiveFileKey"
               KeyType: "HASH"
+          Projection:
+            ProjectionType: "ALL"
+        - IndexName: "statusMonthSent-index"
+          KeySchema:
+            - AttributeName: "status"
+              KeyType: "HASH"
+            - AttributeName: "monthSent"
+              KeyType: "RANGE"
           Projection:
             ProjectionType: "ALL"
       BillingMode: "PAY_PER_REQUEST"
@@ -146,6 +158,17 @@ Resources:
         LogGroupRetention: !Ref LogRetention
         LogGroupPrefix: '/aws/lambda'
 
+  SenderOrderCheckLambdaLogGroup:
+    Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/log-group.yaml"
+      Parameters:
+        LogGroupName: !Sub "${ProjectName}-sender-order-check-lambda"
+        LogGroupRetention: !Ref LogRetention
+        LogGroupPrefix: '/aws/lambda'
+
 Outputs:
   # Log group exports
   EcsLogGroup:
@@ -153,6 +176,9 @@ Outputs:
 
   LambdaLogGroup:
     Value: !GetAtt EventFileReadyLambdaLogGroup.Outputs.LogGroupName
+
+  LambdaSenderOrderCheckLogGroup:
+    Value: !GetAtt SenderOrderCheckLambdaLogGroup.Outputs.LogGroupName
 
   # Dynamo table
   PortFatDownloadTableName:
@@ -259,3 +285,7 @@ Outputs:
   EventFileReadyLambdaName:
     Description: Name of event file ready lambda
     Value: !Sub "${ProjectName}-portfat-eventFileReady-lambda"
+
+  SenderOrderCheckLambdaName:
+    Description: Name of the sender order check Lambda function
+    Value: !Sub "${ProjectName}-sender-order-check-lambda"
