@@ -313,6 +313,18 @@ Parameters:
     Default: 'ARM'
     Description: CPU architecture for the Fargate tasks
 
+  SenderOrderCheckCron:
+    Type: String
+    Example: '0 0 22 * ? *'
+    Description: Cron expression for SenderOrderCheckSchedule
+
+  SenderOrderCheckScheduleState:
+    Type: String
+    AllowedValues:
+      - ENABLED
+      - DISABLED
+    Description: 'State of the SenderOrderCheckSchedule'
+
 Resources:
   PortFatMicroservice:
     Type: AWS::CloudFormation::Stack
@@ -781,8 +793,8 @@ Resources:
     Properties:
       Name: !Sub "${ProjectName}-sender-order-check-schedule"
       Description: "Executes sender order check Lambda on the 22nd of every month at 00:00 UTC"
-      ScheduleExpression: "cron(0 0 22 * ? *)"
-      State: ENABLED
+      ScheduleExpression: !Sub cron(${SenderOrderCheckCron})
+      State: !Ref SenderOrderCheckScheduleState
       FlexibleTimeWindow:
         Mode: OFF
       Target:
