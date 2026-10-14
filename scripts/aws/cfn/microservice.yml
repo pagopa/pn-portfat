@@ -794,6 +794,7 @@ Resources:
       Name: !Sub "${ProjectName}-sender-order-check-schedule"
       Description: "Executes sender order check Lambda on the 22nd of every month at 00:00 UTC"
       ScheduleExpression: !Sub cron(${SenderOrderCheckCron})
+      ScheduleExpressionTimezone: Europe/Rome
       State: !Ref SenderOrderCheckScheduleState
       FlexibleTimeWindow:
         Mode: OFF

@@ -10,7 +10,7 @@
     "MaxTasksNumber": "1",
     "InvoicingServiceIPCidrs": "",
     "BlobStorageBaseUrl": "https://pn-delayer-storage-dev-pn-test-delayer-bucket.s3.eu-south-1.amazonaws.com",
-    "SenderOrderCheckCron": "0 0 22 * ? *",
+    "SenderOrderCheckCron": "0 9 22 * ? *",
     "SenderOrderCheckScheduleState": "ENABLED"
   }
 }
