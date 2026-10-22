@@ -797,7 +797,7 @@ Resources:
       ScheduleExpressionTimezone: Europe/Rome
       State: !Ref SenderOrderCheckScheduleState
       FlexibleTimeWindow:
-        Mode: OFF
+        Mode: 'OFF'
       Target:
         Arn: !GetAtt SenderOrderCheckLambda.Arn
         RoleArn: !GetAtt EventBridgeSchedulerRole.Arn
