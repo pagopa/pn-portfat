@@ -315,7 +315,7 @@ Parameters:
 
   SenderOrderCheckCron:
     Type: String
-    Example: '0 0 22 * ? *'
+    Default: '0 0 22 * ? *'
     Description: Cron expression for SenderOrderCheckSchedule
 
   SenderOrderCheckScheduleState:
