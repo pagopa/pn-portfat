@@ -712,7 +712,6 @@ Resources:
         Mode: Active
       Environment:
         Variables:
-          AWS_REGION: !Sub "${AWS::Region}"
           PORTFAT_DOWNLOAD_TABLE_NAME: !Ref PortFatDownloadTableName
 
   SenderOrderCheckLambdaRole:
