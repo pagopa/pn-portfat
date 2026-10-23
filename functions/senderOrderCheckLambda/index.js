@@ -1,5 +1,5 @@
 const { handler } = require('./src/app/eventHandler.js');
 
 exports.handler = async (event) => {
-  return handler();
+  return handler(event);
 };
