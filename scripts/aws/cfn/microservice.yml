@@ -473,7 +473,6 @@ Resources:
             - !Ref PortFatRequestActionsMockQueueAgeAlarmARN
             - !Ref PortFatRequestActionsMockQueueDLQAlarmARN
             - !GetAtt PortFatLambdaAlarms.Outputs.LambdaInvocationErrorLogsMetricAlarm
-            - !Ref SenderOrderCheckDLQAlarm
         LambdaArns: !Join
           - ','
           - - !GetAtt PortFatLambdaFunction.Arn
@@ -747,12 +746,6 @@ Resources:
               - !Sub "${PortFatDownloadTableArn}"
               - !Sub "${PortFatDownloadTableArn}/*"
 
-  SenderOrderCheckDLQ:
-    Type: AWS::SQS::Queue
-    Properties:
-      QueueName: !Sub "${ProjectName}-sender-order-check-lambda-dlq"
-      MessageRetentionPeriod: 1209600
-
   EventBridgeSchedulerRole:
     Type: AWS::IAM::Role
     Properties:
@@ -781,11 +774,6 @@ Resources:
               - lambda:InvokeFunction
             Resource:
               - !GetAtt SenderOrderCheckLambda.Arn
-          - Effect: Allow
-            Action:
-              - sqs:SendMessage
-            Resource:
-              - !GetAtt SenderOrderCheckDLQ.Arn
 
   SenderOrderCheckSchedule:
     Type: AWS::Scheduler::Schedule
@@ -800,8 +788,6 @@ Resources:
       Target:
         Arn: !GetAtt SenderOrderCheckLambda.Arn
         RoleArn: !GetAtt EventBridgeSchedulerRole.Arn
-        DeadLetterConfig:
-          Arn: !GetAtt SenderOrderCheckDLQ.Arn
 
   SenderOrderCheckLambdaPermission:
     Type: AWS::Lambda::Permission
@@ -810,24 +796,6 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: scheduler.amazonaws.com
       SourceArn: !GetAtt SenderOrderCheckSchedule.Arn
-
-  SenderOrderCheckDLQAlarm:
-    Type: AWS::CloudWatch::Alarm
-    Properties:
-      AlarmName: !Sub "${ProjectName}-sender-order-check-lambda-dlq-alarm"
-      AlarmDescription: "Alert when messages appear in sender order check DLQ"
-      MetricName: ApproximateNumberOfMessagesVisible
-      Namespace: AWS/SQS
-      Statistic: Average
-      Period: 300
-      EvaluationPeriods: 1
-      Threshold: 1
-      ComparisonOperator: GreaterThanOrEqualToThreshold
-      Dimensions:
-        - Name: QueueName
-          Value: !GetAtt SenderOrderCheckDLQ.QueueName
-      AlarmActions:
-        - !Ref AlarmSNSTopicArn
 
   SafeStorageToPortfatMockQueuePolicy:
     Type: AWS::SQS::QueuePolicy
