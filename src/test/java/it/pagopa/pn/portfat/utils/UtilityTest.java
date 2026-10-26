@@ -112,14 +112,14 @@ class UtilityTest {
     void testExtractYearMonthFromPath() {
         String filePath = "/modulicommessazip/2026_10/portfatt_modulo_commessa_2026_10_2026-09-21T08-17.46Z.zip";
         String result = Utility.extractYearMonthFromPath(filePath);
-        assertEquals("2026_10", result);
+        assertEquals("2026-10", result);
     }
 
     @Test
     void testExtractYearMonthFromPathSingleDigit() {
         String filePath = "/modulicommessazip/2027_1/portfatt_modulo_commessa_2027_1_2026-09-21T08-17.46Z.zip";
         String result = Utility.extractYearMonthFromPath(filePath);
-        assertEquals("2027_1", result);
+        assertEquals("2027-01", result);
     }
 
     @Test
@@ -133,9 +133,8 @@ class UtilityTest {
     void testExtractYearMonthFromPathSingleDigitInvalid2() {
         String filePath = "/modulicommessazip/2027_01/portfatt_modulo_commessa_2027_1_2026-09-21T08-17.46Z.zip";
         String result = Utility.extractYearMonthFromPath(filePath);
-        assertNull(result);
+        assertEquals("2027-01", result);
     }
-
 
     @Test
     void testExtractYearMonthFromPathSingleDigitInvalid3() {

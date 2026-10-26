@@ -1,11 +1,12 @@
 const { YearMonth } = require('@js-joda/core');
 const {getCompletedRecordsByMonthSent} = require('./lib/dynamo');
 
-exports.handler = async function handler() {
+exports.handler = async function handler(event) {
     console.log('Starting monthly records check lambda');
 
-    // Current month in yyyy-MM format
-    const currentMonth = YearMonth.now();
+    // Current month in yyyy-MM format. If provided in input, it overrides the system date.
+    const currentMonthValue = event?.currentMonth;
+    const currentMonth = currentMonthValue ? YearMonth.parse(currentMonthValue) : YearMonth.now();
     const monthSent = currentMonth.toString();
     const nextMonth = currentMonth.plusMonths(1).toString();
     const fourthMonth = currentMonth.plusMonths(4).toString();
