@@ -111,7 +111,7 @@ class QueueListenerTest extends BaseTest.WithLocalStack {
 
         PortFatDownload created = captor.getValue();
 
-        assertEquals("2026_10", created.getOrderMonth());
+        assertEquals("2026-10", created.getOrderMonth());
         assertEquals(
                 YearMonth.now().format(DateTimeFormatter.ofPattern("yyyy-MM")),
                 created.getMonthSent()
