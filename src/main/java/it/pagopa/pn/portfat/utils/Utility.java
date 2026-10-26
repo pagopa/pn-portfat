@@ -27,7 +27,7 @@ import static it.pagopa.pn.portfat.exception.ExceptionTypeEnum.*;
 @Slf4j
 public class Utility {
 
-    private static final Pattern YEAR_MONTH_PATTERN = Pattern.compile("\\d{4}_(?:[1-9]|1[0-2])");
+    private static final Pattern YEAR_MONTH_PATTERN = Pattern.compile("\\d{4}_((?:0?[1-9])|(?:1[0-2]))");
     /**
      * Costruttore privato per evitare l'istanza della classe. Lancia un'eccezione se chiamato.
      */
@@ -177,14 +177,14 @@ public class Utility {
     }
 
     /**
-     * Estrae il valore anno_mese (YYYY_MM) dal filePath.
+     * Estrae il valore anno-mese (YYYY-MM) dal filePath.
      * <p>
      * Cerca il pattern YYYY_MM nel path, ad esempio da:
      * /modulicommessazip/2026_10/portfatt_modulo_commessa_2026_10_...
-     * estrae: 2026_10
+     * estrae: 2026-10
      *
      * @param filePath il percorso del file da cui estrarre anno e mese
-     * @return il valore anno_mese nel formato YYYY_MM, o null se non trovato
+     * @return il valore anno-mese nel formato YYYY-MM, o null se non trovato
      */
     public static String extractYearMonthFromPath(String filePath) {
         if (!StringUtils.hasText(filePath)) {
@@ -194,7 +194,8 @@ public class Utility {
         for (Path part : Path.of(filePath)) {
             String value = part.toString();
             if (YEAR_MONTH_PATTERN.matcher(value).matches()) {
-                return value;
+                String[] yearMonth = value.split("_");
+                return yearMonth[0] + "-" + String.format("%02d", Integer.parseInt(yearMonth[1]));
             }
         }
 

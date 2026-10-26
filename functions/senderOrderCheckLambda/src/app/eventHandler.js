@@ -5,7 +5,8 @@ exports.handler = async function handler(event) {
     console.log('Starting monthly records check lambda');
 
     // Current month in yyyy-MM format. If provided in input, it overrides the system date.
-    const currentMonth = event.currentMonth ? YearMonth.parse(event.currentMonth) : YearMonth.now();
+    const currentMonthValue = event?.currentMonth;
+    const currentMonth = currentMonthValue ? YearMonth.parse(currentMonthValue) : YearMonth.now();
     const monthSent = currentMonth.toString();
     const nextMonth = currentMonth.plusMonths(1).toString();
     const fourthMonth = currentMonth.plusMonths(4).toString();
