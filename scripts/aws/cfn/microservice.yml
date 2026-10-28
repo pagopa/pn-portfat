@@ -473,6 +473,8 @@ Resources:
             - !Ref PortFatRequestActionsMockQueueAgeAlarmARN
             - !Ref PortFatRequestActionsMockQueueDLQAlarmARN
             - !GetAtt PortFatLambdaAlarms.Outputs.LambdaInvocationErrorLogsMetricAlarm
+            - !GetAtt SenderOrderCheckLambdaAlarms.Outputs.LambdaInvocationErrorLogsMetricAlarm
+
         LambdaArns: !Join
           - ','
           - - !GetAtt PortFatLambdaFunction.Arn
@@ -745,6 +747,14 @@ Resources:
             Resource:
               - !Sub "${PortFatDownloadTableArn}"
               - !Sub "${PortFatDownloadTableArn}/*"
+
+  SenderOrderCheckLambdaAlarms:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/lambda-alarms.yaml"
+      Parameters:
+        FunctionName: !Ref SenderOrderCheckLambda
+        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
 
   EventBridgeSchedulerRole:
     Type: AWS::IAM::Role
